@@ -9,8 +9,6 @@
         android:name=".application.BaseApplication"
         android:label="TT助手" >
 
-        <activity android:name="com.ttaid.speech.setting.IatSettings" >
-        </activity>
         <activity
             android:name=".activity.MainActivity"
             android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|orientation|screenLayout|fontScale"

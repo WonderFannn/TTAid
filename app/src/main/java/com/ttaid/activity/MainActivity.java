@@ -8,8 +8,6 @@ import org.json.JSONObject;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Environment;
 import android.text.TextUtils;
@@ -30,9 +28,6 @@ import com.iflytek.cloud.SpeechError;
 import com.iflytek.cloud.SpeechRecognizer;
 import com.iflytek.cloud.ui.RecognizerDialog;
 import com.iflytek.cloud.ui.RecognizerDialogListener;
-import com.iflytek.cloud.util.ContactManager;
-import com.iflytek.cloud.util.ContactManager.ContactListener;
-import com.ttaid.speech.setting.IatSettings;
 import com.ttaid.speech.util.FucUtil;
 import com.ttaid.speech.util.JsonParser;
 import com.iflytek.sunflower.FlowerCollector;
@@ -48,7 +43,6 @@ public class MainActivity extends Activity implements OnClickListener {
 
 	private EditText mResultText;
 	private Toast mToast;
-	private SharedPreferences mSharedPreferences;
 	// 引擎类型
 	private String mEngineType = SpeechConstant.TYPE_CLOUD;
 
@@ -70,8 +64,6 @@ public class MainActivity extends Activity implements OnClickListener {
 		// 使用UI听写功能，请根据sdk文件目录下的notice.txt,放置布局文件和图片资源
 		mIatDialog = new RecognizerDialog(MainActivity.this, mInitListener);
 
-		mSharedPreferences = getSharedPreferences(IatSettings.PREFER_NAME,
-				Activity.MODE_PRIVATE);
 		mToast = Toast.makeText(this, "", Toast.LENGTH_SHORT);
 		mResultText = ((EditText) findViewById(com.ttaid.R.id.iat_text));
 	}
@@ -81,12 +73,9 @@ public class MainActivity extends Activity implements OnClickListener {
 	 */
 	private void initLayout() {
 		findViewById(com.ttaid.R.id.iat_recognize).setOnClickListener(MainActivity.this);
-		findViewById(com.ttaid.R.id.iat_upload_contacts).setOnClickListener(MainActivity.this);
 		findViewById(com.ttaid.R.id.iat_upload_userwords).setOnClickListener(MainActivity.this);
 		findViewById(com.ttaid.R.id.iat_stop).setOnClickListener(MainActivity.this);
 		findViewById(com.ttaid.R.id.iat_cancel).setOnClickListener(MainActivity.this);
-		findViewById(com.ttaid.R.id.image_iat_set).setOnClickListener(MainActivity.this);
-
 	}
 
 	int ret = 0; // 函数调用返回值
@@ -100,11 +89,6 @@ public class MainActivity extends Activity implements OnClickListener {
 		}
 		
 		switch (view.getId()) {
-		// 进入参数设置页面
-		case com.ttaid.R.id.image_iat_set:
-			Intent intents = new Intent(MainActivity.this, IatSettings.class);
-			startActivity(intents);
-			break;
 		// 开始听写
 		// 如何判断一次听写结束：OnResult isLast=true 或者 onError
 		case com.ttaid.R.id.iat_recognize:
@@ -115,8 +99,7 @@ public class MainActivity extends Activity implements OnClickListener {
 			mIatResults.clear();
 			// 设置参数
 			setParam();
-			boolean isShowDialog = mSharedPreferences.getBoolean(
-					getString(com.ttaid.R.string.pref_key_iat_show), true);
+			boolean isShowDialog = true;
 			if (isShowDialog) {
 				// 显示听写对话框
 				mIatDialog.setListener(mRecognizerDialogListener);
@@ -142,13 +125,6 @@ public class MainActivity extends Activity implements OnClickListener {
 		case com.ttaid.R.id.iat_cancel:
 			mIat.cancel();
 			showTip("取消听写");
-			break;
-		// 上传联系人
-		case com.ttaid.R.id.iat_upload_contacts:
-			showTip(getString(com.ttaid.R.string.text_upload_contacts));
-			ContactManager mgr = ContactManager.createManager(MainActivity.this,
-					mContactListener);
-			mgr.asyncQueryAllContactsName();
 			break;
 		// 上传用户词表
 		case com.ttaid.R.id.iat_upload_userwords:
@@ -306,32 +282,6 @@ public class MainActivity extends Activity implements OnClickListener {
 
 	};
 
-	/**
-	 * 获取联系人监听器。
-	 */
-	private ContactListener mContactListener = new ContactListener() {
-
-		@Override
-		public void onContactQueryFinish(final String contactInfos, boolean changeFlag) {
-			// 注：实际应用中除第一次上传之外，之后应该通过changeFlag判断是否需要上传，否则会造成不必要的流量.
-			// 每当联系人发生变化，该接口都将会被回调，可通过ContactManager.destroy()销毁对象，解除回调。
-			// if(changeFlag) {
-			// 指定引擎类型
-			runOnUiThread(new Runnable() {
-				public void run() {
-					mResultText.setText(contactInfos);
-				}
-			});
-			
-			mIat.setParameter(SpeechConstant.ENGINE_TYPE,SpeechConstant.TYPE_CLOUD);
-			mIat.setParameter(SpeechConstant.TEXT_ENCODING, "utf-8");
-			ret = mIat.updateLexicon("contact", contactInfos, mLexiconListener);
-			if (ret != ErrorCode.SUCCESS) {
-				showTip("上传联系人失败：" + ret);
-			}
-		}
-	};
-
 	private void showTip(final String str) {
 		mToast.setText(str);
 		mToast.show();
@@ -351,47 +301,16 @@ public class MainActivity extends Activity implements OnClickListener {
 		mIat.setParameter(SpeechConstant.ENGINE_TYPE, mEngineType);
 		// 设置返回结果格式
 		mIat.setParameter(SpeechConstant.RESULT_TYPE, "json");
-		
-		this.mTranslateEnable = mSharedPreferences.getBoolean( this.getString(com.ttaid.R.string.pref_key_translate), false );
-		if( mTranslateEnable ){
-			Log.i( TAG, "translate enable" );
-			mIat.setParameter( SpeechConstant.ASR_SCH, "1" );
-			mIat.setParameter( SpeechConstant.ADD_CAP, "translate" );
-			mIat.setParameter( SpeechConstant.TRS_SRC, "its" );
-		}
-
-		String lag = mSharedPreferences.getString("iat_language_preference",
-				"mandarin");
-		if (lag.equals("en_us")) {
-			// 设置语言
-			mIat.setParameter(SpeechConstant.LANGUAGE, "en_us");
-			mIat.setParameter(SpeechConstant.ACCENT, null);
-			
-			if( mTranslateEnable ){
-				mIat.setParameter( SpeechConstant.ORI_LANG, "en" );
-				mIat.setParameter( SpeechConstant.TRANS_LANG, "cn" );
-			}
-		} else {
-			// 设置语言
-			mIat.setParameter(SpeechConstant.LANGUAGE, "zh_cn");
-			// 设置语言区域
-			mIat.setParameter(SpeechConstant.ACCENT, lag);
-			
-			if( mTranslateEnable ){
-				mIat.setParameter( SpeechConstant.ORI_LANG, "cn" );
-				mIat.setParameter( SpeechConstant.TRANS_LANG, "en" );
-			}
-		}
-
+		// 设置语言
+		mIat.setParameter(SpeechConstant.LANGUAGE, "zh_cn");
+		// 设置语言区域
+		mIat.setParameter(SpeechConstant.ACCENT, "mandarin");
 		// 设置语音前端点:静音超时时间，即用户多长时间不说话则当做超时处理
-		mIat.setParameter(SpeechConstant.VAD_BOS, mSharedPreferences.getString("iat_vadbos_preference", "4000"));
-		
+		mIat.setParameter(SpeechConstant.VAD_BOS,"4000");
 		// 设置语音后端点:后端点静音检测时间，即用户停止说话多长时间内即认为不再输入， 自动停止录音
-		mIat.setParameter(SpeechConstant.VAD_EOS, mSharedPreferences.getString("iat_vadeos_preference", "1000"));
-		
+		mIat.setParameter(SpeechConstant.VAD_EOS,"1000");
 		// 设置标点符号,设置为"0"返回结果无标点,设置为"1"返回结果有标点
-		mIat.setParameter(SpeechConstant.ASR_PTT, mSharedPreferences.getString("iat_punc_preference", "1"));
-		
+		mIat.setParameter(SpeechConstant.ASR_PTT,  "1");
 		// 设置音频保存路径，保存音频格式支持pcm、wav，设置路径为sd卡请注意WRITE_EXTERNAL_STORAGE权限
 		// 注：AUDIO_FORMAT参数语记需要更新版本才能生效
 		mIat.setParameter(SpeechConstant.AUDIO_FORMAT,"wav");
