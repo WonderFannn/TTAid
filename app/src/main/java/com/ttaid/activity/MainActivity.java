@@ -53,9 +53,10 @@ public class MainActivity extends Activity implements OnClickListener {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
-		setContentView(com.ttaid.R.layout.iatdemo);
+		setContentView(com.ttaid.R.layout.main_activity);
 
 		initLayout();
+
 		// 初始化识别无UI识别对象
 		// 使用SpeechRecognizer对象，可根据回调消息自定义界面；
 		mIat = SpeechRecognizer.createRecognizer(MainActivity.this, mInitListener);
