@@ -1,4 +1,4 @@
-package com.ttaid.speech.util;
+package com.ttaid.util;
 
 import org.json.JSONArray;
 import org.json.JSONObject;

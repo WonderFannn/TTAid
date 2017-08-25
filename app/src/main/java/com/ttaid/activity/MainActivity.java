@@ -28,8 +28,8 @@ import com.iflytek.cloud.SpeechError;
 import com.iflytek.cloud.SpeechRecognizer;
 import com.iflytek.cloud.ui.RecognizerDialog;
 import com.iflytek.cloud.ui.RecognizerDialogListener;
-import com.ttaid.speech.util.FucUtil;
-import com.ttaid.speech.util.JsonParser;
+import com.ttaid.util.FucUtil;
+import com.ttaid.util.JsonParser;
 import com.iflytek.sunflower.FlowerCollector;
 
 public class MainActivity extends Activity implements OnClickListener {
