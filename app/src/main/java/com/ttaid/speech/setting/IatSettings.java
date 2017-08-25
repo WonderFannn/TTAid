@@ -23,7 +23,7 @@ public class IatSettings extends PreferenceActivity implements OnPreferenceChang
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		super.onCreate(savedInstanceState);
 		getPreferenceManager().setSharedPreferencesName(PREFER_NAME);
-		addPreferencesFromResource(com.ttaid.voicedemo.R.xml.iat_setting);
+		addPreferencesFromResource(com.ttaid.R.xml.iat_setting);
 		
 		mVadbosPreference = (EditTextPreference)findPreference("iat_vadbos_preference");
 		mVadbosPreference.getEditText().addTextChangedListener(new SettingTextWatcher(IatSettings.this,mVadbosPreference,0,10000));

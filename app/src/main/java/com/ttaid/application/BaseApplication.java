@@ -3,7 +3,7 @@ package com.ttaid.application;
 import android.app.Application;
 
 import com.iflytek.cloud.SpeechUtility;
-import com.ttaid.voicedemo.R;
+import com.ttaid.R;
 
 public class BaseApplication extends Application {
 

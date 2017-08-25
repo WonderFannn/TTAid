@@ -27,7 +27,7 @@
         <activity android:name="com.ttaid.speech.setting.IatSettings" >
         </activity>
         <activity
-            android:name="com.ttaid.voicedemo.MainActivity"
+            android:name="com.ttaid.activity.MainActivity"
             android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|orientation|screenLayout|fontScale"
             android:screenOrientation="portrait" >
             <intent-filter>

@@ -59,7 +59,7 @@ public class MainActivity extends Activity implements OnClickListener {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
-		setContentView(com.ttaid.voicedemo.R.layout.iatdemo);
+		setContentView(com.ttaid.R.layout.iatdemo);
 
 		initLayout();
 		// 初始化识别无UI识别对象
@@ -73,19 +73,19 @@ public class MainActivity extends Activity implements OnClickListener {
 		mSharedPreferences = getSharedPreferences(IatSettings.PREFER_NAME,
 				Activity.MODE_PRIVATE);
 		mToast = Toast.makeText(this, "", Toast.LENGTH_SHORT);
-		mResultText = ((EditText) findViewById(com.ttaid.voicedemo.R.id.iat_text));
+		mResultText = ((EditText) findViewById(com.ttaid.R.id.iat_text));
 	}
 
 	/**
 	 * 初始化Layout。
 	 */
 	private void initLayout() {
-		findViewById(com.ttaid.voicedemo.R.id.iat_recognize).setOnClickListener(MainActivity.this);
-		findViewById(com.ttaid.voicedemo.R.id.iat_upload_contacts).setOnClickListener(MainActivity.this);
-		findViewById(com.ttaid.voicedemo.R.id.iat_upload_userwords).setOnClickListener(MainActivity.this);
-		findViewById(com.ttaid.voicedemo.R.id.iat_stop).setOnClickListener(MainActivity.this);
-		findViewById(com.ttaid.voicedemo.R.id.iat_cancel).setOnClickListener(MainActivity.this);
-		findViewById(com.ttaid.voicedemo.R.id.image_iat_set).setOnClickListener(MainActivity.this);
+		findViewById(com.ttaid.R.id.iat_recognize).setOnClickListener(MainActivity.this);
+		findViewById(com.ttaid.R.id.iat_upload_contacts).setOnClickListener(MainActivity.this);
+		findViewById(com.ttaid.R.id.iat_upload_userwords).setOnClickListener(MainActivity.this);
+		findViewById(com.ttaid.R.id.iat_stop).setOnClickListener(MainActivity.this);
+		findViewById(com.ttaid.R.id.iat_cancel).setOnClickListener(MainActivity.this);
+		findViewById(com.ttaid.R.id.image_iat_set).setOnClickListener(MainActivity.this);
 
 	}
 
@@ -101,13 +101,13 @@ public class MainActivity extends Activity implements OnClickListener {
 		
 		switch (view.getId()) {
 		// 进入参数设置页面
-		case com.ttaid.voicedemo.R.id.image_iat_set:
+		case com.ttaid.R.id.image_iat_set:
 			Intent intents = new Intent(MainActivity.this, IatSettings.class);
 			startActivity(intents);
 			break;
 		// 开始听写
 		// 如何判断一次听写结束：OnResult isLast=true 或者 onError
-		case com.ttaid.voicedemo.R.id.iat_recognize:
+		case com.ttaid.R.id.iat_recognize:
 			// 移动数据分析，收集开始听写事件
 			FlowerCollector.onEvent(MainActivity.this, "iat_recognize");
 			
@@ -116,43 +116,43 @@ public class MainActivity extends Activity implements OnClickListener {
 			// 设置参数
 			setParam();
 			boolean isShowDialog = mSharedPreferences.getBoolean(
-					getString(com.ttaid.voicedemo.R.string.pref_key_iat_show), true);
+					getString(com.ttaid.R.string.pref_key_iat_show), true);
 			if (isShowDialog) {
 				// 显示听写对话框
 				mIatDialog.setListener(mRecognizerDialogListener);
 				mIatDialog.show();
-				showTip(getString(com.ttaid.voicedemo.R.string.text_begin));
+				showTip(getString(com.ttaid.R.string.text_begin));
 			} else {
 				// 不显示听写对话框
 				ret = mIat.startListening(mRecognizerListener);
 				if (ret != ErrorCode.SUCCESS) {
 					showTip("听写失败,错误码：" + ret);
 				} else {
-					showTip(getString(com.ttaid.voicedemo.R.string.text_begin));
+					showTip(getString(com.ttaid.R.string.text_begin));
 				}
 			}
 			break;
 		// 音频流识别
 		// 停止听写
-		case com.ttaid.voicedemo.R.id.iat_stop:
+		case com.ttaid.R.id.iat_stop:
 			mIat.stopListening();
 			showTip("停止听写");
 			break;
 		// 取消听写
-		case com.ttaid.voicedemo.R.id.iat_cancel:
+		case com.ttaid.R.id.iat_cancel:
 			mIat.cancel();
 			showTip("取消听写");
 			break;
 		// 上传联系人
-		case com.ttaid.voicedemo.R.id.iat_upload_contacts:
-			showTip(getString(com.ttaid.voicedemo.R.string.text_upload_contacts));
+		case com.ttaid.R.id.iat_upload_contacts:
+			showTip(getString(com.ttaid.R.string.text_upload_contacts));
 			ContactManager mgr = ContactManager.createManager(MainActivity.this,
 					mContactListener);
 			mgr.asyncQueryAllContactsName();
 			break;
 		// 上传用户词表
-		case com.ttaid.voicedemo.R.id.iat_upload_userwords:
-			showTip(getString(com.ttaid.voicedemo.R.string.text_upload_userwords));
+		case com.ttaid.R.id.iat_upload_userwords:
+			showTip(getString(com.ttaid.R.string.text_upload_userwords));
 			String contents = FucUtil.readFile(MainActivity.this, "userwords","utf-8");
 			mResultText.setText(contents);
 			// 指定引擎类型
@@ -191,7 +191,7 @@ public class MainActivity extends Activity implements OnClickListener {
 			if (error != null) {
 				showTip(error.toString());
 			} else {
-				showTip(getString(com.ttaid.voicedemo.R.string.text_upload_success));
+				showTip(getString(com.ttaid.R.string.text_upload_success));
 			}
 		}
 	};
@@ -352,7 +352,7 @@ public class MainActivity extends Activity implements OnClickListener {
 		// 设置返回结果格式
 		mIat.setParameter(SpeechConstant.RESULT_TYPE, "json");
 		
-		this.mTranslateEnable = mSharedPreferences.getBoolean( this.getString(com.ttaid.voicedemo.R.string.pref_key_translate), false );
+		this.mTranslateEnable = mSharedPreferences.getBoolean( this.getString(com.ttaid.R.string.pref_key_translate), false );
 		if( mTranslateEnable ){
 			Log.i( TAG, "translate enable" );
 			mIat.setParameter( SpeechConstant.ASR_SCH, "1" );
