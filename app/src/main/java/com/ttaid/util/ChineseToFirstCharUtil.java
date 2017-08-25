@@ -5,6 +5,7 @@ package com.ttaid.util;
  */
 public class ChineseToFirstCharUtil {
 
+
     /**
      * 汉字转拼音缩写
      *
