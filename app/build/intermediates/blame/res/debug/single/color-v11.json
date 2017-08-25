@@ -1,0 +1,10 @@
+[
+    {
+        "merged": "/Users/wangfan/Documents/workspace/AndroidProjects/TTAid/app/build/intermediates/res/merged/debug/color-v11/abc_background_cache_hint_selector_material_light.xml",
+        "source": "/Users/wangfan/.android/build-cache/0b5a3f89bbe960999ba175780c83511d9b8675fc/output/res/color-v11/abc_background_cache_hint_selector_material_light.xml"
+    },
+    {
+        "merged": "/Users/wangfan/Documents/workspace/AndroidProjects/TTAid/app/build/intermediates/res/merged/debug/color-v11/abc_background_cache_hint_selector_material_dark.xml",
+        "source": "/Users/wangfan/.android/build-cache/0b5a3f89bbe960999ba175780c83511d9b8675fc/output/res/color-v11/abc_background_cache_hint_selector_material_dark.xml"
+    }
+]
