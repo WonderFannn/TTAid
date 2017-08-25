@@ -12,6 +12,15 @@
     </item>
     <item
         is-multidex="false"
+        jar="/Users/wangfan/.android/build-cache/40b7e760c5d87022f60a85ed5115567717e70ed0/output/jars/classes.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="26.0.1"
+        sha1="2cd4b982617e544728de0782d718a58ce1b06e3f">
+        <dex dex="/Users/wangfan/Documents/workspace/AndroidProjects/TTAid/app/build/intermediates/pre-dexed/debug/classes_daafe6ed8292e2ebd1244b1d3ce3a670776d7e05.jar" />
+    </item>
+    <item
+        is-multidex="false"
         jar="/Users/wangfan/Documents/workspace/AndroidProjects/TTAid/app/libs/Sunflower.jar"
         jumboMode="false"
         optimize="true"

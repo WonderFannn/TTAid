@@ -17,6 +17,7 @@ ADDED from /Users/wangfan/Documents/workspace/AndroidProjects/TTAid/app/src/main
 		ADDED from /Users/wangfan/Documents/workspace/AndroidProjects/TTAid/app/src/main/AndroidManifest.xml:2:11-69
 application
 ADDED from /Users/wangfan/Documents/workspace/AndroidProjects/TTAid/app/src/main/AndroidManifest.xml:7:5-33:19
+MERGED from [com.android.volley:volley:1.0.0] /Users/wangfan/.android/build-cache/40b7e760c5d87022f60a85ed5115567717e70ed0/output/AndroidManifest.xml:9:5-20
 	android:label
 		ADDED from /Users/wangfan/Documents/workspace/AndroidProjects/TTAid/app/src/main/AndroidManifest.xml:10:9-29
 	android:icon
@@ -59,6 +60,7 @@ ADDED from /Users/wangfan/Documents/workspace/AndroidProjects/TTAid/app/src/main
 		ADDED from /Users/wangfan/Documents/workspace/AndroidProjects/TTAid/app/src/main/AndroidManifest.xml:29:13-43
 uses-sdk
 ADDED from /Users/wangfan/Documents/workspace/AndroidProjects/TTAid/app/src/main/AndroidManifest.xml:35:5-44
+MERGED from [com.android.volley:volley:1.0.0] /Users/wangfan/.android/build-cache/40b7e760c5d87022f60a85ed5115567717e70ed0/output/AndroidManifest.xml:7:5-43
 	android:targetSdkVersion
 		INJECTED from /Users/wangfan/Documents/workspace/AndroidProjects/TTAid/app/src/main/AndroidManifest.xml
 		INJECTED from /Users/wangfan/Documents/workspace/AndroidProjects/TTAid/app/src/main/AndroidManifest.xml
