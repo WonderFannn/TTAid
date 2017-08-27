@@ -18,6 +18,11 @@ import android.view.Window;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.iflytek.cloud.ErrorCode;
 import com.iflytek.cloud.InitListener;
 import com.iflytek.cloud.LexiconListener;
@@ -56,7 +61,20 @@ public class MainActivity extends Activity implements OnClickListener {
 		setContentView(com.ttaid.R.layout.main_activity);
 
 		initLayout();
-
+		RequestQueue mQueue = Volley.newRequestQueue(this);
+		StringRequest stringRequest = new StringRequest("http://open.tvapk.com/fastsou/vdsou?sokey=我是",
+				new Response.Listener<String>() {
+					@Override
+					public void onResponse(String response) {
+						Log.d("TAG", response);
+					}
+				}, new Response.ErrorListener() {
+			@Override
+			public void onErrorResponse(VolleyError error) {
+				Log.e("TAG", error.getMessage(), error);
+			}
+		});
+        mQueue.add(stringRequest);
 		// 初始化识别无UI识别对象
 		// 使用SpeechRecognizer对象，可根据回调消息自定义界面；
 		mIat = SpeechRecognizer.createRecognizer(MainActivity.this, mInitListener);
