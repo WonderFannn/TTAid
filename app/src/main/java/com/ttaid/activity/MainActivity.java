@@ -1,14 +1,15 @@
 package com.ttaid.activity;
 
-import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Environment;
 import android.text.TextUtils;
@@ -16,12 +17,15 @@ import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.Window;
-import android.widget.EditText;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.android.volley.toolbox.ImageRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.iflytek.cloud.ErrorCode;
@@ -34,11 +38,36 @@ import com.iflytek.cloud.SpeechError;
 import com.iflytek.cloud.SpeechRecognizer;
 import com.iflytek.cloud.ui.RecognizerDialog;
 import com.iflytek.cloud.ui.RecognizerDialogListener;
+import com.ttaid.R;
+import com.ttaid.dao.MovieInfo;
 import com.ttaid.util.FucUtil;
 import com.ttaid.util.JsonParser;
 import com.iflytek.sunflower.FlowerCollector;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+
 public class MainActivity extends Activity implements OnClickListener {
+
+    //控件绑定
+    @BindView(R.id.tv_show_info)
+    TextView tvShowInfo;
+    @BindView(R.id.iv_1)
+    ImageView iv1;
+    @BindView(R.id.iv_2)
+    ImageView iv2;
+    @BindView(R.id.iv_3)
+    ImageView iv3;
+    @BindView(R.id.btn_recognize)
+    Button btnRecognize;
+    @BindView(R.id.btn_stop)
+    Button btnStop;
+    @BindView(R.id.btn_cancel)
+    Button btnCancel;
+    @BindView(R.id.btn_upload_userwords)
+    Button btnUploadUserwords;
+
+
 	private static String TAG = MainActivity.class.getSimpleName();
 	// 语音听写对象
 	private SpeechRecognizer mIat;
@@ -47,36 +76,131 @@ public class MainActivity extends Activity implements OnClickListener {
 	// 用HashMap存储听写结果
 	private HashMap<String, String> mIatResults = new LinkedHashMap<String, String>();
 
-	private EditText mResultText;
 	private Toast mToast;
 	// 引擎类型
 	private String mEngineType = SpeechConstant.TYPE_CLOUD;
-
 	private boolean mTranslateEnable = false;
+
+    private RequestQueue mQueue;
+    private List<MovieInfo> movieList;
 	Response.Listener<String> RsListener = new Response.Listener<String>() {
         @Override
         public void onResponse(final String response) {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        mResultText.setText(new String(response.getBytes("UTF-8"),"UTF-8"));
-                    } catch (UnsupportedEncodingException e) {
-                        e.printStackTrace();
+            Log.d(TAG, "onResponse: "+response.toString());
+            movieList = JsonParser.parseMovieResult(response);
+            if (movieList!=null) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        haveMovieResult = true;
+                        if(movieList.size() >= 3){
+                            iv1.setVisibility(View.VISIBLE);
+                            iv2.setVisibility(View.VISIBLE);
+                            iv3.setVisibility(View.VISIBLE);
+                            ImageRequest imageRequest1 = new ImageRequest(
+                                    movieList.get(0).getPic(),
+                                    new Response.Listener<Bitmap>() {
+                                        @Override
+                                        public void onResponse(Bitmap response) {
+                                            iv1.setImageBitmap(response);
+                                        }
+                                    }, 0, 0, Bitmap.Config.RGB_565, new Response.ErrorListener() {
+                                @Override
+                                public void onErrorResponse(VolleyError error) {
+
+                                }
+                            });
+                            ImageRequest imageRequest2 = new ImageRequest(
+                                    movieList.get(1).getPic(),
+                                    new Response.Listener<Bitmap>() {
+                                        @Override
+                                        public void onResponse(Bitmap response) {
+                                            iv2.setImageBitmap(response);
+                                        }
+                                    }, 0, 0, Bitmap.Config.RGB_565, new Response.ErrorListener() {
+                                @Override
+                                public void onErrorResponse(VolleyError error) {
+
+                                }
+                            });
+                            ImageRequest imageRequest3 = new ImageRequest(
+                                    movieList.get(2).getPic(),
+                                    new Response.Listener<Bitmap>() {
+                                        @Override
+                                        public void onResponse(Bitmap response) {
+                                            iv3.setImageBitmap(response);
+                                        }
+                                    }, 0, 0, Bitmap.Config.RGB_565, new Response.ErrorListener() {
+                                @Override
+                                public void onErrorResponse(VolleyError error) {
+
+                                }
+                            });
+                            mQueue.add(imageRequest1);
+                            mQueue.add(imageRequest2);
+                            mQueue.add(imageRequest3);
+                        }else if (movieList.size() == 2){
+                            iv1.setVisibility(View.VISIBLE);
+                            iv3.setVisibility(View.VISIBLE);
+                            ImageRequest imageRequest1 = new ImageRequest(
+                                    movieList.get(0).getPic(),
+                                    new Response.Listener<Bitmap>() {
+                                        @Override
+                                        public void onResponse(Bitmap response) {
+                                            iv1.setImageBitmap(response);
+                                        }
+                                    }, 0, 0, Bitmap.Config.RGB_565, new Response.ErrorListener() {
+                                @Override
+                                public void onErrorResponse(VolleyError error) {
+
+                                }
+                            });
+                            ImageRequest imageRequest2 = new ImageRequest(
+                                    movieList.get(1).getPic(),
+                                    new Response.Listener<Bitmap>() {
+                                        @Override
+                                        public void onResponse(Bitmap response) {
+                                            iv3.setImageBitmap(response);
+                                        }
+                                    }, 0, 0, Bitmap.Config.RGB_565, new Response.ErrorListener() {
+                                @Override
+                                public void onErrorResponse(VolleyError error) {
+
+                                }
+                            });
+                            mQueue.add(imageRequest1);
+                            mQueue.add(imageRequest2);
+                        }else if (movieList.size() == 1){
+                            iv2.setVisibility(View.VISIBLE);
+                            ImageRequest imageRequest1 = new ImageRequest(
+                                    movieList.get(0).getPic(),
+                                    new Response.Listener<Bitmap>() {
+                                        @Override
+                                        public void onResponse(Bitmap response) {
+                                            iv2.setImageBitmap(response);
+                                        }
+                                    }, 0, 0, Bitmap.Config.RGB_565, new Response.ErrorListener() {
+                                @Override
+                                public void onErrorResponse(VolleyError error) {
+
+                                }
+                            });
+                            mQueue.add(imageRequest1);
+                        }
                     }
-                }
-            });
+                });
+            }
         }
     };
-
+    private Boolean haveMovieResult = false;
 	@SuppressLint("ShowToast")
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(com.ttaid.R.layout.main_activity);
-
+        ButterKnife.bind(this);
 		initLayout();
-		RequestQueue mQueue = Volley.newRequestQueue(this);
+        mQueue = Volley.newRequestQueue(this);
 		// 初始化识别无UI识别对象
 		// 使用SpeechRecognizer对象，可根据回调消息自定义界面；
 		mIat = SpeechRecognizer.createRecognizer(MainActivity.this, mInitListener);
@@ -86,25 +210,17 @@ public class MainActivity extends Activity implements OnClickListener {
 		mIatDialog = new RecognizerDialog(MainActivity.this, mInitListener);
 
 		mToast = Toast.makeText(this, "", Toast.LENGTH_SHORT);
-		mResultText = ((EditText) findViewById(com.ttaid.R.id.iat_text));
-		StringRequest stringRequest = new StringRequest("http://open.tvapk.com/fastsou/vdsou?sokey=我是传奇",
-                RsListener, new Response.ErrorListener() {
-                    @Override
-			        public void onErrorResponse(VolleyError error) {
-				        Log.e("TAG", error.getMessage(), error);
-			    }
-		});
-        mQueue.add(stringRequest);
+
 	}
 
 	/**
 	 * 初始化Layout。
 	 */
 	private void initLayout() {
-		findViewById(com.ttaid.R.id.iat_recognize).setOnClickListener(MainActivity.this);
-		findViewById(com.ttaid.R.id.iat_upload_userwords).setOnClickListener(MainActivity.this);
-		findViewById(com.ttaid.R.id.iat_stop).setOnClickListener(MainActivity.this);
-		findViewById(com.ttaid.R.id.iat_cancel).setOnClickListener(MainActivity.this);
+		btnRecognize.setOnClickListener(this);
+        btnStop.setOnClickListener(this);
+        btnCancel.setOnClickListener(this);
+        btnUploadUserwords.setOnClickListener(this);
 	}
 
 	int ret = 0; // 函数调用返回值
@@ -120,11 +236,11 @@ public class MainActivity extends Activity implements OnClickListener {
 		switch (view.getId()) {
 		// 开始听写
 		// 如何判断一次听写结束：OnResult isLast=true 或者 onError
-		case com.ttaid.R.id.iat_recognize:
+		case R.id.btn_recognize:
 			// 移动数据分析，收集开始听写事件
 			FlowerCollector.onEvent(MainActivity.this, "iat_recognize");
 			
-			mResultText.setText(null);// 清空显示内容
+			tvShowInfo.setText(null);// 清空显示内容
 			mIatResults.clear();
 			// 设置参数
 			setParam();
@@ -146,20 +262,20 @@ public class MainActivity extends Activity implements OnClickListener {
 			break;
 		// 音频流识别
 		// 停止听写
-		case com.ttaid.R.id.iat_stop:
+		case R.id.btn_stop:
 			mIat.stopListening();
 			showTip("停止听写");
 			break;
 		// 取消听写
-		case com.ttaid.R.id.iat_cancel:
+		case R.id.btn_cancel:
 			mIat.cancel();
 			showTip("取消听写");
 			break;
 		// 上传用户词表
-		case com.ttaid.R.id.iat_upload_userwords:
+		case R.id.btn_upload_userwords:
 			showTip(getString(com.ttaid.R.string.text_upload_userwords));
 			String contents = FucUtil.readFile(MainActivity.this, "userwords","utf-8");
-			mResultText.setText(contents);
+			tvShowInfo.setText(contents);
 			// 指定引擎类型
 			mIat.setParameter(SpeechConstant.ENGINE_TYPE, SpeechConstant.TYPE_CLOUD);
 			mIat.setParameter(SpeechConstant.TEXT_ENCODING, "utf-8");
@@ -241,7 +357,16 @@ public class MainActivity extends Activity implements OnClickListener {
 			showTip(results.getResultString());
 			
 			if (isLast) {
-				// TODO 最后的结果
+                if (haveMovieResult){
+                    if (tvShowInfo.getText().toString().equals("清空")){
+                        haveMovieResult = false;
+                        iv1.setVisibility(View.GONE);
+                        iv2.setVisibility(View.GONE);
+                        iv3.setVisibility(View.GONE);
+                    }
+                }else {
+                    searchMovie();
+                }
 			}
 		}
 
@@ -281,8 +406,7 @@ public class MainActivity extends Activity implements OnClickListener {
 			resultBuffer.append(mIatResults.get(key));
 		}
 
-		mResultText.setText(resultBuffer.toString());
-		mResultText.setSelection(mResultText.length());
+		tvShowInfo.setText(resultBuffer.toString());
 	}
 
 	/**
@@ -290,12 +414,19 @@ public class MainActivity extends Activity implements OnClickListener {
 	 */
 	private RecognizerDialogListener mRecognizerDialogListener = new RecognizerDialogListener() {
 		public void onResult(RecognizerResult results, boolean isLast) {
-			if( mTranslateEnable ){
-				printTransResult( results );
-			}else{
-				printResult(results);
-			}
-			
+            printResult(results);
+            if (isLast) {
+                if (haveMovieResult){
+                    if (tvShowInfo.getText().toString().equals("清空")){
+                        haveMovieResult = false;
+                        iv1.setVisibility(View.GONE);
+                        iv2.setVisibility(View.GONE);
+                        iv3.setVisibility(View.GONE);
+                    }
+                }else {
+                    searchMovie();
+                }
+            }
 		}
 
 		/**
@@ -311,7 +442,21 @@ public class MainActivity extends Activity implements OnClickListener {
 
 	};
 
-	private void showTip(final String str) {
+    private void searchMovie() {
+        String info = tvShowInfo.getText().toString();
+        tvShowInfo.setText("正在为你查找《"+info+"》相关的内容");
+        String url = getString(R.string.search_movie_url)+toUnicode(info);
+        Log.d(TAG, "searchMovie: "+url);
+        StringRequest stringRequest = new StringRequest(url, RsListener, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.e("TAG", error.getMessage(), error);
+            }
+        });
+        mQueue.add(stringRequest);
+    }
+
+    private void showTip(final String str) {
 		mToast.setText(str);
 		mToast.show();
 	}
@@ -325,7 +470,6 @@ public class MainActivity extends Activity implements OnClickListener {
 	public void setParam() {
 		// 清空参数
 		mIat.setParameter(SpeechConstant.PARAMS, null);
-
 		// 设置听写引擎
 		mIat.setParameter(SpeechConstant.ENGINE_TYPE, mEngineType);
 		// 设置返回结果格式
@@ -339,7 +483,7 @@ public class MainActivity extends Activity implements OnClickListener {
 		// 设置语音后端点:后端点静音检测时间，即用户停止说话多长时间内即认为不再输入， 自动停止录音
 		mIat.setParameter(SpeechConstant.VAD_EOS,"1000");
 		// 设置标点符号,设置为"0"返回结果无标点,设置为"1"返回结果有标点
-		mIat.setParameter(SpeechConstant.ASR_PTT,  "1");
+		mIat.setParameter(SpeechConstant.ASR_PTT,  "0");
 		// 设置音频保存路径，保存音频格式支持pcm、wav，设置路径为sd卡请注意WRITE_EXTERNAL_STORAGE权限
 		// 注：AUDIO_FORMAT参数语记需要更新版本才能生效
 		mIat.setParameter(SpeechConstant.AUDIO_FORMAT,"wav");
@@ -353,7 +497,7 @@ public class MainActivity extends Activity implements OnClickListener {
 		if( TextUtils.isEmpty(trans)||TextUtils.isEmpty(oris) ){
 			showTip( "解析结果失败，请确认是否已开通翻译功能。" );
 		}else{
-			mResultText.setText( "原始语言:\n"+oris+"\n目标语言:\n"+trans );
+			tvShowInfo.setText( "原始语言:\n"+oris+"\n目标语言:\n"+trans );
 		}
 
 	}
@@ -384,4 +528,14 @@ public class MainActivity extends Activity implements OnClickListener {
 		FlowerCollector.onPause(MainActivity.this);
 		super.onPause();
 	}
+
+    public static String toUnicode(String s) {
+        String as[] = new String[s.length()];
+        String s1 = "";
+        for (int i = 0; i < s.length(); i++) {
+            as[i] = Integer.toHexString(s.charAt(i) & 0xffff);
+            s1 = s1 + "\\u" + as[i];
+        }
+        return s1;
+    }
 }

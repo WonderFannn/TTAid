@@ -16,29 +16,8 @@
     
     <string name="pref_key_translate">translate</string>
     <string name="pref_title_translate">翻译</string>
-    
-    <!-- 语言 -->
-    <string-array name="language_entries">
-        <item>普通话</item>
-        <item>粤语</item>
-        <item>英语</item>
-    </string-array>
-    <string-array name="language_values">
-        <item>mandarin</item>
-        <item>cantonese</item>
-        <item>en_us</item>
-    </string-array>
-    <!-- 标点符号 -->
-    <string-array name="punc_entries">
-        <item>有标点</item>
-        <item>无标点</item>
-    </string-array>
-    <string-array name="punc_values">
-        <item>1</item>
-        <item>0</item>
-    </string-array>
-    <string-array name="dwa_entries">
-        <item>开启</item>
-        <item>关闭</item>
-    </string-array>
+    <!-- 网络相关 -->
+    <string name="search_movie_url">http://open.tvapk.com/fastsou/vdsou?sokey=</string>
+    <string name="all_movie_url">http://open.tvapk.com/fastsou/allvideo</string>
+    <string name="url_sign">f9763aa117e00136fd11876b5aa724fc</string>
 </resources>
