@@ -15,12 +15,9 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Environment;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.Window;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -34,24 +31,20 @@ import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.iflytek.cloud.ErrorCode;
 import com.iflytek.cloud.InitListener;
-import com.iflytek.cloud.LexiconListener;
 import com.iflytek.cloud.RecognizerListener;
 import com.iflytek.cloud.RecognizerResult;
 import com.iflytek.cloud.SpeechConstant;
 import com.iflytek.cloud.SpeechError;
 import com.iflytek.cloud.SpeechRecognizer;
-import com.iflytek.cloud.ui.RecognizerDialog;
-import com.iflytek.cloud.ui.RecognizerDialogListener;
 import com.ttaid.R;
+import com.ttaid.broad.BroadcastManager;
 import com.ttaid.dao.MovieInfo;
-import com.ttaid.util.FucUtil;
 import com.ttaid.util.JsonParser;
-import com.iflytek.sunflower.FlowerCollector;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-public class MainActivity extends Activity implements OnClickListener {
+public class MainActivity extends Activity {
 
     //控件绑定
     @BindView(R.id.tv_show_info)
@@ -76,28 +69,16 @@ public class MainActivity extends Activity implements OnClickListener {
     ImageView iv3;
     @BindView(R.id.tv_3)
     TextView tv3;
-    @BindView(R.id.btn_recognize)
-    Button btnRecognize;
-    @BindView(R.id.btn_stop)
-    Button btnStop;
-    @BindView(R.id.btn_cancel)
-    Button btnCancel;
-    @BindView(R.id.btn_upload_userwords)
-    Button btnUploadUserwords;
-
 
 	private static String TAG = MainActivity.class.getSimpleName();
 	// 语音听写对象
 	private SpeechRecognizer mIat;
-	// 语音听写UI
-	private RecognizerDialog mIatDialog;
 	// 用HashMap存储听写结果
 	private HashMap<String, String> mIatResults = new LinkedHashMap<String, String>();
-
+    ListeningThread mListenlingThread;
 	private Toast mToast;
 	// 引擎类型
 	private String mEngineType = SpeechConstant.TYPE_CLOUD;
-	private boolean mTranslateEnable = false;
 
     private RequestQueue mQueue;
     private List<MovieInfo> movieList;
@@ -106,7 +87,7 @@ public class MainActivity extends Activity implements OnClickListener {
         public void onResponse(final String response) {
             Log.d(TAG, "onResponse: "+response.toString());
             movieList = JsonParser.parseMovieResult(response);
-            if (movieList!=null) {
+            if (movieList!=null&&movieList.size()>0) {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -223,94 +204,14 @@ public class MainActivity extends Activity implements OnClickListener {
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(com.ttaid.R.layout.main_activity);
         ButterKnife.bind(this);
-		initLayout();
-        mQueue = Volley.newRequestQueue(this);
-		// 初始化识别无UI识别对象
-		// 使用SpeechRecognizer对象，可根据回调消息自定义界面；
-		mIat = SpeechRecognizer.createRecognizer(MainActivity.this, mInitListener);
-
-		// 初始化听写Dialog，如果只使用有UI听写功能，无需创建SpeechRecognizer
-		// 使用UI听写功能，请根据sdk文件目录下的notice.txt,放置布局文件和图片资源
-		mIatDialog = new RecognizerDialog(MainActivity.this, mInitListener);
-
+        Intent intent = new Intent("com.ttaid.service.BackgroungSpeechRecongnizerService");
+        startService(intent);
 		mToast = Toast.makeText(this, "", Toast.LENGTH_SHORT);
 
 	}
 
-	/**
-	 * 初始化Layout。
-	 */
-	private void initLayout() {
-		btnRecognize.setOnClickListener(this);
-        btnStop.setOnClickListener(this);
-        btnCancel.setOnClickListener(this);
-        btnUploadUserwords.setOnClickListener(this);
-	}
 
 	int ret = 0; // 函数调用返回值
-
-	@Override
-	public void onClick(View view) {
-		if( null == mIat ){
-			// 创建单例失败，与 21001 错误为同样原因，参考 http://bbs.xfyun.cn/forum.php?mod=viewthread&tid=9688
-			this.showTip( "创建对象失败，请确认 libmsc.so 放置正确，且有调用 createUtility 进行初始化" );
-			return;
-		}
-		
-		switch (view.getId()) {
-		// 开始听写
-		// 如何判断一次听写结束：OnResult isLast=true 或者 onError
-		case R.id.btn_recognize:
-			// 移动数据分析，收集开始听写事件
-			FlowerCollector.onEvent(MainActivity.this, "iat_recognize");
-			
-			tvShowInfo.setText(null);// 清空显示内容
-			mIatResults.clear();
-			// 设置参数
-			setParam();
-			boolean isShowDialog = true;
-			if (isShowDialog) {
-				// 显示听写对话框
-				mIatDialog.setListener(mRecognizerDialogListener);
-				mIatDialog.show();
-				showTip(getString(com.ttaid.R.string.text_begin));
-			} else {
-				// 不显示听写对话框
-				ret = mIat.startListening(mRecognizerListener);
-				if (ret != ErrorCode.SUCCESS) {
-					showTip("听写失败,错误码：" + ret);
-				} else {
-					showTip(getString(com.ttaid.R.string.text_begin));
-				}
-			}
-			break;
-		// 音频流识别
-		// 停止听写
-		case R.id.btn_stop:
-			mIat.stopListening();
-			showTip("停止听写");
-			break;
-		// 取消听写
-		case R.id.btn_cancel:
-			mIat.cancel();
-			showTip("取消听写");
-			break;
-		// 上传用户词表
-		case R.id.btn_upload_userwords:
-			showTip(getString(com.ttaid.R.string.text_upload_userwords));
-			String contents = FucUtil.readFile(MainActivity.this, "userwords","utf-8");
-			tvShowInfo.setText(contents);
-			// 指定引擎类型
-			mIat.setParameter(SpeechConstant.ENGINE_TYPE, SpeechConstant.TYPE_CLOUD);
-			mIat.setParameter(SpeechConstant.TEXT_ENCODING, "utf-8");
-			ret = mIat.updateLexicon("userword", contents, mLexiconListener);
-			if (ret != ErrorCode.SUCCESS)
-				showTip("上传热词失败,错误码：" + ret);
-			break;
-		default:
-			break;
-		}
-	}
 
 	/**
 	 * 初始化监听器。
@@ -326,85 +227,37 @@ public class MainActivity extends Activity implements OnClickListener {
 		}
 	};
 
-	/**
-	 * 上传联系人/词表监听器。
-	 */
-	private LexiconListener mLexiconListener = new LexiconListener() {
-
-		@Override
-		public void onLexiconUpdated(String lexiconId, SpeechError error) {
-			if (error != null) {
-				showTip(error.toString());
-			} else {
-				showTip(getString(com.ttaid.R.string.text_upload_success));
-			}
-		}
-	};
 
 	/**
 	 * 听写监听器。
 	 */
 	private RecognizerListener mRecognizerListener = new RecognizerListener() {
-
 		@Override
 		public void onBeginOfSpeech() {
-			// 此回调表示：sdk内部录音机已经准备好了，用户可以开始语音输入
-			showTip("开始说话");
 		}
-
 		@Override
 		public void onError(SpeechError error) {
-			// Tips：
-			// 错误码：10118(您没有说话)，可能是录音机权限被禁，需要提示用户打开应用的录音权限。
-			// 如果使用本地功能（语记）需要提示用户开启语记的录音权限。
-			if(mTranslateEnable && error.getErrorCode() == 14002) {
-				showTip( error.getPlainDescription(true)+"\n请确认是否已开通翻译功能" );
-			} else {
-				showTip(error.getPlainDescription(true));
-			}
 		}
-
 		@Override
 		public void onEndOfSpeech() {
-			// 此回调表示：检测到了语音的尾端点，已经进入识别过程，不再接受语音输入
-			showTip("结束说话");
 		}
-
 		@Override
 		public void onResult(RecognizerResult results, boolean isLast) {
 			Log.d(TAG, results.getResultString());
-			if( mTranslateEnable ){
-				printTransResult( results );
-			}else{
-				printResult(results);
-			}
-			showTip(results.getResultString());
-			
+            printResult(results);
 			if (isLast) {
                 if (haveMovieResult){
-                    if (tvShowInfo.getText().toString().equals("清空")){
-                        clearMovieShow();
-                    }
+                    parseOrder(tvShowInfo.getText().toString());
                 }else {
                     searchMovie();
                 }
 			}
 		}
-
 		@Override
 		public void onVolumeChanged(int volume, byte[] data) {
-			showTip("当前正在说话，音量大小：" + volume);
-			Log.d(TAG, "返回音频数据："+data.length);
 		}
-
 		@Override
 		public void onEvent(int eventType, int arg1, int arg2, Bundle obj) {
-			// 以下代码用于获取与云端的会话id，当业务出错时将会话id提供给技术支持人员，可用于查询会话日志，定位出错原因
-			// 若使用本地能力，会话id为null
-			//	if (SpeechEvent.EVENT_SESSION_ID == eventType) {
-			//		String sid = obj.getString(SpeechEvent.KEY_EVENT_SESSION_ID);
-			//		Log.d(TAG, "session id =" + sid);
-			//	}
 		}
 	};
 
@@ -418,7 +271,6 @@ public class MainActivity extends Activity implements OnClickListener {
 
     private void printResult(RecognizerResult results) {
 		String text = JsonParser.parseIatResult(results.getResultString());
-
 		String sn = null;
 		// 读取json结果中的sn字段
 		try {
@@ -427,45 +279,13 @@ public class MainActivity extends Activity implements OnClickListener {
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
-
 		mIatResults.put(sn, text);
-
 		StringBuffer resultBuffer = new StringBuffer();
 		for (String key : mIatResults.keySet()) {
 			resultBuffer.append(mIatResults.get(key));
 		}
-
 		tvShowInfo.setText(resultBuffer.toString());
 	}
-
-	/**
-	 * 听写UI监听器
-	 */
-	private RecognizerDialogListener mRecognizerDialogListener = new RecognizerDialogListener() {
-		public void onResult(RecognizerResult results, boolean isLast) {
-            printResult(results);
-            if (isLast) {
-                if (haveMovieResult){
-                    parseOrder(tvShowInfo.getText().toString());
-
-                }else {
-                    searchMovie();
-                }
-            }
-		}
-
-		/**
-		 * 识别回调错误.
-		 */
-		public void onError(SpeechError error) {
-			if(mTranslateEnable && error.getErrorCode() == 14002) {
-				showTip( error.getPlainDescription(true)+"\n请确认是否已开通翻译功能" );
-			} else {
-				showTip(error.getPlainDescription(true));
-			}
-		}
-
-	};
 
     private void parseOrder(String order) {
         if (order.equals("清空")) {
@@ -484,6 +304,7 @@ public class MainActivity extends Activity implements OnClickListener {
             intent.setPackage("com.tv.kuaisou");
             intent.putExtra("id", idString);
             startActivity(intent);
+            BroadcastManager.sendBroadcast(BroadcastManager.ACTION_VOICE_WAKE,null);
         }
     }
 
@@ -498,7 +319,6 @@ public class MainActivity extends Activity implements OnClickListener {
             e.printStackTrace();
         }
         url = getString(R.string.search_movie_url)+ codes;
-
         Log.d(TAG, "searchMovie: "+url);
         StringRequest stringRequest = new StringRequest(url, RsListener, new Response.ErrorListener() {
             @Override
@@ -542,18 +362,7 @@ public class MainActivity extends Activity implements OnClickListener {
 		mIat.setParameter(SpeechConstant.AUDIO_FORMAT,"wav");
 		mIat.setParameter(SpeechConstant.ASR_AUDIO_PATH, Environment.getExternalStorageDirectory()+"/msc/iat.wav");
 	}
-	
-	private void printTransResult (RecognizerResult results) {
-		String trans  = JsonParser.parseTransResult(results.getResultString(),"dst");
-		String oris = JsonParser.parseTransResult(results.getResultString(),"src");
 
-		if( TextUtils.isEmpty(trans)||TextUtils.isEmpty(oris) ){
-			showTip( "解析结果失败，请确认是否已开通翻译功能。" );
-		}else{
-			tvShowInfo.setText( "原始语言:\n"+oris+"\n目标语言:\n"+trans );
-		}
-
-	}
 
 	@Override
 	protected void onDestroy() {
@@ -568,27 +377,43 @@ public class MainActivity extends Activity implements OnClickListener {
 
 	@Override
 	protected void onResume() {
-		// 开放统计 移动数据统计分析
-		FlowerCollector.onResume(MainActivity.this);
-		FlowerCollector.onPageStart(TAG);
+        BroadcastManager.sendBroadcast(BroadcastManager.ACTION_VOICE_WAKE_CLOSE, null);
+        mQueue = Volley.newRequestQueue(this);
+        // 初始化识别无UI识别对象
+        // 使用SpeechRecognizer对象，可根据回调消息自定义界面；
+        mIat = SpeechRecognizer.createRecognizer(MainActivity.this, mInitListener);
+        setParam();
+        mListenlingThread = new ListeningThread();
+        mListenlingThread.start();
 		super.onResume();
 	}
 
 	@Override
 	protected void onPause() {
-		// 开放统计 移动数据统计分析
-		FlowerCollector.onPageEnd(TAG);
-		FlowerCollector.onPause(MainActivity.this);
+        if (mListenlingThread != null){
+            mListenlingThread.interrupt();
+            mListenlingThread = null;
+        }
 		super.onPause();
 	}
 
-    public static String toUnicode(String s) {
-        String as[] = new String[s.length()];
-        String s1 = "";
-        for (int i = 0; i < s.length(); i++) {
-            as[i] = Integer.toHexString(s.charAt(i) & 0xffff);
-            s1 = s1 + "\\u" + as[i];
+    public class ListeningThread extends Thread{
+        @Override
+        public void run() {
+            super.run();
+            Log.d(TAG, "ListeningThread run: ");
+            try {
+                while(true){
+                    if (mIat != null && !mIat.isListening()) {
+                        Thread.sleep(300);
+                        mIatResults.clear();
+                        mIat.startListening(mRecognizerListener);
+                    }
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
-        return s1;
+
     }
 }
