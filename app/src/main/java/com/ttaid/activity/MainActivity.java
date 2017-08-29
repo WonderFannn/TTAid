@@ -36,6 +36,8 @@ import com.iflytek.cloud.RecognizerResult;
 import com.iflytek.cloud.SpeechConstant;
 import com.iflytek.cloud.SpeechError;
 import com.iflytek.cloud.SpeechRecognizer;
+import com.iflytek.cloud.SpeechSynthesizer;
+import com.iflytek.cloud.SynthesizerListener;
 import com.ttaid.R;
 import com.ttaid.broad.BroadcastManager;
 import com.ttaid.dao.MovieInfo;
@@ -73,6 +75,8 @@ public class MainActivity extends Activity {
 	private static String TAG = MainActivity.class.getSimpleName();
 	// 语音听写对象
 	private SpeechRecognizer mIat;
+    // 语音合成对象
+    private SpeechSynthesizer mTts;
 	// 用HashMap存储听写结果
 	private HashMap<String, String> mIatResults = new LinkedHashMap<String, String>();
     ListeningThread mListenlingThread;
@@ -207,7 +211,24 @@ public class MainActivity extends Activity {
         Intent intent = new Intent("com.ttaid.service.BackgroungSpeechRecongnizerService");
         startService(intent);
 		mToast = Toast.makeText(this, "", Toast.LENGTH_SHORT);
+        mTts = SpeechSynthesizer.createSynthesizer(this, mInitListener);
+        setTTSParam();
+        int code = mTts.startSpeaking("欢迎使用TT语音助手", mTtsListener);
+//			/**
+//			 * 只保存音频不进行播放接口,调用此接口请注释startSpeaking接口
+//			 * text:要合成的文本，uri:需要保存的音频全路径，listener:回调接口
+//			*/
+//			String path = Environment.getExternalStorageDirectory()+"/tts.pcm";
+//			int code = mTts.synthesizeToUri(text, path, mTtsListener);
 
+        if (code != ErrorCode.SUCCESS) {
+            if(code == ErrorCode.ERROR_COMPONENT_NOT_INSTALLED){
+                //未安装则跳转到提示安装页面
+//                mInstaller.install();
+            }else {
+                showTip("语音合成失败,错误码: " + code);
+            }
+        }
 	}
 
 
@@ -260,7 +281,48 @@ public class MainActivity extends Activity {
 		public void onEvent(int eventType, int arg1, int arg2, Bundle obj) {
 		}
 	};
+    private SynthesizerListener mTtsListener = new SynthesizerListener() {
 
+        @Override
+        public void onSpeakBegin() {
+            showTip("开始播放");
+        }
+
+        @Override
+        public void onSpeakPaused() {
+            showTip("暂停播放");
+        }
+
+        @Override
+        public void onSpeakResumed() {
+            showTip("继续播放");
+        }
+
+        @Override
+        public void onBufferProgress(int percent, int beginPos, int endPos,
+                                     String info) {
+
+        }
+
+        @Override
+        public void onSpeakProgress(int percent, int beginPos, int endPos) {
+            // 播放进度
+
+        }
+
+        @Override
+        public void onCompleted(SpeechError error) {
+            if (error == null) {
+                showTip("播放完成");
+            } else if (error != null) {
+                showTip(error.getPlainDescription(true));
+            }
+        }
+
+        @Override
+        public void onEvent(int eventType, int arg1, int arg2, Bundle obj) {
+        }
+    };
     private void clearMovieShow() {
         haveMovieResult = false;
         movieList.clear();
@@ -362,7 +424,31 @@ public class MainActivity extends Activity {
 		mIat.setParameter(SpeechConstant.AUDIO_FORMAT,"wav");
 		mIat.setParameter(SpeechConstant.ASR_AUDIO_PATH, Environment.getExternalStorageDirectory()+"/msc/iat.wav");
 	}
+    private void setTTSParam(){
+        // 清空参数
+        mTts.setParameter(SpeechConstant.PARAMS, null);
+        // 根据合成引擎设置相应参数
+        if(mEngineType.equals(SpeechConstant.TYPE_CLOUD)) {
+            mTts.setParameter(SpeechConstant.ENGINE_TYPE, SpeechConstant.TYPE_CLOUD);
+            // 设置在线合成发音人
+            mTts.setParameter(SpeechConstant.VOICE_NAME, "xiaoyun");
+            //设置合成语速
+            mTts.setParameter(SpeechConstant.SPEED,  "50");
+            //设置合成音调
+            mTts.setParameter(SpeechConstant.PITCH,  "50");
+            //设置合成音量
+            mTts.setParameter(SpeechConstant.VOLUME, "50");
+        }
+        //设置播放器音频流类型
+        mTts.setParameter(SpeechConstant.STREAM_TYPE, "3");
+        // 设置播放合成音频打断音乐播放，默认为true
+        mTts.setParameter(SpeechConstant.KEY_REQUEST_FOCUS, "true");
 
+        // 设置音频保存路径，保存音频格式支持pcm、wav，设置路径为sd卡请注意WRITE_EXTERNAL_STORAGE权限
+        // 注：AUDIO_FORMAT参数语记需要更新版本才能生效
+        mTts.setParameter(SpeechConstant.AUDIO_FORMAT, "wav");
+        mTts.setParameter(SpeechConstant.TTS_AUDIO_PATH, Environment.getExternalStorageDirectory()+"/msc/tts.wav");
+    }
 
 	@Override
 	protected void onDestroy() {
@@ -373,6 +459,12 @@ public class MainActivity extends Activity {
 			mIat.cancel();
 			mIat.destroy();
 		}
+
+        if( null != mTts ){
+            mTts.stopSpeaking();
+            // 退出时释放连接
+            mTts.destroy();
+        }
 	}
 
 	@Override
