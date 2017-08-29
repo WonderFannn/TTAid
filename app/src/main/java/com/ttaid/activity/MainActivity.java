@@ -1,5 +1,7 @@
 package com.ttaid.activity;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -9,6 +11,7 @@ import org.json.JSONObject;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Environment;
@@ -19,6 +22,7 @@ import android.view.View.OnClickListener;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -52,12 +56,26 @@ public class MainActivity extends Activity implements OnClickListener {
     //控件绑定
     @BindView(R.id.tv_show_info)
     TextView tvShowInfo;
+    @BindView(R.id.ll_1)
+    LinearLayout ll1;
     @BindView(R.id.iv_1)
     ImageView iv1;
+    @BindView(R.id.tv_1)
+    TextView tv1;
+
+    @BindView(R.id.ll_2)
+    LinearLayout ll2;
     @BindView(R.id.iv_2)
     ImageView iv2;
+    @BindView(R.id.tv_2)
+    TextView tv2;
+
+    @BindView(R.id.ll_3)
+    LinearLayout ll3;
     @BindView(R.id.iv_3)
     ImageView iv3;
+    @BindView(R.id.tv_3)
+    TextView tv3;
     @BindView(R.id.btn_recognize)
     Button btnRecognize;
     @BindView(R.id.btn_stop)
@@ -94,9 +112,12 @@ public class MainActivity extends Activity implements OnClickListener {
                     public void run() {
                         haveMovieResult = true;
                         if(movieList.size() >= 3){
-                            iv1.setVisibility(View.VISIBLE);
-                            iv2.setVisibility(View.VISIBLE);
-                            iv3.setVisibility(View.VISIBLE);
+                            ll1.setVisibility(View.VISIBLE);
+                            ll2.setVisibility(View.VISIBLE);
+                            ll3.setVisibility(View.VISIBLE);
+                            tv1.setText(movieList.get(0).getTitle());
+                            tv2.setText(movieList.get(1).getTitle());
+                            tv3.setText(movieList.get(2).getTitle());
                             ImageRequest imageRequest1 = new ImageRequest(
                                     movieList.get(0).getPic(),
                                     new Response.Listener<Bitmap>() {
@@ -140,8 +161,10 @@ public class MainActivity extends Activity implements OnClickListener {
                             mQueue.add(imageRequest2);
                             mQueue.add(imageRequest3);
                         }else if (movieList.size() == 2){
-                            iv1.setVisibility(View.VISIBLE);
-                            iv3.setVisibility(View.VISIBLE);
+                            ll1.setVisibility(View.VISIBLE);
+                            ll3.setVisibility(View.VISIBLE);
+                            tv1.setText(movieList.get(0).getTitle());
+                            tv3.setText(movieList.get(1).getTitle());
                             ImageRequest imageRequest1 = new ImageRequest(
                                     movieList.get(0).getPic(),
                                     new Response.Listener<Bitmap>() {
@@ -171,7 +194,8 @@ public class MainActivity extends Activity implements OnClickListener {
                             mQueue.add(imageRequest1);
                             mQueue.add(imageRequest2);
                         }else if (movieList.size() == 1){
-                            iv2.setVisibility(View.VISIBLE);
+                            ll2.setVisibility(View.VISIBLE);
+                            tv2.setText(movieList.get(0).getTitle());
                             ImageRequest imageRequest1 = new ImageRequest(
                                     movieList.get(0).getPic(),
                                     new Response.Listener<Bitmap>() {
@@ -359,10 +383,7 @@ public class MainActivity extends Activity implements OnClickListener {
 			if (isLast) {
                 if (haveMovieResult){
                     if (tvShowInfo.getText().toString().equals("清空")){
-                        haveMovieResult = false;
-                        iv1.setVisibility(View.GONE);
-                        iv2.setVisibility(View.GONE);
-                        iv3.setVisibility(View.GONE);
+                        clearMovieShow();
                     }
                 }else {
                     searchMovie();
@@ -387,7 +408,15 @@ public class MainActivity extends Activity implements OnClickListener {
 		}
 	};
 
-	private void printResult(RecognizerResult results) {
+    private void clearMovieShow() {
+        haveMovieResult = false;
+        movieList.clear();
+        ll1.setVisibility(View.GONE);
+        ll2.setVisibility(View.GONE);
+        ll3.setVisibility(View.GONE);
+    }
+
+    private void printResult(RecognizerResult results) {
 		String text = JsonParser.parseIatResult(results.getResultString());
 
 		String sn = null;
@@ -417,12 +446,8 @@ public class MainActivity extends Activity implements OnClickListener {
             printResult(results);
             if (isLast) {
                 if (haveMovieResult){
-                    if (tvShowInfo.getText().toString().equals("清空")){
-                        haveMovieResult = false;
-                        iv1.setVisibility(View.GONE);
-                        iv2.setVisibility(View.GONE);
-                        iv3.setVisibility(View.GONE);
-                    }
+                    parseOrder(tvShowInfo.getText().toString());
+
                 }else {
                     searchMovie();
                 }
@@ -442,10 +467,38 @@ public class MainActivity extends Activity implements OnClickListener {
 
 	};
 
+    private void parseOrder(String order) {
+        if (order.equals("清空")) {
+            clearMovieShow();
+        }else if (order.indexOf("播放")>=0){
+            int index = 0;
+            if (order.indexOf("1")>=0||order.indexOf("一")>=0){
+                index = 0;
+            }else if (order.indexOf("2")>=0||order.indexOf("二")>=0){
+                index = 1;
+            }else if (order.indexOf("3")>=0||order.indexOf("三")>=0){
+                index = 2;
+            }
+            String idString = movieList.get(index).getId()+"";
+            Intent intent = new Intent("com.tv.kuaisou.action.DetailActivity");
+            intent.setPackage("com.tv.kuaisou");
+            intent.putExtra("id", idString);
+            startActivity(intent);
+        }
+    }
+
     private void searchMovie() {
         String info = tvShowInfo.getText().toString();
         tvShowInfo.setText("正在为你查找《"+info+"》相关的内容");
-        String url = getString(R.string.search_movie_url)+toUnicode(info);
+        String url = null;
+        String codes= null;
+        try {
+            codes = URLEncoder.encode(info, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        url = getString(R.string.search_movie_url)+ codes;
+
         Log.d(TAG, "searchMovie: "+url);
         StringRequest stringRequest = new StringRequest(url, RsListener, new Response.ErrorListener() {
             @Override
