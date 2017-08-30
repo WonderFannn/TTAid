@@ -86,7 +86,8 @@ public class MainActivity extends Activity {
 
     private RequestQueue mQueue;
     private List<MovieInfo> movieList;
-	Response.Listener<String> RsListener = new Response.Listener<String>() {
+    private int movListIndex = 0;
+	private Response.Listener<String> RsListener = new Response.Listener<String>() {
         @Override
         public void onResponse(final String response) {
             Log.d(TAG, "onResponse: "+response.toString());
@@ -95,144 +96,116 @@ public class MainActivity extends Activity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        haveMovieResult = true;
-                        if(movieList.size() >= 3){
-                            ll1.setVisibility(View.VISIBLE);
-                            ll2.setVisibility(View.VISIBLE);
-                            ll3.setVisibility(View.VISIBLE);
-                            tv1.setText(movieList.get(0).getTitle());
-                            tv2.setText(movieList.get(1).getTitle());
-                            tv3.setText(movieList.get(2).getTitle());
-                            ImageRequest imageRequest1 = new ImageRequest(
-                                    movieList.get(0).getPic(),
-                                    new Response.Listener<Bitmap>() {
-                                        @Override
-                                        public void onResponse(Bitmap response) {
-                                            iv1.setImageBitmap(response);
-                                        }
-                                    }, 0, 0, Bitmap.Config.RGB_565, new Response.ErrorListener() {
-                                @Override
-                                public void onErrorResponse(VolleyError error) {
-
-                                }
-                            });
-                            ImageRequest imageRequest2 = new ImageRequest(
-                                    movieList.get(1).getPic(),
-                                    new Response.Listener<Bitmap>() {
-                                        @Override
-                                        public void onResponse(Bitmap response) {
-                                            iv2.setImageBitmap(response);
-                                        }
-                                    }, 0, 0, Bitmap.Config.RGB_565, new Response.ErrorListener() {
-                                @Override
-                                public void onErrorResponse(VolleyError error) {
-
-                                }
-                            });
-                            ImageRequest imageRequest3 = new ImageRequest(
-                                    movieList.get(2).getPic(),
-                                    new Response.Listener<Bitmap>() {
-                                        @Override
-                                        public void onResponse(Bitmap response) {
-                                            iv3.setImageBitmap(response);
-                                        }
-                                    }, 0, 0, Bitmap.Config.RGB_565, new Response.ErrorListener() {
-                                @Override
-                                public void onErrorResponse(VolleyError error) {
-
-                                }
-                            });
-                            mQueue.add(imageRequest1);
-                            mQueue.add(imageRequest2);
-                            mQueue.add(imageRequest3);
-                        }else if (movieList.size() == 2){
-                            ll1.setVisibility(View.VISIBLE);
-                            ll3.setVisibility(View.VISIBLE);
-                            tv1.setText(movieList.get(0).getTitle());
-                            tv3.setText(movieList.get(1).getTitle());
-                            ImageRequest imageRequest1 = new ImageRequest(
-                                    movieList.get(0).getPic(),
-                                    new Response.Listener<Bitmap>() {
-                                        @Override
-                                        public void onResponse(Bitmap response) {
-                                            iv1.setImageBitmap(response);
-                                        }
-                                    }, 0, 0, Bitmap.Config.RGB_565, new Response.ErrorListener() {
-                                @Override
-                                public void onErrorResponse(VolleyError error) {
-
-                                }
-                            });
-                            ImageRequest imageRequest2 = new ImageRequest(
-                                    movieList.get(1).getPic(),
-                                    new Response.Listener<Bitmap>() {
-                                        @Override
-                                        public void onResponse(Bitmap response) {
-                                            iv3.setImageBitmap(response);
-                                        }
-                                    }, 0, 0, Bitmap.Config.RGB_565, new Response.ErrorListener() {
-                                @Override
-                                public void onErrorResponse(VolleyError error) {
-
-                                }
-                            });
-                            mQueue.add(imageRequest1);
-                            mQueue.add(imageRequest2);
-                        }else if (movieList.size() == 1){
-                            ll2.setVisibility(View.VISIBLE);
-                            tv2.setText(movieList.get(0).getTitle());
-                            ImageRequest imageRequest1 = new ImageRequest(
-                                    movieList.get(0).getPic(),
-                                    new Response.Listener<Bitmap>() {
-                                        @Override
-                                        public void onResponse(Bitmap response) {
-                                            iv2.setImageBitmap(response);
-                                        }
-                                    }, 0, 0, Bitmap.Config.RGB_565, new Response.ErrorListener() {
-                                @Override
-                                public void onErrorResponse(VolleyError error) {
-
-                                }
-                            });
-                            mQueue.add(imageRequest1);
-                        }
+                        speakText("为你找到"+movieList.size()+"个结果");
+                        shouMoveResult(movieList,movListIndex,false);
                     }
                 });
             }
         }
     };
-    private Boolean haveMovieResult = false;
+    private Response.ErrorListener RsErrorListener = new Response.ErrorListener() {
+        @Override
+        public void onErrorResponse(VolleyError error) {
+        }
+    };
+    private void shouMoveResult(List<MovieInfo> movieList, int movListIndex){
+        shouMoveResult(movieList,movListIndex,true);
+    }
+    private void shouMoveResult(List<MovieInfo> movieList, int movListIndex, boolean speak) {
+        if (movieList.size()-movListIndex <= 0){
+            speakText("没有下一组了");
+            return;
+        }
+        if (speak) {
+            speakText("现在显示第" + (movListIndex / 3 + 1) + "组结果");
+        }
+        clearMovieShow();
+        if((movieList.size()-movListIndex) >= 3){
+            ll1.setVisibility(View.VISIBLE);
+            ll2.setVisibility(View.VISIBLE);
+            ll3.setVisibility(View.VISIBLE);
+            tv1.setText(movieList.get(movListIndex).getTitle());
+            tv2.setText(movieList.get(movListIndex+1).getTitle());
+            tv3.setText(movieList.get(movListIndex+2).getTitle());
+            ImageRequest imageRequest1 = new ImageRequest(
+                    movieList.get(movListIndex).getPic(),
+                    new Response.Listener<Bitmap>() {
+                        @Override
+                        public void onResponse(Bitmap response) {
+                            iv1.setImageBitmap(response);
+                        }
+                    }, 0, 0, Bitmap.Config.RGB_565, RsErrorListener);
+            ImageRequest imageRequest2 = new ImageRequest(
+                    movieList.get(movListIndex+1).getPic(),
+                    new Response.Listener<Bitmap>() {
+                        @Override
+                        public void onResponse(Bitmap response) {
+                            iv2.setImageBitmap(response);
+                        }
+                    }, 0, 0, Bitmap.Config.RGB_565, RsErrorListener);
+            ImageRequest imageRequest3 = new ImageRequest(
+                    movieList.get(movListIndex+2).getPic(),
+                    new Response.Listener<Bitmap>() {
+                        @Override
+                        public void onResponse(Bitmap response) {
+                            iv3.setImageBitmap(response);
+                        }
+                    }, 0, 0, Bitmap.Config.RGB_565,RsErrorListener);
+            mQueue.add(imageRequest1);
+            mQueue.add(imageRequest2);
+            mQueue.add(imageRequest3);
+        }else if ((movieList.size()-movListIndex) == 2){
+            ll1.setVisibility(View.VISIBLE);
+            ll3.setVisibility(View.VISIBLE);
+            tv1.setText(movieList.get(movListIndex).getTitle());
+            tv3.setText(movieList.get(movListIndex+1).getTitle());
+            ImageRequest imageRequest1 = new ImageRequest(
+                    movieList.get(movListIndex).getPic(),
+                    new Response.Listener<Bitmap>() {
+                        @Override
+                        public void onResponse(Bitmap response) {
+                            iv1.setImageBitmap(response);
+                        }
+                    }, 0, 0, Bitmap.Config.RGB_565, RsErrorListener);
+            ImageRequest imageRequest2 = new ImageRequest(
+                    movieList.get(movListIndex+1).getPic(),
+                    new Response.Listener<Bitmap>() {
+                        @Override
+                        public void onResponse(Bitmap response) {
+                            iv3.setImageBitmap(response);
+                        }
+                    }, 0, 0, Bitmap.Config.RGB_565, RsErrorListener);
+            mQueue.add(imageRequest1);
+            mQueue.add(imageRequest2);
+        }else if ((movieList.size()-movListIndex) == 1){
+            ll2.setVisibility(View.VISIBLE);
+            tv2.setText(movieList.get(movListIndex).getTitle());
+            ImageRequest imageRequest1 = new ImageRequest(
+                    movieList.get(movListIndex).getPic(),
+                    new Response.Listener<Bitmap>() {
+                        @Override
+                        public void onResponse(Bitmap response) {
+                            iv2.setImageBitmap(response);
+                        }
+                    }, 0, 0, Bitmap.Config.RGB_565,RsErrorListener);
+            mQueue.add(imageRequest1);
+        }
+    }
+
 	@SuppressLint("ShowToast")
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(com.ttaid.R.layout.main_activity);
         ButterKnife.bind(this);
-        Intent intent = new Intent("com.ttaid.service.BackgroungSpeechRecongnizerService");
-        startService(intent);
+//        Intent intent = new Intent("com.ttaid.service.BackgroungSpeechRecongnizerService");
+//        startService(intent);
 		mToast = Toast.makeText(this, "", Toast.LENGTH_SHORT);
+
         mTts = SpeechSynthesizer.createSynthesizer(this, mInitListener);
         setTTSParam();
-        int code = mTts.startSpeaking("欢迎使用TT语音助手", mTtsListener);
-//			/**
-//			 * 只保存音频不进行播放接口,调用此接口请注释startSpeaking接口
-//			 * text:要合成的文本，uri:需要保存的音频全路径，listener:回调接口
-//			*/
-//			String path = Environment.getExternalStorageDirectory()+"/tts.pcm";
-//			int code = mTts.synthesizeToUri(text, path, mTtsListener);
-
-        if (code != ErrorCode.SUCCESS) {
-            if(code == ErrorCode.ERROR_COMPONENT_NOT_INSTALLED){
-                //未安装则跳转到提示安装页面
-//                mInstaller.install();
-            }else {
-                showTip("语音合成失败,错误码: " + code);
-            }
-        }
+        speakText("欢迎使用TT语音助手");
 	}
-
-
-	int ret = 0; // 函数调用返回值
 
 	/**
 	 * 初始化监听器。
@@ -247,7 +220,6 @@ public class MainActivity extends Activity {
 			}
 		}
 	};
-
 
 	/**
 	 * 听写监听器。
@@ -265,13 +237,9 @@ public class MainActivity extends Activity {
 		@Override
 		public void onResult(RecognizerResult results, boolean isLast) {
 			Log.d(TAG, results.getResultString());
-            printResult(results);
+            String resultText = printResult(results);
 			if (isLast) {
-                if (haveMovieResult){
-                    parseOrder(tvShowInfo.getText().toString());
-                }else {
-                    searchMovie();
-                }
+                parseOrder(resultText );
 			}
 		}
 		@Override
@@ -282,56 +250,40 @@ public class MainActivity extends Activity {
 		}
 	};
     private SynthesizerListener mTtsListener = new SynthesizerListener() {
-
         @Override
         public void onSpeakBegin() {
-            showTip("开始播放");
         }
-
         @Override
         public void onSpeakPaused() {
-            showTip("暂停播放");
         }
-
         @Override
         public void onSpeakResumed() {
-            showTip("继续播放");
         }
-
         @Override
         public void onBufferProgress(int percent, int beginPos, int endPos,
                                      String info) {
-
         }
-
         @Override
         public void onSpeakProgress(int percent, int beginPos, int endPos) {
-            // 播放进度
-
         }
-
         @Override
         public void onCompleted(SpeechError error) {
             if (error == null) {
-                showTip("播放完成");
             } else if (error != null) {
                 showTip(error.getPlainDescription(true));
             }
         }
-
         @Override
         public void onEvent(int eventType, int arg1, int arg2, Bundle obj) {
         }
     };
     private void clearMovieShow() {
-        haveMovieResult = false;
-        movieList.clear();
         ll1.setVisibility(View.GONE);
         ll2.setVisibility(View.GONE);
         ll3.setVisibility(View.GONE);
     }
 
-    private void printResult(RecognizerResult results) {
+    private String printResult(RecognizerResult results) {
 		String text = JsonParser.parseIatResult(results.getResultString());
 		String sn = null;
 		// 读取json结果中的sn字段
@@ -346,20 +298,27 @@ public class MainActivity extends Activity {
 		for (String key : mIatResults.keySet()) {
 			resultBuffer.append(mIatResults.get(key));
 		}
-		tvShowInfo.setText(resultBuffer.toString());
+		return resultBuffer.toString();
 	}
 
     private void parseOrder(String order) {
         if (order.equals("清空")) {
             clearMovieShow();
+            movieList.clear();
+            movListIndex = 0;
+            speakText("已经清空了显示结果，现在可以重新搜索");
         }else if (order.indexOf("播放")>=0){
-            int index = 0;
+            if (movieList == null || movieList.size() ==0){
+                speakText("请先搜索电影");
+                return;
+            }
+            int index = movListIndex;
             if (order.indexOf("1")>=0||order.indexOf("一")>=0){
-                index = 0;
+                index = movListIndex;
             }else if (order.indexOf("2")>=0||order.indexOf("二")>=0){
-                index = 1;
+                index = movListIndex+1;
             }else if (order.indexOf("3")>=0||order.indexOf("三")>=0){
-                index = 2;
+                index = movListIndex+2;
             }
             String idString = movieList.get(index).getId()+"";
             Intent intent = new Intent("com.tv.kuaisou.action.DetailActivity");
@@ -367,20 +326,33 @@ public class MainActivity extends Activity {
             intent.putExtra("id", idString);
             startActivity(intent);
             BroadcastManager.sendBroadcast(BroadcastManager.ACTION_VOICE_WAKE,null);
+        }else if (order.indexOf("搜索") == 0){
+            String movName = order.substring(order.indexOf("搜索")+2,order.length());
+            searchMovie(movName);
+        }else if (order.contains("下一组")){
+            movListIndex += 3;
+            shouMoveResult(movieList,movListIndex);
+        }else if (order.contains("上一组")){
+            movListIndex -= 3;
+            if (movListIndex < 0){
+                movListIndex = 0;
+            }
+            shouMoveResult(movieList,movListIndex);
         }
     }
-
-    private void searchMovie() {
-        String info = tvShowInfo.getText().toString();
-        tvShowInfo.setText("正在为你查找《"+info+"》相关的内容");
-        String url = null;
+    private void speakText(String text){
+        tvShowInfo.setText(text);
+        mTts.startSpeaking(tvShowInfo.getText().toString(),mTtsListener);
+    }
+    private void searchMovie(String movName) {
+        speakText("正在为你查找《"+movName+"》相关的内容");
         String codes= null;
         try {
-            codes = URLEncoder.encode(info, "UTF-8");
+            codes = URLEncoder.encode(movName, "UTF-8");
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
-        url = getString(R.string.search_movie_url)+ codes;
+        String url = getString(R.string.search_movie_url)+ codes;
         Log.d(TAG, "searchMovie: "+url);
         StringRequest stringRequest = new StringRequest(url, RsListener, new Response.ErrorListener() {
             @Override
@@ -427,18 +399,16 @@ public class MainActivity extends Activity {
     private void setTTSParam(){
         // 清空参数
         mTts.setParameter(SpeechConstant.PARAMS, null);
-        // 根据合成引擎设置相应参数
-        if(mEngineType.equals(SpeechConstant.TYPE_CLOUD)) {
-            mTts.setParameter(SpeechConstant.ENGINE_TYPE, SpeechConstant.TYPE_CLOUD);
-            // 设置在线合成发音人
-            mTts.setParameter(SpeechConstant.VOICE_NAME, "xiaoyun");
-            //设置合成语速
-            mTts.setParameter(SpeechConstant.SPEED,  "50");
-            //设置合成音调
-            mTts.setParameter(SpeechConstant.PITCH,  "50");
-            //设置合成音量
-            mTts.setParameter(SpeechConstant.VOLUME, "50");
-        }
+        mTts.setParameter(SpeechConstant.ENGINE_TYPE, SpeechConstant.TYPE_CLOUD);
+        // 设置在线合成发音人
+        mTts.setParameter(SpeechConstant.VOICE_NAME, "xiaoyan");
+        //设置合成语速
+        mTts.setParameter(SpeechConstant.SPEED,  "50");
+        //设置合成音调
+        mTts.setParameter(SpeechConstant.PITCH,  "50");
+        //设置合成音量
+        mTts.setParameter(SpeechConstant.VOLUME, "80");
+
         //设置播放器音频流类型
         mTts.setParameter(SpeechConstant.STREAM_TYPE, "3");
         // 设置播放合成音频打断音乐播放，默认为true
