@@ -92,12 +92,16 @@ public class MainActivity extends Activity {
         public void onResponse(final String response) {
             Log.d(TAG, "onResponse: "+response.toString());
             movieList = JsonParser.parseMovieResult(response);
-            if (movieList!=null&&movieList.size()>0) {
+            if (movieList!=null) {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        speakText("为你找到"+movieList.size()+"个结果");
-                        shouMoveResult(movieList,movListIndex,false);
+                        if(movieList.size()>0) {
+                            speakText("为你找到" + movieList.size() + "个结果");
+                            shouMoveResult(movieList, movListIndex, false);
+                        }else {
+                            speakText("没有搜索到结果，请重新搜索 ");
+                        }
                     }
                 });
             }
@@ -114,6 +118,7 @@ public class MainActivity extends Activity {
     private void shouMoveResult(List<MovieInfo> movieList, int movListIndex, boolean speak) {
         if (movieList.size()-movListIndex <= 0){
             speakText("没有下一组了");
+            this.movListIndex = movListIndex -3;
             return;
         }
         if (speak) {
@@ -239,7 +244,7 @@ public class MainActivity extends Activity {
 			Log.d(TAG, results.getResultString());
             String resultText = printResult(results);
 			if (isLast) {
-                parseOrder(resultText );
+                parseOrder(resultText);
 			}
 		}
 		@Override
@@ -307,17 +312,17 @@ public class MainActivity extends Activity {
             movieList.clear();
             movListIndex = 0;
             speakText("已经清空了显示结果，现在可以重新搜索");
-        }else if (order.indexOf("播放")>=0){
+        }else if (order.contains("播放")){
             if (movieList == null || movieList.size() ==0){
                 speakText("请先搜索电影");
                 return;
             }
             int index = movListIndex;
-            if (order.indexOf("1")>=0||order.indexOf("一")>=0){
+            if (order.contains("1") || order.contains("一")){
                 index = movListIndex;
-            }else if (order.indexOf("2")>=0||order.indexOf("二")>=0){
+            }else if (order.contains("2") || order.contains("二")){
                 index = movListIndex+1;
-            }else if (order.indexOf("3")>=0||order.indexOf("三")>=0){
+            }else if (order.contains("3") || order.contains("三")){
                 index = movListIndex+2;
             }
             String idString = movieList.get(index).getId()+"";
@@ -329,15 +334,26 @@ public class MainActivity extends Activity {
         }else if (order.indexOf("搜索") == 0){
             String movName = order.substring(order.indexOf("搜索")+2,order.length());
             searchMovie(movName);
-        }else if (order.contains("下一组")){
+        }else if (order.contains("下一")||order.contains("向后")){
+            if (movieList == null || movieList.size() ==0){
+                speakText("请先搜索电影");
+                return;
+            }
             movListIndex += 3;
             shouMoveResult(movieList,movListIndex);
-        }else if (order.contains("上一组")){
+        }else if (order.contains("上一")||order.contains("向前")){
+            if (movieList == null || movieList.size() ==0){
+                speakText("请先搜索电影");
+                return;
+            }
             movListIndex -= 3;
             if (movListIndex < 0){
                 movListIndex = 0;
             }
             shouMoveResult(movieList,movListIndex);
+        }else if(order.equals("关闭")){
+            speakText("再见");
+            finish();
         }
     }
     private void speakText(String text){
@@ -370,9 +386,6 @@ public class MainActivity extends Activity {
 
 	/**
 	 * 参数设置
-	 * 
-	 * @param
-	 * @return
 	 */
 	public void setParam() {
 		// 清空参数
