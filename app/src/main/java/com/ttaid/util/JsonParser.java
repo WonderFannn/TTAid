@@ -153,7 +153,7 @@ public class JsonParser {
 
         } catch (JSONException e) {
             e.printStackTrace();
-            Log.e("JsonParseActivity", "json解析出现了问题");
+            Log.e("JsonParser", "json解析出现了问题");
         }
 
         return null;
