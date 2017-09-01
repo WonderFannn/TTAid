@@ -24,7 +24,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.android.volley.ParseError;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
@@ -74,9 +73,6 @@ public class MainActivity extends Activity {
     @BindView(R.id.tv_3)
     TextView tv3;
 
-    //解析模式，0为本应用模式，1为AIUI模式
-    private int parseMode = 0;
-
     private static String TAG = MainActivity.class.getSimpleName();
     // 语音听写对象
     private SpeechRecognizer mIat;
@@ -96,24 +92,21 @@ public class MainActivity extends Activity {
         @Override
         public void onResponse(final String response) {
             Log.d(TAG, "onResponse: " + response.toString());
-            if (parseMode == 0) {
-                movieList = JsonParser.parseMovieResult(response);
-                if (movieList != null) {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            if (movieList.size() > 0) {
-                                speakText("为你找到" + movieList.size() + "个结果");
-                                shouMoveResult(movieList, movListIndex, false);
-                            } else {
-                                speakText("没有搜索到结果，请重新搜索 ");
-                            }
+            movieList = JsonParser.parseMovieResult(response);
+            if (movieList != null) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (movieList.size() > 0) {
+                            speakText("为你找到" + movieList.size() + "个结果");
+                            shouMoveResult(movieList, movListIndex, false);
+                        } else {
+                            speakText("没有搜索到结果，请重新搜索 ");
                         }
-                    });
-                }
-            }else if (parseMode == 1){
-
+                    }
+                });
             }
+
         }
     };
     private Response.ErrorListener RsErrorListener = new Response.ErrorListener() {
@@ -330,91 +323,60 @@ public class MainActivity extends Activity {
     }
 
     private void parseOrder(String order) {
-        if (parseMode == 0) {
-            if (order.equals("清空")) {
-                clearMovieShow();
-                movieList.clear();
+        if (order.equals("清空")) {
+            clearMovieShow();
+            movieList.clear();
+            movListIndex = 0;
+            speakText("已经清空了显示结果，现在可以重新搜索");
+        } else if (order.contains("播放")) {
+            if (movieList == null || movieList.size() == 0) {
+                speakText("请先搜索电影");
+                return;
+            }
+            int index = movListIndex;
+            if (order.contains("1") || order.contains("一")) {
+                index = movListIndex;
+            } else if (order.contains("2") || order.contains("二")) {
+                index = movListIndex + 1;
+            } else if (order.contains("3") || order.contains("三")) {
+                index = movListIndex + 2;
+            }
+            if (index >= movieList.size()) {
+                speakText("您说错了吧");
+                return;
+            }
+            String idString = movieList.get(index).getId() + "";
+            Intent intent = new Intent("com.tv.kuaisou.action.DetailActivity");
+            intent.setPackage("com.tv.kuaisou");
+            intent.putExtra("id", idString);
+            startActivity(intent);
+            BroadcastManager.sendBroadcast(BroadcastManager.ACTION_VOICE_WAKE, null);
+        } else if (order.indexOf("搜索") == 0) {
+
+            String movName = order.substring(order.indexOf("搜索") + 2, order.length());
+            searchMovie(movName);
+        } else if (order.contains("下一") || order.contains("向后")) {
+            if (movieList == null || movieList.size() == 0) {
+                speakText("请先搜索电影");
+                return;
+            }
+            movListIndex += 3;
+            shouMoveResult(movieList, movListIndex);
+        } else if (order.contains("上一") || order.contains("向前")) {
+            if (movieList == null || movieList.size() == 0) {
+                speakText("请先搜索电影");
+                return;
+            }
+            movListIndex -= 3;
+            if (movListIndex < 0) {
                 movListIndex = 0;
-                speakText("已经清空了显示结果，现在可以重新搜索");
-            } else if (order.contains("播放")) {
-                if (movieList == null || movieList.size() == 0) {
-                    speakText("请先搜索电影");
-                    return;
-                }
-                int index = movListIndex;
-                if (order.contains("1") || order.contains("一")) {
-                    index = movListIndex;
-                } else if (order.contains("2") || order.contains("二")) {
-                    index = movListIndex + 1;
-                } else if (order.contains("3") || order.contains("三")) {
-                    index = movListIndex + 2;
-                }
-                if(index >= movieList.size()){
-                    speakText("您说错了吧");
-                    return;
-                }
-                String idString = movieList.get(index).getId() + "";
-                Intent intent = new Intent("com.tv.kuaisou.action.DetailActivity");
-                intent.setPackage("com.tv.kuaisou");
-                intent.putExtra("id", idString);
-                startActivity(intent);
-                BroadcastManager.sendBroadcast(BroadcastManager.ACTION_VOICE_WAKE, null);
-            } else if (order.indexOf("搜索") == 0) {
-
-                String movName = order.substring(order.indexOf("搜索") + 2, order.length());
-                searchMovie(movName);
-            } else if (order.contains("下一") || order.contains("向后")) {
-                if (movieList == null || movieList.size() == 0) {
-                    speakText("请先搜索电影");
-                    return;
-                }
-                movListIndex += 3;
-                shouMoveResult(movieList, movListIndex);
-            } else if (order.contains("上一") || order.contains("向前")) {
-                if (movieList == null || movieList.size() == 0) {
-                    speakText("请先搜索电影");
-                    return;
-                }
-                movListIndex -= 3;
-                if (movListIndex < 0) {
-                    movListIndex = 0;
-                }
-                shouMoveResult(movieList, movListIndex);
-            } else if (order.equals("关闭")) {
-                speakText("再见");
-                finish();
-            } else if (order.equals("中国")){
-                speakText("已为你切换到AIUI模式");
-                parseMode = 1;
             }
-        }else if (parseMode == 1){
-            if (order.equals("中国中国")){
-                speakText("已为你切换到TT语音助手模式");
-                parseMode = 0;
-            }else {
-                try {
-                    getAIUIResult(order);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
+            shouMoveResult(movieList, movListIndex);
+        } else if (order.equals("关闭")) {
+            speakText("再见");
+            finish();
         }
-    }
 
-    private void getAIUIResult(String order) throws JSONException {
-        WifiManager wm = (WifiManager)getApplicationContext().getSystemService(getApplicationContext().WIFI_SERVICE);
-        String m_szWLANMAC = wm.getConnectionInfo().getMacAddress();
-        JSONObject serviceContent = new JSONObject();
-        serviceContent.put("account","C280010005");
-        serviceContent.put("mac",m_szWLANMAC);
-        serviceContent.put("text",order);
-        JSONObject data = new JSONObject();
-        data.put("activityCode","T901");
-        data.put("bipCode","B040");
-        data.put("serviceContent",serviceContent);
-        String url = getString(R.string.beone_aiui_url) + data.toString();
-        StringRequest stringRequest = new StringRequest(url,RsListener,RsErrorListener);
-        mQueue.add(stringRequest);
     }
 
     private void speakText(String text) {
@@ -524,7 +486,7 @@ public class MainActivity extends Activity {
         mListenlingThread.start();
         super.onResume();
     }
-    
+
     @Override
     protected void onPause() {
         if (mListenlingThread != null) {
