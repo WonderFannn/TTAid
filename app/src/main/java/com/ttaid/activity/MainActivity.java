@@ -349,6 +349,10 @@ public class MainActivity extends Activity {
                 } else if (order.contains("3") || order.contains("三")) {
                     index = movListIndex + 2;
                 }
+                if(index >= movieList.size()){
+                    speakText("您说错了吧");
+                    return;
+                }
                 String idString = movieList.get(index).getId() + "";
                 Intent intent = new Intent("com.tv.kuaisou.action.DetailActivity");
                 intent.setPackage("com.tv.kuaisou");
@@ -408,6 +412,9 @@ public class MainActivity extends Activity {
         data.put("activityCode","T901");
         data.put("bipCode","B040");
         data.put("serviceContent",serviceContent);
+        String url = getString(R.string.beone_aiui_url) + data.toString();
+        StringRequest stringRequest = new StringRequest(url,RsListener,RsErrorListener);
+        mQueue.add(stringRequest);
     }
 
     private void speakText(String text) {
@@ -429,12 +436,7 @@ public class MainActivity extends Activity {
         }
         String url = getString(R.string.search_movie_url) + codes;
         Log.d(TAG, "searchMovie: " + url);
-        StringRequest stringRequest = new StringRequest(url, RsListener, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Log.e("TAG", error.getMessage(), error);
-            }
-        });
+        StringRequest stringRequest = new StringRequest(url, RsListener, RsErrorListener);
         mQueue.add(stringRequest);
     }
 
@@ -476,7 +478,7 @@ public class MainActivity extends Activity {
         // 设置在线合成发音人
         mTts.setParameter(SpeechConstant.VOICE_NAME, "xiaoyan");
         //设置合成语速
-        mTts.setParameter(SpeechConstant.SPEED, "50");
+        mTts.setParameter(SpeechConstant.SPEED, "70");
         //设置合成音调
         mTts.setParameter(SpeechConstant.PITCH, "50");
         //设置合成音量
@@ -522,7 +524,7 @@ public class MainActivity extends Activity {
         mListenlingThread.start();
         super.onResume();
     }
-
+    
     @Override
     protected void onPause() {
         if (mListenlingThread != null) {
