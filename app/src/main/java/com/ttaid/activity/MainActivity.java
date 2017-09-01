@@ -2,6 +2,8 @@ package com.ttaid.activity;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -92,26 +94,49 @@ public class MainActivity extends Activity {
     private RequestQueue mQueue;
     private List<MovieInfo> movieList;
     private int movListIndex = 0;
+
     private Response.Listener<String> RsListener = new Response.Listener<String>() {
         @Override
         public void onResponse(final String response) {
             Log.d(TAG, "onResponse: " + response.toString());
-            if (parseMode == 0) {
-                movieList = JsonParser.parseMovieResult(response);
-                if (movieList != null) {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            if (movieList.size() > 0) {
-                                speakText("为你找到" + movieList.size() + "个结果");
-                                shouMoveResult(movieList, movListIndex, false);
-                            } else {
-                                speakText("没有搜索到结果，请重新搜索 ");
-                            }
+
+            movieList = JsonParser.parseMovieResult(response);
+            if (movieList != null) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (movieList.size() > 0) {
+                            speakText("为你找到" + movieList.size() + "个结果");
+                            shouMoveResult(movieList, movListIndex, false);
+                        } else {
+                            speakText("没有搜索到结果，请重新搜索 ");
                         }
-                    });
+                    }
+                });
+            }
+        }
+    };
+
+    private boolean isLogin = false;
+    private String mSecretKey;
+    private String mAccount;
+    private String mMac = "00003ECB2DE233A8";
+
+    private Response.Listener<String> RsBeoneListener = new Response.Listener<String>() {
+        @Override
+        public void onResponse(String response) {
+            Log.d(TAG, "onResponse: " +response.toString());
+            if (isLogin){
+
+            }else {
+                try {
+                    JSONObject data = new JSONObject(response);
+                    JSONObject serviceContent = data.getJSONObject("serviceContent");
+                    mSecretKey = serviceContent.getString("secretKey");
+                    mAccount = serviceContent.getString("account");
+                } catch (JSONException e) {
+                    e.printStackTrace();
                 }
-            }else if (parseMode == 1){
 
             }
         }
@@ -349,7 +374,7 @@ public class MainActivity extends Activity {
                 } else if (order.contains("3") || order.contains("三")) {
                     index = movListIndex + 2;
                 }
-                if(index >= movieList.size()){
+                if (index >= movieList.size()) {
                     speakText("您说错了吧");
                     return;
                 }
@@ -383,15 +408,19 @@ public class MainActivity extends Activity {
             } else if (order.equals("关闭")) {
                 speakText("再见");
                 finish();
-            } else if (order.equals("中国")){
-                speakText("已为你切换到AIUI模式");
-                parseMode = 1;
+            } else if (order.equals("中国")) {
+                speakText("正在登录");
+                try {
+                    loginBeone();
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
             }
-        }else if (parseMode == 1){
-            if (order.equals("中国中国")){
+        } else if (parseMode == 1) {
+            if (order.equals("中国中国")) {
                 speakText("已为你切换到TT语音助手模式");
                 parseMode = 0;
-            }else {
+            } else {
                 try {
                     getAIUIResult(order);
                 } catch (JSONException e) {
@@ -401,19 +430,62 @@ public class MainActivity extends Activity {
         }
     }
 
-    private void getAIUIResult(String order) throws JSONException {
-        WifiManager wm = (WifiManager)getApplicationContext().getSystemService(getApplicationContext().WIFI_SERVICE);
-        String m_szWLANMAC = wm.getConnectionInfo().getMacAddress();
+    private void loginBeone() throws JSONException {
+
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
+        Date curDate = new Date(System.currentTimeMillis());
+        String time = formatter.format(curDate);
+
         JSONObject serviceContent = new JSONObject();
-        serviceContent.put("account","C280010005");
-        serviceContent.put("mac",m_szWLANMAC);
-        serviceContent.put("text",order);
+        serviceContent.put("mac", "888");
         JSONObject data = new JSONObject();
-        data.put("activityCode","T901");
-        data.put("bipCode","B040");
-        data.put("serviceContent",serviceContent);
+        data.put("actionCode","0");
+        data.put("activityCode", "T906");
+        data.put("bipCode", "B000");
+        data.put("bipVer", "1.0");
+        data.put("origDomain", "M000");
+        data.put("processTime",time);
+        data.put("homeDomain", "P000");
+        data.put("testFlag", "1");
+        data.put("serviceContent", serviceContent);
+
         String url = getString(R.string.beone_aiui_url) + data.toString();
-        StringRequest stringRequest = new StringRequest(url,RsListener,RsErrorListener);
+        Log.d(TAG, "loginBeone: "+url);
+        StringRequest stringRequest = new StringRequest(url, RsBeoneListener, RsErrorListener);
+        mQueue.add(stringRequest);
+
+    }
+
+    private void getAIUIResult(String order) throws JSONException {
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
+        Date curDate = new Date(System.currentTimeMillis());
+        String time = formatter.format(curDate);
+        String opr = null;
+        try {
+            opr = URLEncoder.encode(order, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        JSONObject serviceContent = new JSONObject();
+        serviceContent.put("secretKey", mSecretKey);
+        serviceContent.put("account", mAccount);
+        serviceContent.put("mac", mMac);
+        serviceContent.put("voiceText", opr);
+        serviceContent.put("patternOperation", false);
+        JSONObject data = new JSONObject();
+        data.put("actionCode","0");
+        data.put("activityCode", "T901");
+        data.put("bipCode", "B040");
+        data.put("bipVer", "1.0");
+        data.put("origDomain", "M000");
+        data.put("processTime",time);
+        data.put("homeDomain", "P000");
+        data.put("testFlag", "1");
+        data.put("serviceContent", serviceContent);
+
+        String url = getString(R.string.beone_aiui_url) + data.toString();
+        Log.d(TAG, "getAIUIResult: "+url);
+        StringRequest stringRequest = new StringRequest(url, RsBeoneListener, RsErrorListener);
         mQueue.add(stringRequest);
     }
 
@@ -524,7 +596,7 @@ public class MainActivity extends Activity {
         mListenlingThread.start();
         super.onResume();
     }
-    
+
     @Override
     protected void onPause() {
         if (mListenlingThread != null) {
