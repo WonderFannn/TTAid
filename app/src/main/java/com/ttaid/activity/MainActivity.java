@@ -158,7 +158,7 @@ public class MainActivity extends Activity {
                             isLogin = false;
                             parseMode = 0;
                         }else {
-                            speakText("登录成功");
+                            speakText("已经切换到AIUI模式");
                             isLogin = true;
                             parseMode = 1;
                         }
