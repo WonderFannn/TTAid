@@ -435,18 +435,22 @@ public class MainActivity extends Activity {
                 speakText("再见");
                 finish();
             } else if (order.equals("中国")) {
-                speakText("正在登录");
-                try {
-                    loginBeone();
-                } catch (JSONException e) {
-                    e.printStackTrace();
+                if (isLogin){
+                    parseMode = 1;
+                    speakText("已为你切换到AIUI模式");
+                }else {
+                    speakText("正在登录");
+                    try {
+                        loginBeone();
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         } else if (parseMode == 1) {
             if (order.equals("中国中国")) {
                 speakText("已为你切换到TT语音助手模式");
                 parseMode = 0;
-                isLogin = false;
             } else if (order.equals("123")){
                 try {
                     getAIUIResult("双路开关关");
