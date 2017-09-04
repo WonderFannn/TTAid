@@ -15,9 +15,9 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Environment;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
@@ -26,7 +26,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.android.volley.ParseError;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
@@ -125,10 +124,24 @@ public class MainActivity extends Activity {
     private Response.Listener<String> RsBeoneListener = new Response.Listener<String>() {
         @Override
         public void onResponse(String response) {
-            Log.d(TAG, "onResponse: " +response.toString());
-            if (isLogin){
+            Log.d(TAG, "onResponse: " + response.toString());
+            if (isLogin) {
+                try {
+                    JSONObject data = new JSONObject(response);
+                    final String serviceContent = data.getString("serviceContent");
+                    if (serviceContent != null) {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+//                                speakText(serviceContent);
+                            }
+                        });
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
 
-            }else {
+            } else {
                 try {
                     JSONObject data = new JSONObject(response);
                     JSONObject serviceContent = data.getJSONObject("serviceContent");
@@ -137,7 +150,20 @@ public class MainActivity extends Activity {
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
-
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (TextUtils.isEmpty(mSecretKey) || TextUtils.isEmpty(mAccount)) {
+                            speakText("登录失败");
+                            isLogin = false;
+                            parseMode = 0;
+                        }else {
+                            speakText("登录成功");
+                            isLogin = true;
+                            parseMode = 1;
+                        }
+                    }
+                });
             }
         }
     };
@@ -420,7 +446,26 @@ public class MainActivity extends Activity {
             if (order.equals("中国中国")) {
                 speakText("已为你切换到TT语音助手模式");
                 parseMode = 0;
-            } else {
+                isLogin = false;
+            } else if (order.equals("123")){
+                try {
+                    getAIUIResult("双路开关关");
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }else if (order.equals("456")){
+                try {
+                    getAIUIResult("开音乐");
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }else if (order.equals("789")){
+                try {
+                    getAIUIResult("关音乐");
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }else if(order.indexOf("我要") == 0 || order.indexOf("我想") ==0){
                 try {
                     getAIUIResult(order);
                 } catch (JSONException e) {
@@ -437,20 +482,20 @@ public class MainActivity extends Activity {
         String time = formatter.format(curDate);
 
         JSONObject serviceContent = new JSONObject();
-        serviceContent.put("mac", "888");
+        serviceContent.put("mac", mMac);
         JSONObject data = new JSONObject();
-        data.put("actionCode","0");
+        data.put("actionCode", "0");
         data.put("activityCode", "T906");
         data.put("bipCode", "B000");
         data.put("bipVer", "1.0");
         data.put("origDomain", "M000");
-        data.put("processTime",time);
+        data.put("processTime", time);
         data.put("homeDomain", "P000");
         data.put("testFlag", "1");
         data.put("serviceContent", serviceContent);
 
         String url = getString(R.string.beone_aiui_url) + data.toString();
-        Log.d(TAG, "loginBeone: "+url);
+        Log.d(TAG, "loginBeone: " + url);
         StringRequest stringRequest = new StringRequest(url, RsBeoneListener, RsErrorListener);
         mQueue.add(stringRequest);
 
@@ -473,18 +518,18 @@ public class MainActivity extends Activity {
         serviceContent.put("voiceText", opr);
         serviceContent.put("patternOperation", false);
         JSONObject data = new JSONObject();
-        data.put("actionCode","0");
+        data.put("actionCode", "0");
         data.put("activityCode", "T901");
         data.put("bipCode", "B040");
         data.put("bipVer", "1.0");
         data.put("origDomain", "M000");
-        data.put("processTime",time);
+        data.put("processTime", time);
         data.put("homeDomain", "P000");
         data.put("testFlag", "1");
         data.put("serviceContent", serviceContent);
 
         String url = getString(R.string.beone_aiui_url) + data.toString();
-        Log.d(TAG, "getAIUIResult: "+url);
+        Log.d(TAG, "getAIUIResult: " + url);
         StringRequest stringRequest = new StringRequest(url, RsBeoneListener, RsErrorListener);
         mQueue.add(stringRequest);
     }
