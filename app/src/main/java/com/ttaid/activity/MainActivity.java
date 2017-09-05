@@ -111,7 +111,7 @@ public class MainActivity extends Activity {
             }
         }
     };
-
+    private int parseMode = 0;
     private boolean isLogin = false;
     private String mSecretKey;
     private String mAccount;
@@ -158,7 +158,7 @@ public class MainActivity extends Activity {
                             speakText("登录失败");
                             isLogin = false;
                             parseMode = 0;
-                        }else {
+                        } else {
                             speakText("已经切换到AIUI模式");
                             isLogin = true;
                             parseMode = 1;
@@ -326,9 +326,9 @@ public class MainActivity extends Activity {
     private SynthesizerListener mTtsListener = new SynthesizerListener() {
         @Override
         public void onSpeakBegin() {
-            if (mIat.isListening()){
+            if (mIat.isListening()) {
                 mIat.stopListening();
-                if (mListenlingThread != null){
+                if (mListenlingThread != null) {
                     mListenlingThread.interrupt();
                     mListenlingThread = null;
                 }
@@ -355,9 +355,9 @@ public class MainActivity extends Activity {
         @Override
         public void onCompleted(SpeechError error) {
             if (error == null) {
-                if(mListenlingThread!=null){
+                if (mListenlingThread != null) {
                     mListenlingThread.start();
-                }else {
+                } else {
                     mListenlingThread = new ListeningThread();
                     mListenlingThread.start();
                 }
@@ -396,49 +396,6 @@ public class MainActivity extends Activity {
     }
 
     private void parseOrder(String order) {
-        if (order.equals("清空")) {
-            clearMovieShow();
-            movieList.clear();
-            movListIndex = 0;
-            speakText("已经清空了显示结果，现在可以重新搜索");
-        } else if (order.contains("播放")) {
-            if (movieList == null || movieList.size() == 0) {
-                speakText("请先搜索电影");
-                return;
-            }
-            int index = movListIndex;
-            if (order.contains("1") || order.contains("一")) {
-                index = movListIndex;
-            } else if (order.contains("2") || order.contains("二")) {
-                index = movListIndex + 1;
-            } else if (order.contains("3") || order.contains("三")) {
-                index = movListIndex + 2;
-            }
-            if (index >= movieList.size()) {
-                speakText("您说错了吧");
-                return;
-            }
-            String idString = movieList.get(index).getId() + "";
-            Intent intent = new Intent("com.tv.kuaisou.action.DetailActivity");
-            intent.setPackage("com.tv.kuaisou");
-            intent.putExtra("id", idString);
-            startActivity(intent);
-            BroadcastManager.sendBroadcast(BroadcastManager.ACTION_VOICE_WAKE, null);
-        } else if (order.indexOf("搜索") == 0) {
-
-            String movName = order.substring(order.indexOf("搜索") + 2, order.length());
-            searchMovie(movName);
-        } else if (order.contains("下一") || order.contains("向后")) {
-            if (movieList == null || movieList.size() == 0) {
-                speakText("请先搜索电影");
-                return;
-            }
-            movListIndex += 3;
-            shouMoveResult(movieList, movListIndex);
-        } else if (order.contains("上一") || order.contains("向前")) {
-            if (movieList == null || movieList.size() == 0) {
-                speakText("请先搜索电影");
-                return;
         if (parseMode == 0) {
             if (order.equals("清空")) {
                 clearMovieShow();
@@ -469,7 +426,6 @@ public class MainActivity extends Activity {
                 startActivity(intent);
                 BroadcastManager.sendBroadcast(BroadcastManager.ACTION_VOICE_WAKE, null);
             } else if (order.indexOf("搜索") == 0) {
-
                 String movName = order.substring(order.indexOf("搜索") + 2, order.length());
                 searchMovie(movName);
             } else if (order.contains("下一") || order.contains("向后")) {
@@ -493,10 +449,10 @@ public class MainActivity extends Activity {
                 speakText("再见");
                 finish();
             } else if (order.equals("中国")) {
-                if (isLogin){
+                if (isLogin) {
                     parseMode = 1;
                     speakText("已为你切换到AIUI模式");
-                }else {
+                } else {
                     speakText("正在登录");
                     try {
                         loginBeone();
@@ -509,30 +465,6 @@ public class MainActivity extends Activity {
             if (order.equals("中国中国")) {
                 speakText("已为你切换到TT语音助手模式");
                 parseMode = 0;
-            } else if (order.equals("123")){
-                try {
-                    getAIUIResult("双路开关关");
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }else if (order.equals("456")){
-                try {
-                    getAIUIResult("开音乐");
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }else if (order.equals("789")){
-                try {
-                    getAIUIResult("关音乐");
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }else if(order.indexOf("我要") == 0 || order.indexOf("我想") ==0){
-                try {
-                    getAIUIResult(order);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
             }else {
                 try {
                     getAIUIResult(order);
@@ -540,15 +472,9 @@ public class MainActivity extends Activity {
                     e.printStackTrace();
                 }
             }
-            movListIndex -= 3;
-            if (movListIndex < 0) {
-                movListIndex = 0;
-            }
-            shouMoveResult(movieList, movListIndex);
-        } else if (order.equals("关闭")) {
-            speakText("再见");
-            finish();
         }
+    }
+
 
     private void loginBeone() throws JSONException {
 
@@ -726,7 +652,7 @@ public class MainActivity extends Activity {
         super.onPause();
     }
 
-    public class ListeningThread extends Thread {
+    class ListeningThread extends Thread {
         @Override
         public void run() {
             super.run();
@@ -743,6 +669,8 @@ public class MainActivity extends Activity {
                 e.printStackTrace();
             }
         }
-
     }
 }
+
+
+
