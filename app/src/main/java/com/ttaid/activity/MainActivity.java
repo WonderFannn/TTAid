@@ -128,12 +128,17 @@ public class MainActivity extends Activity {
             if (isLogin) {
                 try {
                     JSONObject data = new JSONObject(response);
-                    final String serviceContent = data.getString("serviceContent");
-                    if (serviceContent != null) {
+                    final String serviceContentString = data.getString("serviceContent");
+                    final JSONObject serviceContentJson = new JSONObject(serviceContentString);
+                    if (serviceContentJson != null) {
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-//                                speakText(serviceContent);
+                                try {
+                                    speakText(serviceContentJson.getString("answer"));
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
+                                }
                             }
                         });
                     }
@@ -324,6 +329,13 @@ public class MainActivity extends Activity {
     private SynthesizerListener mTtsListener = new SynthesizerListener() {
         @Override
         public void onSpeakBegin() {
+            if (mIat.isListening()){
+                mIat.stopListening();
+                if (mListenlingThread != null){
+                    mListenlingThread.interrupt();
+                    mListenlingThread = null;
+                }
+            }
         }
 
         @Override
@@ -346,6 +358,12 @@ public class MainActivity extends Activity {
         @Override
         public void onCompleted(SpeechError error) {
             if (error == null) {
+                if(mListenlingThread!=null){
+                    mListenlingThread.start();
+                }else {
+                    mListenlingThread = new ListeningThread();
+                    mListenlingThread.start();
+                }
             } else if (error != null) {
                 showTip(error.getPlainDescription(true));
             }
@@ -470,6 +488,12 @@ public class MainActivity extends Activity {
                     e.printStackTrace();
                 }
             }else if(order.indexOf("我要") == 0 || order.indexOf("我想") ==0){
+                try {
+                    getAIUIResult(order);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }else {
                 try {
                     getAIUIResult(order);
                 } catch (JSONException e) {
@@ -668,7 +692,7 @@ public class MainActivity extends Activity {
                         mIat.startListening(mRecognizerListener);
                     }
                 }
-            } catch (InterruptedException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
