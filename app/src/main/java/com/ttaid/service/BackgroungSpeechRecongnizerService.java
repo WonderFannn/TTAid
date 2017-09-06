@@ -178,7 +178,7 @@ public class BackgroungSpeechRecongnizerService extends Service {
                 return;
             }
             Log.i("TAG", "WS->result:"+text);
-            if(!TextUtils.isEmpty(text) && data_list != null){
+            if(data_list != null){
                 ToastUtil.showShort(BaseApplication.getContext(),text);
                 if (text.equals("返回")){
 //                    Instrumentation mInst = new Instrumentation();
