@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.ttaid"
     android:versionCode="1"
-    android:versionName="0.1.0825.1647" >
+    android:versionName="0.1.0907.1532" >
 
     <application
         android:icon="@drawable/icon"
