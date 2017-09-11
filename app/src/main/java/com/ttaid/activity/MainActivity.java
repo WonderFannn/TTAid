@@ -51,6 +51,7 @@ import com.iflytek.cloud.SynthesizerListener;
 import com.ttaid.R;
 import com.ttaid.broad.BroadcastManager;
 import com.ttaid.dao.MovieInfo;
+import com.ttaid.util.GetMacUtil;
 import com.ttaid.util.JsonParser;
 
 import butterknife.BindView;
@@ -277,7 +278,7 @@ public class MainActivity extends Activity {
 
         WifiManager wm = (WifiManager)getApplicationContext().getSystemService(getApplicationContext().WIFI_SERVICE);
         mMac = wm.getConnectionInfo().getMacAddress();
-        mMac = getMacAddress();
+        mMac = GetMacUtil.getMacAddress();
         mMac = mMac.replace(":","");
         mMac = "0000"+mMac;
         Log.d(TAG, "onCreate: mMac:"+mMac);
@@ -289,26 +290,7 @@ public class MainActivity extends Activity {
         setTTSParam();
         speakText("欢迎使用TT语音助手");
     }
-    public static String loadFileAsString(String filePath) throws java.io.IOException{
-        StringBuffer fileData = new StringBuffer(1000);
-        BufferedReader reader = new BufferedReader(new FileReader(filePath));
-        char[] buf = new char[1024]; int numRead=0;
-        while((numRead=reader.read(buf)) != -1){
-            String readData = String.valueOf(buf, 0, numRead);
-            fileData.append(readData);
-        }
-        reader.close();
-        return fileData.toString();
-    }/** Get the STB MacAddress*/
 
-    public static String getMacAddress(){
-        try {
-            return loadFileAsString("/sys/class/net/eth0/address") .toUpperCase().substring(0, 17);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
     /**
      * 初始化监听器。
      */
@@ -343,6 +325,7 @@ public class MainActivity extends Activity {
         public void onResult(RecognizerResult results, boolean isLast) {
             Log.d(TAG, results.getResultString());
             String resultText = printResult(results);
+            tvShowInfo.setText(resultText);
             if (isLast) {
                 parseOrder(resultText);
             }
