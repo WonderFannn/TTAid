@@ -127,14 +127,14 @@
                 android:layout_height="match_parent"
                 android:layout_weight="3"
                 android:gravity="center"
-                android:text="设置听写语言" />
+                android:text="设置合成声音" />
 
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:gravity="center"
-                android:text="zhongwen" />
+                android:text="小燕" />
         </LinearLayout>
 
         <LinearLayout
@@ -148,14 +148,14 @@
                 android:layout_height="match_parent"
                 android:layout_weight="3"
                 android:gravity="center"
-                android:text="设置听写前端点" />
+                android:text="设置合成语速" />
 
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:gravity="center"
-                android:text="4000" />
+                android:text="70" />
         </LinearLayout>
 
         <LinearLayout
@@ -169,14 +169,14 @@
                 android:layout_height="match_parent"
                 android:layout_weight="3"
                 android:gravity="center"
-                android:text="设置听写后端点" />
+                android:text="设置合成语调" />
 
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:gravity="center"
-                android:text="1000" />
+                android:text="50" />
         </LinearLayout>
 
         <LinearLayout
@@ -184,18 +184,20 @@
             android:layout_height="0dp"
             android:layout_weight="1"
             android:orientation="horizontal">
+
             <TextView
-                android:gravity="center"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="3"
-                android:text="设置听写标点" />
-            <TextView
                 android:gravity="center"
+                android:text="设置合成音量" />
+
+            <TextView
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:text="有" />
+                android:gravity="center"
+                android:text="100" />
         </LinearLayout>
 
     </LinearLayout>
