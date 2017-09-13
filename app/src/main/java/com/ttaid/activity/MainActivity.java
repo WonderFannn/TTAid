@@ -325,8 +325,8 @@ public class MainActivity extends Activity {
         public void onResult(RecognizerResult results, boolean isLast) {
             Log.d(TAG, results.getResultString());
             String resultText = printResult(results);
-            tvShowInfo.setText(resultText);
-            if (isLast) {
+            showTip(resultText);
+            if (isLast && !TextUtils.isEmpty(resultText)) {
                 parseOrder(resultText);
             }
         }
