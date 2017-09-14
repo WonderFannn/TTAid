@@ -1,15 +1,9 @@
 package com.ttaid.activity;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
 import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -476,6 +470,9 @@ public class MainActivity extends Activity {
                         e.printStackTrace();
                     }
                 }
+            } else if(order.equals("设置")){
+                Intent intent = new Intent(this,SettingActivity.class);
+                startActivity(intent);
             }
         } else if (parseMode == 1) {
             if (order.equals("中国中国")) {
