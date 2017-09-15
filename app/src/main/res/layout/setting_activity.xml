@@ -30,6 +30,7 @@
                 android:text="设置听写语言" />
 
             <TextView
+                android:id="@+id/tv_language"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
@@ -51,6 +52,7 @@
                 android:text="设置听写前端点" />
 
             <TextView
+                android:id="@+id/tv_vad_bos"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
@@ -72,6 +74,7 @@
                 android:text="设置听写后端点" />
 
             <TextView
+                android:id="@+id/tv_vad_eos"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
@@ -93,6 +96,7 @@
                 android:text="设置听写标点" />
 
             <TextView
+                android:id="@+id/tv_asr_ptt"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
@@ -130,6 +134,7 @@
                 android:text="设置合成声音" />
 
             <TextView
+                android:id="@+id/tv_voice_name"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
@@ -151,6 +156,7 @@
                 android:text="设置合成语速" />
 
             <TextView
+                android:id="@+id/tv_speed"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
@@ -172,6 +178,7 @@
                 android:text="设置合成语调" />
 
             <TextView
+                android:id="@+id/tv_pitch"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
@@ -193,6 +200,7 @@
                 android:text="设置合成音量" />
 
             <TextView
+                android:id="@+id/tv_volume"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"

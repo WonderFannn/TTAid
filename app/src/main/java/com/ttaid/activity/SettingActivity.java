@@ -4,11 +4,10 @@ import android.app.Activity;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.PersistableBundle;
-import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Window;
+import android.widget.TextView;
 
 import com.iflytek.cloud.ErrorCode;
 import com.iflytek.cloud.InitListener;
@@ -28,7 +27,9 @@ import org.json.JSONObject;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 
+import butterknife.BindViews;
 import butterknife.ButterKnife;
 
 /**
@@ -38,6 +39,12 @@ import butterknife.ButterKnife;
 public class SettingActivity extends Activity {
 
     private static final String TAG = "SettingActivity";
+
+    //UI相关
+    @BindViews({ R.id.tv_language, R.id.tv_vad_bos, R.id.tv_vad_eos, R.id.tv_asr_ptt,
+                    R.id.tv_voice_name, R.id.tv_speed, R.id.tv_pitch, R.id.tv_volume})
+    List<TextView> tvShow;
+
     private SharedPreferences settings;
     // 语音听写对象
     private SpeechRecognizer mIat;

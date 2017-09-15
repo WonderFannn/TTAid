@@ -120,7 +120,7 @@ public class MainActivity extends Activity {
     private boolean isLogin = false;
     private String mSecretKey;
     private String mAccount;
-    private String mMac = "00003ECB2DE233A8";
+    private String mMac;
 
     private Response.Listener<String> RsBeoneListener = new Response.Listener<String>() {
         @Override
@@ -275,11 +275,12 @@ public class MainActivity extends Activity {
         setting = getSharedPreferences(getString(R.string.setting_prf),0);
         WifiManager wm = (WifiManager)getApplicationContext().getSystemService(getApplicationContext().WIFI_SERVICE);
         mMac = wm.getConnectionInfo().getMacAddress();
-        mMac = GetMacUtil.getMacAddress();
-        if(!TextUtils.isEmpty(mMac)) {
+        if(!TextUtils.isEmpty(GetMacUtil.getMacAddress())) {
+            mMac = GetMacUtil.getMacAddress();
             mMac = mMac.replace(":", "");
             mMac = "0000" + mMac;
-        }else {
+        }
+        if(TextUtils.isEmpty(mMac)){
             mMac = "0000F64F73A999618";
         }
         Log.d(TAG, "onCreate: mMac:"+mMac);
