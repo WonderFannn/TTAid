@@ -92,7 +92,7 @@ public class NlpDemo extends Activity implements OnClickListener {
 
 		AssetManager assetManager = getResources().getAssets();
 		try {
-			InputStream ins = assetManager.open( "cfg/aiui_phone.cfg" );
+			InputStream ins = assetManager.open("cfg/aiui_phone.cfg");
 			byte[] buffer = new byte[ins.available()];
 
 			ins.read(buffer);

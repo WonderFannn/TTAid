@@ -481,6 +481,9 @@ public class MainActivity extends Activity {
             } else if(order.equals("设置")){
                 Intent intent = new Intent(this,SettingActivity.class);
                 startActivity(intent);
+            }else if (order.equals("讯飞")){
+                Intent intent = new Intent(this,NlpDemo.class);
+                startActivity(intent);
             }
         } else if (parseMode == 1) {
             if (order.equals("中国中国")) {
