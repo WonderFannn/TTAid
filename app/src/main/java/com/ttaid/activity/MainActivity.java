@@ -442,7 +442,7 @@ public class MainActivity extends Activity {
                 intent.setPackage("com.tv.kuaisou");
                 intent.putExtra("id", idString);
                 startActivity(intent);
-                BroadcastManager.sendBroadcast(BroadcastManager.ACTION_VOICE_WAKE, null);
+                BroadcastManager.sendBroadcast(BroadcastManager.ACTION_VOICE_EMULATE_KEY_OPEN, null);
             } else if (order.indexOf("搜索") == 0) {
                 String movName = order.substring(order.indexOf("搜索") + 2, order.length());
                 searchMovie(movName);
@@ -638,6 +638,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
 //        BroadcastManager.sendBroadcast(BroadcastManager.ACTION_VOICE_WAKE_CLOSE, null);
+        BroadcastManager.sendBroadcast(BroadcastManager.ACTION_VOICE_EMULATE_KEY_CLOSE, null);
         mQueue = Volley.newRequestQueue(this);
         // 初始化识别无UI识别对象
         // 使用SpeechRecognizer对象，可根据回调消息自定义界面；

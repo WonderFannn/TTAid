@@ -13,6 +13,12 @@ import com.ttaid.application.BaseApplication;
  * @company 金鑫智慧
  */
 public class BroadcastManager {
+
+	public static final String ACTION_VOICE_EMULATE_KEY_OPEN = "action_voice_emulate_key_open";
+	/**
+	 * 关闭唤醒服务广播
+	 */
+	public static final String ACTION_VOICE_EMULATE_KEY_CLOSE = "action_voice_emulate_key_close";
 	public static final String ACTION_VOICE_WAKE= "action_voice_wake";
 	/**
 	 * 关闭唤醒服务广播
