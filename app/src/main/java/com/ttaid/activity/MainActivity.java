@@ -637,6 +637,7 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onResume() {
+
 //        BroadcastManager.sendBroadcast(BroadcastManager.ACTION_VOICE_WAKE_CLOSE, null);
         BroadcastManager.sendBroadcast(BroadcastManager.ACTION_VOICE_EMULATE_KEY_CLOSE, null);
         mQueue = Volley.newRequestQueue(this);
