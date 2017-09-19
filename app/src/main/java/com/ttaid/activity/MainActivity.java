@@ -1,5 +1,7 @@
 package com.ttaid.activity;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
@@ -15,6 +17,7 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
@@ -34,6 +37,11 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.ImageRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.iflytek.aiui.AIUIAgent;
+import com.iflytek.aiui.AIUIConstant;
+import com.iflytek.aiui.AIUIEvent;
+import com.iflytek.aiui.AIUIListener;
+import com.iflytek.aiui.AIUIMessage;
 import com.iflytek.cloud.ErrorCode;
 import com.iflytek.cloud.InitListener;
 import com.iflytek.cloud.RecognizerListener;
@@ -91,6 +99,10 @@ public class MainActivity extends Activity {
     private Toast mToast;
     // 引擎类型
     private String mEngineType = SpeechConstant.TYPE_CLOUD;
+
+    //讯飞AIUI
+    private AIUIAgent mAIUIAgent = null;
+    private int mAIUIState = AIUIConstant.STATE_IDLE;
 
     private RequestQueue mQueue;
     private List<MovieInfo> movieList;
@@ -414,6 +426,29 @@ public class MainActivity extends Activity {
     }
 
     private void parseOrder(String order) {
+        if (order.equals("中国")){
+            if (isLogin) {
+                parseMode = 1;
+                speakText("已为你切换到AIUI模式");
+            } else {
+                speakText("正在登录");
+                try {
+                    loginBeone();
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+            return;
+        }else if(order.equals("中国中国")){
+            speakText("已为你切换到TT语音助手模式");
+            parseMode = 0;
+            return;
+        }else if (order.equals("讯飞")){
+            speakText("已为你切换到讯飞AIUI模式");
+            parseMode = 2;
+            return;
+        }
+
         if (parseMode == 0) {
             if (order.equals("清空")) {
                 clearMovieShow();
@@ -466,35 +501,19 @@ public class MainActivity extends Activity {
             } else if (order.equals("关闭")) {
                 speakText("再见");
                 finish();
-            } else if (order.equals("中国")) {
-                if (isLogin) {
-                    parseMode = 1;
-                    speakText("已为你切换到AIUI模式");
-                } else {
-                    speakText("正在登录");
-                    try {
-                        loginBeone();
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                }
             } else if(order.equals("设置")){
                 Intent intent = new Intent(this,SettingActivity.class);
                 startActivity(intent);
-            }else if (order.equals("讯飞")){
-                Intent intent = new Intent(this,NlpDemo.class);
-                startActivity(intent);
             }
         } else if (parseMode == 1) {
-            if (order.equals("中国中国")) {
-                speakText("已为你切换到TT语音助手模式");
-                parseMode = 0;
-            }else {
-                try {
-                    getAIUIResult(order);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
+            try {
+                getAIUIResult(order);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }else if (parseMode == 2){
+            if (checkAIUIAgent()){
+                startTextNlp(order);
             }
         }
     }
@@ -637,7 +656,160 @@ public class MainActivity extends Activity {
         mTts.setParameter(SpeechConstant.TTS_AUDIO_PATH, Environment.getExternalStorageDirectory() + "/msc/tts.wav");
     }
 
+    private String getAIUIParams() {
+        String params = "";
 
+        AssetManager assetManager = getResources().getAssets();
+        try {
+            InputStream ins = assetManager.open("cfg/aiui_phone.cfg");
+            byte[] buffer = new byte[ins.available()];
+
+            ins.read(buffer);
+            ins.close();
+
+            params = new String(buffer);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return params;
+    }
+
+    private boolean checkAIUIAgent(){
+        if( null == mAIUIAgent ){
+            Log.i( TAG, "create aiui agent" );
+            mAIUIAgent = AIUIAgent.createAgent( this, getAIUIParams(), mAIUIListener );
+            AIUIMessage startMsg = new AIUIMessage(AIUIConstant.CMD_START, 0, 0, null, null);
+            mAIUIAgent.sendMessage( startMsg );
+        }
+
+        if( null == mAIUIAgent ){
+            final String strErrorTip = "创建 AIUI Agent 失败！";
+            showTip( strErrorTip );
+        }
+
+        return null != mAIUIAgent;
+    }
+
+    private void startTextNlp(String text){
+        Log.i( TAG, "start text nlp" );
+        String params = "data_type=text";
+
+        if( TextUtils.isEmpty(text) ){
+            return;
+        }
+
+        byte[] textData = text.getBytes();
+
+        AIUIMessage msg = new AIUIMessage(AIUIConstant.CMD_WRITE, 0, 0, params, textData);
+        mAIUIAgent.sendMessage(msg);
+    }
+
+    private AIUIListener mAIUIListener = new AIUIListener() {
+
+        @Override
+        public void onEvent(AIUIEvent event) {
+            switch (event.eventType) {
+                case AIUIConstant.EVENT_WAKEUP:
+                    Log.i( TAG,  "on event: "+ event.eventType );
+                    showTip( "进入识别状态" );
+                    break;
+
+                case AIUIConstant.EVENT_RESULT: {
+                    Log.i( TAG,  "on event: "+ event.eventType );
+                    try {
+                        JSONObject bizParamJson = new JSONObject(event.info);
+                        JSONObject data = bizParamJson.getJSONArray("data").getJSONObject(0);
+                        JSONObject params = data.getJSONObject("params");
+                        JSONObject content = data.getJSONArray("content").getJSONObject(0);
+
+                        if (content.has("cnt_id")) {
+                            String cnt_id = content.getString("cnt_id");
+                            JSONObject cntJson = new JSONObject(new String(event.data.getByteArray(cnt_id), "utf-8"));
+
+//                            mNlpText.append( "\n" );
+//                            mNlpText.append(cntJson.toString());
+
+                            String sub = params.optString("sub");
+                            if ("nlp".equals(sub)) {
+                                // 解析得到语义结果
+                                String resultStr = cntJson.optString("intent");
+                                JSONObject answer = new JSONObject(resultStr).optJSONObject("answer");
+                                if(answer != null) {
+                                    String answerText = answer.optString("text");
+                                    Log.i(TAG, resultStr);
+                                    if (TextUtils.isEmpty(answerText)) {
+                                        speakText("对不起，我不明白");
+                                    } else {
+                                        speakText(answerText);
+                                    }
+                                }else {
+                                    speakText("对不起，我不明白");
+                                }
+                            }
+                        }
+                    } catch (Throwable e) {
+                        e.printStackTrace();
+//                        mNlpText.append( "\n" );
+//                        mNlpText.append( e.getLocalizedMessage() );
+                    }
+
+//                    mNlpText.append( "\n" );
+                } break;
+
+                case AIUIConstant.EVENT_ERROR: {
+                    Log.i( TAG,  "on event: "+ event.eventType );
+//                    mNlpText.append( "\n" );
+//                    mNlpText.append( "错误: "+event.arg1+"\n"+event.info );
+                } break;
+
+                case AIUIConstant.EVENT_VAD: {
+                    if (AIUIConstant.VAD_BOS == event.arg1) {
+                        showTip("找到vad_bos");
+                    } else if (AIUIConstant.VAD_EOS == event.arg1) {
+                        showTip("找到vad_eos");
+                    } else {
+                        showTip("" + event.arg2);
+                    }
+                } break;
+
+                case AIUIConstant.EVENT_START_RECORD: {
+                    Log.i( TAG,  "on event: "+ event.eventType );
+                    showTip("开始录音");
+                } break;
+
+                case AIUIConstant.EVENT_STOP_RECORD: {
+                    Log.i( TAG,  "on event: "+ event.eventType );
+                    showTip("停止录音");
+                } break;
+
+                case AIUIConstant.EVENT_STATE: {	// 状态事件
+                    mAIUIState = event.arg1;
+
+                    if (AIUIConstant.STATE_IDLE == mAIUIState) {
+                        // 闲置状态，AIUI未开启
+                        showTip("STATE_IDLE");
+                    } else if (AIUIConstant.STATE_READY == mAIUIState) {
+                        // AIUI已就绪，等待唤醒
+                        showTip("STATE_READY");
+                    } else if (AIUIConstant.STATE_WORKING == mAIUIState) {
+                        // AIUI工作中，可进行交互
+                        showTip("STATE_WORKING");
+                    }
+                } break;
+
+                case AIUIConstant.EVENT_CMD_RETURN:{
+                    if( AIUIConstant.CMD_UPLOAD_LEXICON == event.arg1 ){
+                        showTip( "上传"+ (0==event.arg2?"成功":"失败") );
+                    }
+                }break;
+
+                default:
+                    break;
+            }
+        }
+
+    };
     @Override
     protected void onResume() {
 
