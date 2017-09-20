@@ -23,7 +23,6 @@
             android:name=".activity.SettingActivity"
             >
         </activity>
-        <activity android:name=".activity.NlpDemo" />
 
         <!-- 移动统计分析 -->
         <meta-data
