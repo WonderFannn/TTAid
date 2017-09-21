@@ -429,7 +429,7 @@ public class MainActivity extends Activity {
         if (order.equals("中国")){
             if (isLogin) {
                 parseMode = 1;
-                speakText("已为你切换到AIUI模式");
+                speakText("已为你切换到智能家居模式");
             } else {
                 speakText("正在登录");
                 try {
@@ -443,8 +443,8 @@ public class MainActivity extends Activity {
             speakText("已为你切换到TT语音助手模式");
             parseMode = 0;
             return;
-        }else if (order.equals("讯飞")){
-            speakText("已为你切换到讯飞AIUI模式");
+        }else if (order.equals("金鑫")){
+            speakText("已为你切换到AIUI模式");
             parseMode = 2;
             return;
         }
