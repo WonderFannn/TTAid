@@ -48,18 +48,21 @@ public class BackgroungSpeechRecongnizerService extends Service {
     @Override
     public void onDestroy() {
         ToastUtil.showShort(BaseApplication.getContext(),"后台语音识别服务已关闭");
+        unregisterReceiver(wakeBroadcast);
+        if (hearer != null){
+            hearer.cancel();
+            hearer.destroy();
+        }
+        if(mListenThread != null){
+            mListenThread.interrupt();
+            mListenThread = null;
+        }
         super.onDestroy();
     }
 
     private void init() {
         hearer = SpeechRecognizer.createRecognizer(this, mInitListener);
         setParameter();
-        // 非空判断，防止因空指针使程序崩溃
-        if (hearer != null) {
-//            BroadcastManager.sendBroadcast(BroadcastManager.ACTION_VOICE_EMULATE_KEY_OPEN, null);
-        } else {
-//            ToastUtil.showShort(getApplicationContext(), "未初始化唤醒对象");
-        }
     }
 
 
@@ -215,6 +218,8 @@ public class BackgroungSpeechRecongnizerService extends Service {
                 mListenThread = new ListenThread();
                 mListenThread.start();
             }else if(BroadcastManager.ACTION_VOICE_EMULATE_KEY_CLOSE.equals(action)){
+
+                Log.d("wangfan", "onReceive: 接收到关闭后台语音识别广播");
                 ToastUtil.showShort(BaseApplication.getContext(),"接收到关闭后台语音识别广播");
                 if(mListenThread!=null){
                     mListenThread.interrupt();
