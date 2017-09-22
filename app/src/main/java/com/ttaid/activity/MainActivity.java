@@ -860,7 +860,7 @@ public class MainActivity extends Activity {
             try {
                 while (true) {
                     if (mIat != null && !mIat.isListening()) {
-                        Thread.sleep(300);
+                        Thread.sleep(50);
                         mIatResults.clear();
                         mIat.startListening(mRecognizerListener);
                     }
