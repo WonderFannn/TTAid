@@ -443,12 +443,15 @@ public class MainActivity extends Activity {
             speakText("已为你切换到TT语音助手模式");
             parseMode = 0;
             return;
-        }else if (order.equals("金鑫")){
+        }else if (order.equals("美国")){
             speakText("已为你切换到AIUI模式");
             parseMode = 2;
             return;
+        }else if (order.equals("关闭")) {
+            speakText("再见");
+            finish();
+            return;
         }
-
         if (parseMode == 0) {
             if (order.equals("清空")) {
                 clearMovieShow();
@@ -498,10 +501,7 @@ public class MainActivity extends Activity {
                     movListIndex = 0;
                 }
                 shouMoveResult(movieList, movListIndex);
-            } else if (order.equals("关闭")) {
-                speakText("再见");
-                finish();
-            } else if(order.equals("设置")){
+            }  else if(order.equals("设置")){
                 Intent intent = new Intent(this,SettingActivity.class);
                 startActivity(intent);
             }
