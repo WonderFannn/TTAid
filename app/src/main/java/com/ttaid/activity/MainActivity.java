@@ -176,7 +176,7 @@ public class MainActivity extends Activity {
                             isLogin = false;
                             parseMode = 0;
                         } else {
-                            speakText("已经切换到AIUI模式");
+                            speakText("已经切换到智能家居模式");
                             isLogin = true;
                             parseMode = 1;
                         }
