@@ -53,8 +53,10 @@ import com.iflytek.cloud.SpeechSynthesizer;
 import com.iflytek.cloud.SynthesizerListener;
 import com.tencent.bugly.crashreport.CrashReport;
 import com.ttaid.R;
+import com.ttaid.application.BaseApplication;
 import com.ttaid.broad.BroadcastManager;
 import com.ttaid.dao.MovieInfo;
+import com.ttaid.service.BackgroungSpeechRecongnizerService;
 import com.ttaid.util.GetMacUtil;
 import com.ttaid.util.JsonParser;
 
@@ -284,6 +286,10 @@ public class MainActivity extends Activity {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(com.ttaid.R.layout.main_activity);
         ButterKnife.bind(this);
+        //启动后台语音识别服务
+        Intent mBootIntent = new Intent(BaseApplication.getContext(), BackgroungSpeechRecongnizerService.class);
+        startService(mBootIntent);
+
         setting = getSharedPreferences(getString(R.string.setting_prf),0);
         WifiManager wm = (WifiManager)getApplicationContext().getSystemService(getApplicationContext().WIFI_SERVICE);
         mMac = wm.getConnectionInfo().getMacAddress();
@@ -476,11 +482,15 @@ public class MainActivity extends Activity {
                     return;
                 }
                 String idString = movieList.get(index).getId() + "";
-                Intent intent = new Intent("com.tv.kuaisou.action.DetailActivity");
-                intent.setPackage("com.tv.kuaisou");
-                intent.putExtra("id", idString);
-                startActivity(intent);
-                BroadcastManager.sendBroadcast(BroadcastManager.ACTION_VOICE_EMULATE_KEY_OPEN, null);
+                try{
+                    Intent intent = new Intent("com.tv.kuaisou.action.DetailActivity");
+                    intent.setPackage("com.tv.kuaisou");
+                    intent.putExtra("id", idString);
+                    startActivity(intent);
+                    BroadcastManager.sendBroadcast(BroadcastManager.ACTION_VOICE_EMULATE_KEY_OPEN, null);
+                }catch (Exception e){
+                    speakText("没有安装影视快搜，请安装");
+                }
             } else if (order.indexOf("搜索") == 0) {
                 String movName = order.substring(order.indexOf("搜索") + 2, order.length());
                 searchMovie(movName);
@@ -813,7 +823,6 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
 
-//        BroadcastManager.sendBroadcast(BroadcastManager.ACTION_VOICE_WAKE_CLOSE, null);
         BroadcastManager.sendBroadcast(BroadcastManager.ACTION_VOICE_EMULATE_KEY_CLOSE, null);
         mQueue = Volley.newRequestQueue(this);
         // 初始化识别无UI识别对象
@@ -838,6 +847,9 @@ public class MainActivity extends Activity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        //停止后台识别服务
+        Intent intent = new Intent(BaseApplication.getContext(), BackgroungSpeechRecongnizerService.class);
+        stopService(intent);
 
         if (null != mIat) {
             // 退出时释放连接

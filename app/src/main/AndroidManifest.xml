@@ -20,8 +20,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".activity.SettingActivity"
-            >
+            android:name=".activity.SettingActivity">
         </activity>
 
         <!-- 移动统计分析 -->
@@ -32,6 +31,7 @@
             android:name="IFLYTEK_CHANNEL"
             android:value="Android_Demo" />
 
+        <service android:name=".service.BackgroungSpeechRecongnizerService" />
     </application>
 
     <uses-sdk android:minSdkVersion="15" />
