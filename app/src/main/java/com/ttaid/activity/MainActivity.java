@@ -19,6 +19,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
+import android.net.ConnectivityManager;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Environment;
@@ -51,10 +52,10 @@ import com.iflytek.cloud.SpeechError;
 import com.iflytek.cloud.SpeechRecognizer;
 import com.iflytek.cloud.SpeechSynthesizer;
 import com.iflytek.cloud.SynthesizerListener;
-import com.tencent.bugly.crashreport.CrashReport;
 import com.ttaid.R;
 import com.ttaid.application.BaseApplication;
 import com.ttaid.broad.BroadcastManager;
+import com.ttaid.broad.NetworkStateReceiver;
 import com.ttaid.dao.MovieInfo;
 import com.ttaid.service.BackgroungSpeechRecongnizerService;
 import com.ttaid.util.GetMacUtil;
@@ -90,6 +91,8 @@ public class MainActivity extends Activity {
     TextView tv3;
 
     private static String TAG = MainActivity.class.getSimpleName();
+    NetworkStateReceiver netWorkStateReceiver;
+
     private SharedPreferences setting;
     // 语音听写对象
     private SpeechRecognizer mIat;
@@ -823,6 +826,10 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
 
+        if (netWorkStateReceiver == null) {
+            netWorkStateReceiver = new NetworkStateReceiver();
+        }
+        BroadcastManager.registerBoradcastReceiver1(netWorkStateReceiver, ConnectivityManager.CONNECTIVITY_ACTION);
         BroadcastManager.sendBroadcast(BroadcastManager.ACTION_VOICE_EMULATE_KEY_CLOSE, null);
         mQueue = Volley.newRequestQueue(this);
         // 初始化识别无UI识别对象
@@ -841,6 +848,7 @@ public class MainActivity extends Activity {
             mListenlingThread.interrupt();
             mListenlingThread = null;
         }
+        BroadcastManager.unregisterBoradcastReceiver(netWorkStateReceiver);
         super.onPause();
     }
 
