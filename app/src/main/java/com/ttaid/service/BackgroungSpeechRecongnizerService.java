@@ -169,26 +169,46 @@ public class BackgroungSpeechRecongnizerService extends Service {
             Log.i("TAG", "WS->result:"+text);
             if(!TextUtils.isEmpty(text)){
                 ToastUtil.showShort(BaseApplication.getContext(),text);
-                if (PinyinFormat.getPinYin(text).equals(PinyinFormat.getPinYin("返回"))){
+
+                if (text.contains("返回")){
                     BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_BACK,null);
-                }else if (PinyinFormat.getPinYin(text).equals(PinyinFormat.getPinYin("向上"))
-                        ||PinyinFormat.getPinYin(text).equals(PinyinFormat.getPinYin("上"))){
-                    BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_UP,null);
-                }else if (PinyinFormat.getPinYin(text).equals(PinyinFormat.getPinYin("向下"))
-                        ||PinyinFormat.getPinYin(text).equals(PinyinFormat.getPinYin("下"))
-                        ||PinyinFormat.getPinYin(text).equals(PinyinFormat.getPinYin("想象"))){
-                    BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_DOWN,null);
-                }else if (PinyinFormat.getPinYin(text).equals(PinyinFormat.getPinYin("向左"))
-                        ||PinyinFormat.getPinYin(text).equals(PinyinFormat.getPinYin("左"))
-                        ||PinyinFormat.getPinYin(text).equals(PinyinFormat.getPinYin("项总"))){
-                    BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_LEFT,null);
-                }else if (PinyinFormat.getPinYin(text).equals(PinyinFormat.getPinYin("向右"))
-                        ||PinyinFormat.getPinYin(text).equals(PinyinFormat.getPinYin("右"))
-                        ||PinyinFormat.getPinYin(text).equals(PinyinFormat.getPinYin("想要"))){
-                    BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_RIGHT,null);
-                }else if (PinyinFormat.getPinYin(text).equals(PinyinFormat.getPinYin("确定"))){
+                    return;
+                }else if (text.contains("确定")){
                     BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_CENTER,null);
+                    return;
+                }else if (text.contains("上")){
+                    BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_UP,null);
+                    return;
+                }else if (text.contains("下")){
+                    BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_DOWN,null);
+                    return;
+                }else if (text.contains("左")){
+                    BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_LEFT,null);
+                    return;
+                }else if (text.contains("右")){
+                    BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_RIGHT,null);
+                    return;
                 }
+//                if (PinyinFormat.getPinYin(text).equals(PinyinFormat.getPinYin("返回"))){
+//                    BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_BACK,null);
+//                }else if (PinyinFormat.getPinYin(text).equals(PinyinFormat.getPinYin("向上"))
+//                        ||PinyinFormat.getPinYin(text).equals(PinyinFormat.getPinYin("上"))){
+//                    BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_UP,null);
+//                }else if (PinyinFormat.getPinYin(text).equals(PinyinFormat.getPinYin("向下"))
+//                        ||PinyinFormat.getPinYin(text).equals(PinyinFormat.getPinYin("下"))
+//                        ||PinyinFormat.getPinYin(text).equals(PinyinFormat.getPinYin("想象"))){
+//                    BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_DOWN,null);
+//                }else if (PinyinFormat.getPinYin(text).equals(PinyinFormat.getPinYin("向左"))
+//                        ||PinyinFormat.getPinYin(text).equals(PinyinFormat.getPinYin("左"))
+//                        ||PinyinFormat.getPinYin(text).equals(PinyinFormat.getPinYin("项总"))){
+//                    BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_LEFT,null);
+//                }else if (PinyinFormat.getPinYin(text).equals(PinyinFormat.getPinYin("向右"))
+//                        ||PinyinFormat.getPinYin(text).equals(PinyinFormat.getPinYin("右"))
+//                        ||PinyinFormat.getPinYin(text).equals(PinyinFormat.getPinYin("想要"))){
+//                    BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_RIGHT,null);
+//                }else if (PinyinFormat.getPinYin(text).equals(PinyinFormat.getPinYin("确定"))){
+//                    BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_CENTER,null);
+//                }
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -209,6 +229,10 @@ public class BackgroungSpeechRecongnizerService extends Service {
             String action = intent.getAction();
             if (BroadcastManager.ACTION_VOICE_EMULATE_KEY_OPEN.equals(action)) {
                 ToastUtil.showShort(BaseApplication.getContext(),"接收到开启后台语音识别广播");
+
+                BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_UP,null);
+                BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_UP,null);
+                BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_UP,null);
                 if (hearer != null) {
                     hearer.startListening(mRecoListener);
                 }else {
