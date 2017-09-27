@@ -6,9 +6,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.IBinder;
 import android.text.TextUtils;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.iflytek.cloud.ErrorCode;
 import com.iflytek.cloud.InitListener;
@@ -17,10 +19,11 @@ import com.iflytek.cloud.RecognizerResult;
 import com.iflytek.cloud.SpeechConstant;
 import com.iflytek.cloud.SpeechError;
 import com.iflytek.cloud.SpeechRecognizer;
+import com.iflytek.cloud.SpeechSynthesizer;
+import com.iflytek.cloud.SynthesizerListener;
 import com.ttaid.application.BaseApplication;
 import com.ttaid.broad.BroadcastManager;
 import com.ttaid.util.JsonParser;
-import com.ttaid.util.PinyinFormat;
 import com.ttaid.util.ToastUtil;
 
 public class BackgroungSpeechRecongnizerService extends Service {
@@ -29,6 +32,9 @@ public class BackgroungSpeechRecongnizerService extends Service {
     public static SpeechRecognizer hearer;
     //监听线程
     ListenThread mListenThread;
+    // 语音合成对象
+    private SpeechSynthesizer mTts;
+    private int wakeTimes = 10;
 
     @Override
     public void onCreate() {
@@ -63,9 +69,56 @@ public class BackgroungSpeechRecongnizerService extends Service {
     private void init() {
         hearer = SpeechRecognizer.createRecognizer(this, mInitListener);
         setParameter();
+        mTts = SpeechSynthesizer.createSynthesizer(this, mInitListener);
+        setTTSParam();
     }
 
 
+    private void speakText(String text) {
+        mTts.startSpeaking(text, mTtsListener);
+    }
+    private SynthesizerListener mTtsListener = new SynthesizerListener() {
+        @Override
+        public void onSpeakBegin() {
+            if (hearer.isListening()) {
+                hearer.stopListening();
+                if (mListenThread != null) {
+                    mListenThread.interrupt();
+                    mListenThread = null;
+                }
+            }
+        }
+        @Override
+        public void onSpeakPaused() {
+        }
+        @Override
+        public void onSpeakResumed() {
+        }
+        @Override
+        public void onBufferProgress(int percent, int beginPos, int endPos,
+                                     String info) {
+        }
+        @Override
+        public void onSpeakProgress(int percent, int beginPos, int endPos) {
+        }
+        @Override
+        public void onCompleted(SpeechError error) {
+            if (error == null) {
+                if (mListenThread != null) {
+                    mListenThread.start();
+                } else {
+                    mListenThread = new ListenThread();
+                    mListenThread.start();
+                }
+            } else if (error != null) {
+//                showTip(error.getPlainDescription(true));
+                ToastUtil.showShort(BaseApplication.getContext(),error.getPlainDescription(true));
+            }
+        }
+        @Override
+        public void onEvent(int eventType, int arg1, int arg2, Bundle obj) {
+        }
+    };
     /**
      * 设置听写对象
      */
@@ -83,7 +136,29 @@ public class BackgroungSpeechRecongnizerService extends Service {
         // 设置标点符号,设置为"0"返回结果无标点,设置为"1"返回结果有标点
         hearer.setParameter(SpeechConstant.ASR_PTT,  "0");
     }
+    private void setTTSParam() {
+        // 清空参数
+        mTts.setParameter(SpeechConstant.PARAMS, null);
+        mTts.setParameter(SpeechConstant.ENGINE_TYPE, SpeechConstant.TYPE_CLOUD);
+        // 设置在线合成发音人
+        mTts.setParameter(SpeechConstant.VOICE_NAME,"xiaoyan");
+        //设置合成语速
+        mTts.setParameter(SpeechConstant.SPEED,"70");
+        //设置合成音调
+        mTts.setParameter(SpeechConstant.PITCH, "50");
+        //设置合成音量
+        mTts.setParameter(SpeechConstant.VOLUME,"80");
 
+        //设置播放器音频流类型
+        mTts.setParameter(SpeechConstant.STREAM_TYPE, "3");
+        // 设置播放合成音频打断音乐播放，默认为true
+        mTts.setParameter(SpeechConstant.KEY_REQUEST_FOCUS, "true");
+
+        // 设置音频保存路径，保存音频格式支持pcm、wav，设置路径为sd卡请注意WRITE_EXTERNAL_STORAGE权限
+        // 注：AUDIO_FORMAT参数语记需要更新版本才能生效
+        mTts.setParameter(SpeechConstant.AUDIO_FORMAT, "wav");
+        mTts.setParameter(SpeechConstant.TTS_AUDIO_PATH, Environment.getExternalStorageDirectory() + "/msc/tts.wav");
+    }
     public class ListenThread extends Thread{
         @Override
         public void run() {
@@ -168,8 +243,18 @@ public class BackgroungSpeechRecongnizerService extends Service {
             }
             Log.i("TAG", "WS->result:"+text);
             if(!TextUtils.isEmpty(text)){
+                if (text.contains("重庆重庆")){
+                    speakText("主人，小T为你服务");
+                    wakeTimes = 10;
+                }
+                if (wakeTimes == 0){
+                    speakText("主人，小T睡觉了");
+                    wakeTimes--;
+                    return;
+                }else if(wakeTimes < 0){
+                    return;
+                }
                 ToastUtil.showShort(BaseApplication.getContext(),text);
-
                 if (text.contains("返回")){
                     BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_BACK,null);
                     return;
@@ -188,6 +273,12 @@ public class BackgroungSpeechRecongnizerService extends Service {
                 }else if (text.contains("右")){
                     BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_RIGHT,null);
                     return;
+                }else if(text.contains("休眠")) {
+                    speakText("主人，小T睡觉了");
+                    wakeTimes = -1;
+                }
+                else{
+                    wakeTimes --;
                 }
 //                if (PinyinFormat.getPinYin(text).equals(PinyinFormat.getPinYin("返回"))){
 //                    BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_BACK,null);
