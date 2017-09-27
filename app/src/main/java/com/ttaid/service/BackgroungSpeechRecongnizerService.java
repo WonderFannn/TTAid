@@ -243,7 +243,7 @@ public class BackgroungSpeechRecongnizerService extends Service {
             }
             Log.i("TAG", "WS->result:"+text);
             if(!TextUtils.isEmpty(text)){
-                if (text.contains("重庆重庆")){
+                if (text.contains("成都成都")){
                     speakText("主人，小T为你服务");
                     wakeTimes = 10;
                 }
@@ -320,7 +320,7 @@ public class BackgroungSpeechRecongnizerService extends Service {
             String action = intent.getAction();
             if (BroadcastManager.ACTION_VOICE_EMULATE_KEY_OPEN.equals(action)) {
                 ToastUtil.showShort(BaseApplication.getContext(),"接收到开启后台语音识别广播");
-
+                speakText("主人，小T在后台为你服务");
                 BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_UP,null);
                 BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_UP,null);
                 BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_UP,null);
