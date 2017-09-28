@@ -10,7 +10,6 @@ import android.os.Environment;
 import android.os.IBinder;
 import android.text.TextUtils;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.iflytek.cloud.ErrorCode;
 import com.iflytek.cloud.InitListener;
@@ -34,7 +33,7 @@ public class BackgroungSpeechRecongnizerService extends Service {
     ListenThread mListenThread;
     // 语音合成对象
     private SpeechSynthesizer mTts;
-    private int wakeTimes = 10;
+    private int wakeTimes = 5;
 
     @Override
     public void onCreate() {
@@ -245,7 +244,7 @@ public class BackgroungSpeechRecongnizerService extends Service {
             if(!TextUtils.isEmpty(text)){
                 if (text.contains("成都成都")){
                     speakText("主人，小T为你服务");
-                    wakeTimes = 10;
+                    wakeTimes = 5;
                 }
                 if (wakeTimes == 0){
                     speakText("主人，小T睡觉了");
@@ -257,21 +256,27 @@ public class BackgroungSpeechRecongnizerService extends Service {
                 ToastUtil.showShort(BaseApplication.getContext(),text);
                 if (text.contains("返回")){
                     BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_BACK,null);
+                    wakeTimes = 5;
                     return;
                 }else if (text.contains("确定")){
                     BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_CENTER,null);
+                    wakeTimes = 5;
                     return;
                 }else if (text.contains("上")){
                     BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_UP,null);
+                    wakeTimes = 5;
                     return;
                 }else if (text.contains("下")){
                     BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_DOWN,null);
+                    wakeTimes = 5;
                     return;
                 }else if (text.contains("左")){
                     BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_LEFT,null);
+                    wakeTimes = 5;
                     return;
                 }else if (text.contains("右")){
                     BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_RIGHT,null);
+                    wakeTimes = 5;
                     return;
                 }else if(text.contains("休眠")) {
                     speakText("主人，小T睡觉了");
