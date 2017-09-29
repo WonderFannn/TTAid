@@ -472,13 +472,19 @@ public class MainActivity extends Activity {
                     speakText("请先搜索电影");
                     return;
                 }
-                int index = movListIndex;
+                int index;
                 if (order.contains("1") || order.contains("一")) {
                     index = movListIndex;
                 } else if (order.contains("2") || order.contains("二")) {
                     index = movListIndex + 1;
                 } else if (order.contains("3") || order.contains("三")) {
                     index = movListIndex + 2;
+                } else {
+                    index = movListIndex + movieList.size();//下标越界
+                }
+                //例外情况
+                if (order.equals("播放")){
+                    index = movListIndex;
                 }
                 if (index >= movieList.size()) {
                     speakText("您说错了吧");
