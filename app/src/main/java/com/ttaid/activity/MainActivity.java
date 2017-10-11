@@ -10,6 +10,7 @@ import android.net.ConnectivityManager;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -44,9 +45,15 @@ import com.ttaid.application.BaseApplication;
 import com.ttaid.broad.BroadcastManager;
 import com.ttaid.broad.NetworkStateReceiver;
 import com.ttaid.dao.MovieInfo;
+import com.ttaid.led.LedController;
 import com.ttaid.service.BackgroungSpeechRecongnizerService;
+import com.ttaid.smartecho.CaeWakeUpFileObserver;
+import com.ttaid.smartecho.CaeWakeupListener;
+import com.ttaid.smartecho.Config;
+import com.ttaid.smartecho.SmartEcho;
 import com.ttaid.util.GetMacUtil;
 import com.ttaid.util.JsonParser;
+import com.ttaid.util.LogUtil;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -60,11 +67,13 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity implements CaeWakeupListener {
 
     //控件绑定
     @BindView(R.id.tv_show_info)
@@ -93,9 +102,14 @@ public class MainActivity extends Activity {
     private static String TAG = MainActivity.class.getSimpleName();
 
 
-    
+    //CAE唤醒
+    private CaeWakeUpFileObserver mCaeWakeUpFileObserver;
+
 
     NetworkStateReceiver netWorkStateReceiver;
+    private boolean mIsOnTts = false;
+    private boolean mStartRecognize = false;
+    private boolean mIsNeedStartIat = false;
 
     private SharedPreferences setting;
     // 语音听写对象
@@ -104,7 +118,7 @@ public class MainActivity extends Activity {
     private SpeechSynthesizer mTts;
     // 用HashMap存储听写结果
     private HashMap<String, String> mIatResults = new LinkedHashMap<String, String>();
-    ListeningThread mListenlingThread;
+//    ListeningThread mListenlingThread;
     private Toast mToast;
     // 引擎类型
     private String mEngineType = SpeechConstant.TYPE_CLOUD;
@@ -201,6 +215,7 @@ public class MainActivity extends Activity {
         }
     };
 
+
     private void shouMoveResult(List<MovieInfo> movieList, int movListIndex) {
         shouMoveResult(movieList, movListIndex, true);
     }
@@ -286,7 +301,7 @@ public class MainActivity extends Activity {
             mQueue.add(imageRequest1);
         }
     }
-
+    private SmartEcho mSmartEcho;
     @SuppressLint("ShowToast")
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -296,6 +311,10 @@ public class MainActivity extends Activity {
         //启动后台语音识别服务
         Intent mBootIntent = new Intent(BaseApplication.getContext(), BackgroungSpeechRecongnizerService.class);
         startService(mBootIntent);
+        mCaeWakeUpFileObserver = new CaeWakeUpFileObserver(this);
+
+//        mSmartEcho = new SmartEcho(getApplicationContext());
+//        mSmartEcho.start();
 
         setting = getSharedPreferences(getString(R.string.setting_prf),0);
         WifiManager wm = (WifiManager)getApplicationContext().getSystemService(getApplicationContext().WIFI_SERVICE);
@@ -355,6 +374,7 @@ public class MainActivity extends Activity {
             showTip(resultText);
             if (isLast && !TextUtils.isEmpty(resultText)) {
                 parseOrder(resultText);
+                stopIat();
             }
         }
 
@@ -369,13 +389,13 @@ public class MainActivity extends Activity {
     private SynthesizerListener mTtsListener = new SynthesizerListener() {
         @Override
         public void onSpeakBegin() {
-            if (mIat.isListening()) {
-                mIat.stopListening();
-                if (mListenlingThread != null) {
-                    mListenlingThread.interrupt();
-                    mListenlingThread = null;
-                }
-            }
+//            if (mIat.isListening()) {
+//                mIat.stopListening();
+//                if (mListenlingThread != null) {
+//                    mListenlingThread.interrupt();
+//                    mListenlingThread = null;
+//                }
+//            }
         }
 
         @Override
@@ -398,21 +418,46 @@ public class MainActivity extends Activity {
         @Override
         public void onCompleted(SpeechError error) {
             if (error == null) {
-                if (mListenlingThread != null) {
-                    mListenlingThread.start();
-                } else {
-                    mListenlingThread = new ListeningThread();
-                    mListenlingThread.start();
-                }
-            } else if (error != null) {
+
+            }else if (error != null) {
                 showTip(error.getPlainDescription(true));
             }
+            new Handler().postDelayed(new Runnable(){
+                public void run() {
+                    mIsOnTts = false;
+
+                    if (mIsNeedStartIat) {
+                        LogUtil.d("tts - onCompleted - need start iat after tts");
+                        mIsNeedStartIat = false;
+                        startIat();
+                    }
+                }
+            }, 300);
         }
 
         @Override
         public void onEvent(int eventType, int arg1, int arg2, Bundle obj) {
         }
     };
+
+    private void startIat() {
+        LogUtil.d("SmartEcho - startIat");
+        mStartRecognize = true;
+        // start listening user
+        if(mIat != null && !mIat.isListening()) {
+            mIat.startListening(mRecognizerListener);
+        }
+        showLedOnListener(true);
+    }
+
+    private void stopIat() {
+        LogUtil.d("SmartEcho - stopIat");
+        mStartRecognize = false;
+        if(mIat != null && mIat.isListening()) {
+            mIat.stopListening();
+        }
+        showLedOnListener(false);
+    }
 
     private void clearMovieShow() {
         ll1.setVisibility(View.GONE);
@@ -846,18 +891,23 @@ public class MainActivity extends Activity {
         // 使用SpeechRecognizer对象，可根据回调消息自定义界面；
         mIat = SpeechRecognizer.createRecognizer(MainActivity.this, mInitListener);
         setParam();
-        mListenlingThread = new ListeningThread();
-        mListenlingThread.start();
+//        mListenlingThread = new ListeningThread();
+//        mListenlingThread.start();
         setTTSParam();
+
+        if (mCaeWakeUpFileObserver != null){
+            Log.d(TAG, "onCreate: 开始监听唤醒词");
+            mCaeWakeUpFileObserver.startWatching();
+        }
         super.onResume();
     }
 
     @Override
     protected void onPause() {
-        if (mListenlingThread != null) {
-            mListenlingThread.interrupt();
-            mListenlingThread = null;
-        }
+//        if (mListenlingThread != null) {
+//            mListenlingThread.interrupt();
+//            mListenlingThread = null;
+//        }
         BroadcastManager.unregisterBoradcastReceiver(netWorkStateReceiver);
         super.onPause();
     }
@@ -880,26 +930,104 @@ public class MainActivity extends Activity {
             // 退出时释放连接
             mTts.destroy();
         }
+
+        mCaeWakeUpFileObserver.stopWatching();
     }
 
-    class ListeningThread extends Thread {
-        @Override
-        public void run() {
-            super.run();
-            Log.d(TAG, "ListeningThread run: ");
-            try {
-                while (true) {
-                    if (mIat != null && !mIat.isListening()) {
-                        Thread.sleep(50);
-                        mIatResults.clear();
-                        mIat.startListening(mRecognizerListener);
+    @Override
+    public void onWakeUp(int angle, int chanel) {
+        Log.d(TAG, "onWakeUp: 灵犀唤醒");
+        startTtsOutput(getEchoText(), true);
+        LedController.flashAllLed();
+    }
+
+    public int startTtsOutput(String text, boolean needStartIatAfterTts) {
+        if (mTts == null) {
+            return -1;
+        }
+        mIsOnTts = true;
+        mStartRecognize = false;
+        mIsNeedStartIat = needStartIatAfterTts;
+        // 设置参数
+        setTTSParam();
+        int code = mTts.startSpeaking(text, mTtsListener);
+        if (code != ErrorCode.SUCCESS) {
+            LogUtil.d("tts error: " + code);
+        }
+        return code;
+    }
+
+    private int mEchoIndex = 0;
+    private String getEchoText() {
+        mEchoIndex++;
+        if(mEchoIndex >= Config.ECHO_TEXT_ARRAY.length) {
+            mEchoIndex = 0;
+        }
+        return Config.ECHO_TEXT_ARRAY[mEchoIndex];
+    }
+    /**
+     * ==================================================================================
+     *                               control led
+     * ==================================================================================
+     */
+    private Timer mTimer;
+    private boolean isShowLedGroupA = true;
+    private TimerTask mLedTimerTask;
+
+    public void showLedOnListener(boolean isShow) {
+        LogUtil.d("SmartEcho - showLedOnListener: " + isShow);
+        if (isShow) {
+            if (mTimer == null ) {
+                mTimer = new Timer();
+                mLedTimerTask = new TimerTask() {
+                    @Override
+                    public void run() {
+                        controlLedOnListerner();
                     }
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
+                };
+                mTimer.schedule(mLedTimerTask, 500, 1000);
             }
+        } else {
+            if (mTimer != null) {
+                mTimer.cancel();
+                mTimer = null;
+            }
+            if (mLedTimerTask != null) {
+                mLedTimerTask.cancel();
+                mLedTimerTask = null;
+            }
+            LedController.setAllLedOff();
         }
     }
+
+    public void controlLedOnListerner() {
+        if (isShowLedGroupA) {
+            LedController.setGroupLedState("A", 255);
+            LedController.setGroupLedState("B", 0);
+        } else {
+            LedController.setGroupLedState("A", 0);
+            LedController.setGroupLedState("B", 255);
+        }
+        isShowLedGroupA = !isShowLedGroupA;
+    }
+//    class ListeningThread extends Thread {
+//        @Override
+//        public void run() {
+//            super.run();
+//            Log.d(TAG, "ListeningThread run: ");
+//            try {
+//                while (true) {
+//                    if (mIat != null && !mIat.isListening()) {
+//                        Thread.sleep(50);
+//                        mIatResults.clear();
+//                        mIat.startListening(mRecognizerListener);
+//                    }
+//                }
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
+//        }
+//    }
 }
 
 

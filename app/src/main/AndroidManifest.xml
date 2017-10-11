@@ -11,7 +11,7 @@
         android:label="TT助手" >
 
         <activity
-            android:name=".activity.MainActivity"
+            android:name=".activity.TestActivity"
             android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|orientation|screenLayout|fontScale"
             android:screenOrientation="portrait" >
             <intent-filter>
@@ -23,6 +23,7 @@
         <activity
             android:name=".activity.SettingActivity">
         </activity>
+        <activity android:name=".activity.MainActivity" />
 
         <!-- 移动统计分析 -->
         <meta-data
