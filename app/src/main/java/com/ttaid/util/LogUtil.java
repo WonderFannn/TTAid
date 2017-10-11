@@ -12,7 +12,7 @@ import java.util.Set;
 
 public class LogUtil {
 
-    public static final String TAG = "TAG";
+    public static final String TAG = "sail";
 
     public static void d(String s) {
         Log.d(TAG, s);

@@ -37,20 +37,16 @@ import com.iflytek.cloud.SpeechError;
 import com.iflytek.cloud.SpeechRecognizer;
 import com.iflytek.cloud.SpeechSynthesizer;
 import com.iflytek.cloud.SynthesizerListener;
-import com.iflytek.cloud.TextUnderstander;
-import com.iflytek.cloud.TextUnderstanderListener;
-import com.iflytek.cloud.UnderstanderResult;
 import com.ttaid.R;
 import com.ttaid.application.BaseApplication;
 import com.ttaid.broad.BroadcastManager;
 import com.ttaid.dao.MovieInfo;
 import com.ttaid.led.LedController;
-import com.ttaid.service.BackgroungSpeechRecongnizerService;
+import com.ttaid.service.BackgroundEchoService;
 import com.ttaid.smartecho.CaeWakeUpFileObserver;
 import com.ttaid.smartecho.CaeWakeupListener;
 import com.ttaid.smartecho.Config;
 import com.ttaid.smartecho.audio.PcmRecorder;
-import com.ttaid.smartecho.textunderstand.TextUnderstandResult;
 import com.ttaid.util.GetMacUtil;
 import com.ttaid.util.JsonParser;
 import com.ttaid.util.LogUtil;
@@ -111,13 +107,10 @@ public class TestActivity extends Activity implements CaeWakeupListener {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(com.ttaid.R.layout.main_activity);
         ButterKnife.bind(this);
-        //启动后台语音识别服务
-        Intent mBootIntent = new Intent(BaseApplication.getContext(), BackgroungSpeechRecongnizerService.class);
-        startService(mBootIntent);
+//        //启动后台语音识别服务
+//        Intent mBootIntent = new Intent(BaseApplication.getContext(), BackgroundEchoService.class);
+//        startService(mBootIntent);
         mContext = getApplicationContext();
-        init();
-        start();
-
         WifiManager wm = (WifiManager)getApplicationContext().getSystemService(getApplicationContext().WIFI_SERVICE);
         mMac = wm.getConnectionInfo().getMacAddress();
         if(!TextUtils.isEmpty(GetMacUtil.getMacAddress())) {
@@ -132,10 +125,29 @@ public class TestActivity extends Activity implements CaeWakeupListener {
         mQueue = Volley.newRequestQueue(this);
     }
 
+
+    @Override
+    protected void onResume() {
+        Log.d("TAG", "onResume: ");
+        BroadcastManager.sendBroadcast(BroadcastManager.ACTION_VOICE_EMULATE_KEY_CLOSE, null);
+        Intent mBootIntent = new Intent(BaseApplication.getContext(), BackgroundEchoService.class);
+        stopService(mBootIntent);
+        startService(mBootIntent);
+        init();
+        start();
+        startTtsOutput("欢迎使用TT语音助手");
+        super.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+//        stop();
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        stop();
     }
 
     private Context mContext;
@@ -149,13 +161,15 @@ public class TestActivity extends Activity implements CaeWakeupListener {
     public void init() {
         initTts();
         initIat();
-        initTextUnderstand();
+        mCaeWakeUpFileObserver = null;
         mCaeWakeUpFileObserver = new CaeWakeUpFileObserver(this);
-        startTtsOutput("欢迎使用TT语音助手");
     }
 
     public void start() {
         if (mCaeWakeUpFileObserver != null) {
+            mCaeWakeUpFileObserver.startWatching();
+        }else {
+            mCaeWakeUpFileObserver = new CaeWakeUpFileObserver(this);
             mCaeWakeUpFileObserver.startWatching();
         }
     }
@@ -163,13 +177,13 @@ public class TestActivity extends Activity implements CaeWakeupListener {
     public void stop() {
         if (mCaeWakeUpFileObserver != null) {
             mCaeWakeUpFileObserver.stopWatching();
+            mCaeWakeUpFileObserver = null;
         }
         stopIat();
     }
 
     @Override
     public void onWakeUp(int angle, int chanel) {
-        LogUtil.d("SmartEcho - onWakeUp");
 
         Log.d("TAG", "Echo  onWakeUp - angle:"+angle+"chane:"+chanel);
         startTtsOutput(getEchoText(), true);
@@ -323,7 +337,7 @@ public class TestActivity extends Activity implements CaeWakeupListener {
             // 设置在线合成发音人
             mTts.setParameter(SpeechConstant.VOICE_NAME, voicer);
             //设置合成语速
-            mTts.setParameter(SpeechConstant.SPEED, "50");
+            mTts.setParameter(SpeechConstant.SPEED, "60");
             //设置合成音调
             mTts.setParameter(SpeechConstant.PITCH, "50");
             //设置合成音量
@@ -512,109 +526,9 @@ public class TestActivity extends Activity implements CaeWakeupListener {
 
         String resultStr = resultBuffer.toString();
         return resultStr;
-//        LogUtil.d("======== result: " + resultStr);
-//
-//        if(" ".equals(resultStr) || "。 ".equals(resultStr)) {
-//            LogUtil.d("====== skip result: " + resultStr);
-//            return;
-//        }
-//        Log.d("TAG", "printResult: "+text);
-//        int ret = mTextUnderstander.understandText(text, mTextUnderstanderListener);
-//        if(ret != 0)
-//        {
-//            LogUtil.d("text understand error: "+ ret);
-//        }
     }
 
 
-    /**
-     * ==================================================================================
-     *                               text understand
-     * ==================================================================================
-     */
-    // 语义理解对象（文本到语义）
-    private TextUnderstander mTextUnderstander;
-
-    /**
-     * 初始化监听器（文本到语义）。
-     */
-    private InitListener mTextUdrInitListener = new InitListener() {
-
-        @Override
-        public void onInit(int code) {
-            LogUtil.d("textUnderstanderListener init() code = " + code);
-            if (code != ErrorCode.SUCCESS) {
-                LogUtil.d("====== mTextUdrInitListener - onInit - init error, code: " + code);
-            }
-        }
-    };
-
-    private TextUnderstanderListener mTextUnderstanderListener = new TextUnderstanderListener() {
-
-        @Override
-        public void onResult(final UnderstanderResult result) {
-            LogUtil.d("========= TextUnderstanderListener - onResult =========");
-            if (null != result) {
-                // 显示
-                String UnderstandText = result.getResultString();
-                if (!TextUtils.isEmpty(UnderstandText)) {
-//					String showtext = mResultEdit.getText().toString();
-//					showtext += "\r\n";
-//					showtext += UnderstandText;
-//					mResultEdit.setText(showtext);
-                    LogUtil.d(UnderstandText);
-
-                    TextUnderstandResult textUnderstandResult = new TextUnderstandResult(UnderstandText);
-                    String ttsText = textUnderstandResult.getTtsText();
-                    LogUtil.d("====== ttsText: " + ttsText);
-                    if(ttsText != null && !ttsText.equals("")) {
-                        startTtsOutput(ttsText);
-                    }
-                }
-            } else {
-                LogUtil.d("understander result : null");
-            }
-            LogUtil.d("========================================================");
-        }
-
-        @Override
-        public void onError(SpeechError error) {
-            // 文本语义不能使用回调错误码14002，请确认您下载sdk时是否勾选语义场景和私有语义的发布
-            LogUtil.d("TextUnderstanderListener - onError Code："	+ error.getErrorCode());
-        }
-    };
-
-    private void initTextUnderstand() {
-        mTextUnderstander = TextUnderstander.createTextUnderstander(mContext, mTextUdrInitListener);
-    }
-
-    private void understandResult(RecognizerResult results) {
-        String text = JsonParser.parseIatResult(results.getResultString());
-
-        String sn = null;
-        // 读取json结果中的sn字段
-        try {
-            JSONObject resultJson = new JSONObject(results.getResultString());
-            sn = resultJson.optString("sn");
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        mIatResults.put(sn, text);
-
-        StringBuffer resultBuffer = new StringBuffer();
-        for (String key : mIatResults.keySet()) {
-            resultBuffer.append(mIatResults.get(key));
-        }
-
-//		LogUtil.d("======== result: " + resultBuffer.toString());
-
-        int ret = mTextUnderstander.understandText(text, mTextUnderstanderListener);
-        if(ret != 0)
-        {
-            LogUtil.d("text understand error: " + ret);
-        }
-    }
 
     /**
      * ==================================================================================

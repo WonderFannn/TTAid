@@ -285,26 +285,6 @@ public class BackgroungSpeechRecongnizerService extends Service {
                 else{
                     wakeTimes --;
                 }
-//                if (PinyinFormat.getPinYin(text).equals(PinyinFormat.getPinYin("返回"))){
-//                    BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_BACK,null);
-//                }else if (PinyinFormat.getPinYin(text).equals(PinyinFormat.getPinYin("向上"))
-//                        ||PinyinFormat.getPinYin(text).equals(PinyinFormat.getPinYin("上"))){
-//                    BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_UP,null);
-//                }else if (PinyinFormat.getPinYin(text).equals(PinyinFormat.getPinYin("向下"))
-//                        ||PinyinFormat.getPinYin(text).equals(PinyinFormat.getPinYin("下"))
-//                        ||PinyinFormat.getPinYin(text).equals(PinyinFormat.getPinYin("想象"))){
-//                    BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_DOWN,null);
-//                }else if (PinyinFormat.getPinYin(text).equals(PinyinFormat.getPinYin("向左"))
-//                        ||PinyinFormat.getPinYin(text).equals(PinyinFormat.getPinYin("左"))
-//                        ||PinyinFormat.getPinYin(text).equals(PinyinFormat.getPinYin("项总"))){
-//                    BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_LEFT,null);
-//                }else if (PinyinFormat.getPinYin(text).equals(PinyinFormat.getPinYin("向右"))
-//                        ||PinyinFormat.getPinYin(text).equals(PinyinFormat.getPinYin("右"))
-//                        ||PinyinFormat.getPinYin(text).equals(PinyinFormat.getPinYin("想要"))){
-//                    BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_RIGHT,null);
-//                }else if (PinyinFormat.getPinYin(text).equals(PinyinFormat.getPinYin("确定"))){
-//                    BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_CENTER,null);
-//                }
             }
         } catch (Exception e) {
             e.printStackTrace();
