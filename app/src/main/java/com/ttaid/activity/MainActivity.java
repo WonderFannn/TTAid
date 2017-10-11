@@ -1,18 +1,5 @@
 package com.ttaid.activity;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
@@ -61,6 +48,19 @@ import com.ttaid.service.BackgroungSpeechRecongnizerService;
 import com.ttaid.util.GetMacUtil;
 import com.ttaid.util.JsonParser;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
@@ -91,6 +91,10 @@ public class MainActivity extends Activity {
     TextView tv3;
 
     private static String TAG = MainActivity.class.getSimpleName();
+
+
+    
+
     NetworkStateReceiver netWorkStateReceiver;
 
     private SharedPreferences setting;

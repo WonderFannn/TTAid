@@ -11,4 +11,5 @@
     <string name="beone_aiui_url">http://www.beonehome.com:6100/smarthome/mobile/service?$data=</string>
     <!-- 设置相关 -->
     <string name="setting_prf">settingprf</string>
+    <string formatted="false" name="tts_toast_format">buffer %d%%，playing %d%%</string>
 </resources>
