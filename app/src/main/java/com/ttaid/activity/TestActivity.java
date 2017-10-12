@@ -125,24 +125,32 @@ public class TestActivity extends Activity implements CaeWakeupListener {
         mQueue = Volley.newRequestQueue(this);
     }
 
-
     @Override
     protected void onResume() {
+
         Log.d("TAG", "onResume: ");
         BroadcastManager.sendBroadcast(BroadcastManager.ACTION_VOICE_EMULATE_KEY_CLOSE, null);
         Intent mBootIntent = new Intent(BaseApplication.getContext(), BackgroundEchoService.class);
         stopService(mBootIntent);
         startService(mBootIntent);
+
         init();
         start();
-        startTtsOutput("欢迎使用TT语音助手");
+
+        stop();
+
+        init();
+        start();
+
+        startTtsOutput("欢迎使用哔湾语音助手");
+
         super.onResume();
-    }
+}
 
     @Override
     protected void onPause() {
         super.onPause();
-//        stop();
+        stop();
     }
 
     @Override
@@ -254,7 +262,12 @@ public class TestActivity extends Activity implements CaeWakeupListener {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                tvShowInfo.setText(text);
+                if(text.contains("哔湾") ){
+                    String a = text.replace("哔湾","Beone");
+                    tvShowInfo.setText(a);
+                }else {
+                    tvShowInfo.setText(text);
+                }
             }
         });
 
@@ -657,7 +670,7 @@ public class TestActivity extends Activity implements CaeWakeupListener {
         if (order.equals("中国")){
             if (isLogin) {
                 parseMode = 1;
-                startTtsOutput("已为你切换到智能家居模式");
+                startTtsOutput("已为你切换到哔湾智慧家居模式");
             } else {
                 startTtsOutput("正在登录");
                 try {
@@ -668,14 +681,14 @@ public class TestActivity extends Activity implements CaeWakeupListener {
             }
             return;
         }else if(order.equals("中国中国")){
-            startTtsOutput("已为你切换到TT语音助手模式");
+            startTtsOutput("已为你切换到影视搜素模式");
             parseMode = 0;
             return;
         }else if (order.equals("美国")){
             startTtsOutput("已为你切换到AIUI模式");
             parseMode = 2;
             return;
-        }else if (order.equals("关闭")) {
+        }else if (order.equals("退出应用")) {
             startTtsOutput("再见");
             finish();
             return;
@@ -779,7 +792,7 @@ public class TestActivity extends Activity implements CaeWakeupListener {
     }
     /**
      * ==================================================================================
-     *                               智能家居模式
+     *                               哔湾智慧家居模式
      * ==================================================================================
      */
     private boolean isLogin = false;
@@ -828,7 +841,7 @@ public class TestActivity extends Activity implements CaeWakeupListener {
                             isLogin = false;
                             parseMode = 0;
                         } else {
-                            startTtsOutput("已经切换到智能家居模式");
+                            startTtsOutput("已经切换到哔湾智慧家居模式");
                             isLogin = true;
                             parseMode = 1;
                         }

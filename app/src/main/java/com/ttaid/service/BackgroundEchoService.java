@@ -52,7 +52,7 @@ public class BackgroundEchoService extends Service {
                 backgroundEcho = new BackgroundEcho(getApplicationContext());
                 backgroundEcho.init();
                 backgroundEcho.start();
-                backgroundEcho.startTtsOutput("主人，小T在后台为你服务");
+                backgroundEcho.startTtsOutput("主人，我在后台为你服务");
                 BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_UP,null);
                 BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_UP,null);
                 BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_UP,null);
