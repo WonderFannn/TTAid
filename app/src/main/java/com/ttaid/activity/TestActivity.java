@@ -554,6 +554,8 @@ public class TestActivity extends Activity implements CaeWakeupListener {
      */
     private RequestQueue mQueue;
     private List<MovieInfo> movieList;
+    private int parseMode = 0;
+
     private int movListIndex = 0;
 
     private Response.ErrorListener RsErrorListener = new Response.ErrorListener() {
@@ -561,7 +563,6 @@ public class TestActivity extends Activity implements CaeWakeupListener {
         public void onErrorResponse(VolleyError error) {
         }
     };
-
     private Response.Listener<String> RsListener = new Response.Listener<String>() {
         @Override
         public void onResponse(final String response) {
@@ -582,7 +583,6 @@ public class TestActivity extends Activity implements CaeWakeupListener {
             }
         }
     };
-    private int parseMode = 0;
 
     private void shouMoveResult(List<MovieInfo> movieList, int movListIndex) {
         shouMoveResult(movieList, movListIndex, true);
