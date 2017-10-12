@@ -16,14 +16,15 @@ import com.iflytek.cloud.SpeechError;
 import com.iflytek.cloud.SpeechRecognizer;
 import com.iflytek.cloud.SpeechSynthesizer;
 import com.iflytek.cloud.SynthesizerListener;
+import com.iflytek.cloud.TextUnderstander;
+import com.iflytek.cloud.TextUnderstanderListener;
+import com.iflytek.cloud.UnderstanderResult;
 import com.ttaid.R;
-import com.ttaid.application.BaseApplication;
-import com.ttaid.broad.BroadcastManager;
 import com.ttaid.led.LedController;
 import com.ttaid.smartecho.audio.PcmRecorder;
+import com.ttaid.smartecho.textunderstand.TextUnderstandResult;
 import com.ttaid.util.JsonParser;
 import com.ttaid.util.LogUtil;
-import com.ttaid.util.ToastUtil;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -34,11 +35,10 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 /**
- * Created by wangfan on 2017/10/11.
+ * Created by wangfan on 2017/10/12.
  */
 
-public class BackgroundEcho implements CaeWakeupListener {
-
+public class BeoneAid implements CaeWakeupListener{
     private Context mContext;
 
     private CaeWakeUpFileObserver mCaeWakeUpFileObserver;
@@ -47,7 +47,7 @@ public class BackgroundEcho implements CaeWakeupListener {
     boolean mIsOnTts = false;
     boolean mIsNeedStartIat = false;
 
-    public BackgroundEcho(Context context) {
+    public BeoneAid(Context context) {
         mContext = context;
         init();
     }
@@ -56,33 +56,34 @@ public class BackgroundEcho implements CaeWakeupListener {
         LogUtil.d("SmartEcho - init");
         initTts();
         initIat();
+        initTextUnderstand();
         mCaeWakeUpFileObserver = new CaeWakeUpFileObserver(this);
     }
 
     public void start() {
+        LogUtil.d("SmartEcho - start");
         mRecorder = new PcmRecorder();
         mRecorder.startRecording(mPcmListener);
-        LogUtil.d("SmartEcho - start");
         if (mCaeWakeUpFileObserver != null) {
             mCaeWakeUpFileObserver.startWatching();
         }
-
     }
 
     public void stop() {
         mRecorder.stopRecording();
+        mRecorder = null;
         LogUtil.d("SmartEcho - stop");
         if (mCaeWakeUpFileObserver != null) {
             mCaeWakeUpFileObserver.stopWatching();
         }
         stopIat();
-        mIat = null;
     }
 
     @Override
     public void onWakeUp(int angle, int chanel) {
+        LogUtil.d("SmartEcho - onWakeUp");
 
-        Log.d("TAG", "BgEcho  onWakeUp - angle:"+angle+"chane:"+chanel);
+        Log.d("TAG", "Echo  onWakeUp - angle:"+angle+"chane:"+chanel);
         startTtsOutput(getEchoText(), true);
         LedController.flashAllLed();
     }
@@ -231,7 +232,7 @@ public class BackgroundEcho implements CaeWakeupListener {
             // 设置在线合成发音人
             mTts.setParameter(SpeechConstant.VOICE_NAME, voicer);
             //设置合成语速
-            mTts.setParameter(SpeechConstant.SPEED, "60");
+            mTts.setParameter(SpeechConstant.SPEED, "50");
             //设置合成音调
             mTts.setParameter(SpeechConstant.PITCH, "50");
             //设置合成音量
@@ -297,7 +298,6 @@ public class BackgroundEcho implements CaeWakeupListener {
     private void initIat() {
         LogUtil.d("SmartEcho - initIat");
 
-
         mIat = SpeechRecognizer.createRecognizer(mContext, null);
         setIatParam();
     }
@@ -313,11 +313,10 @@ public class BackgroundEcho implements CaeWakeupListener {
         @Override
         public void onResult(RecognizerResult result, boolean isLast) {
             LogUtil.d("====== mIatListener - onResult");
-            String order = printResult(result);
+            printResult(result);
 
             if(isLast) {
                 LogUtil.d("====== It is last result, so stop recognizer");
-                parsedResult(order,isLast);
                 stopIat();
             }
         }
@@ -424,40 +423,93 @@ public class BackgroundEcho implements CaeWakeupListener {
 
     /**
      * ==================================================================================
-     *                               yu语义解析
+     *                               text understand
      * ==================================================================================
      */
-    private void parsedResult(String results, Boolean isLast) {
-        String text = results;
-        ToastUtil.showShort(mContext,text);
-        if(TextUtils.isEmpty(text)){
-                return;
-            }
-            Log.i("TAG", "WS->result:"+text);
-            if(!TextUtils.isEmpty(text)){
-                ToastUtil.showShort(BaseApplication.getContext(),text);
-                if (text.contains("返回")){
-                    BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_BACK,null);
-                    return;
-                }else if (text.contains("确定")){
-                    BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_CENTER,null);
-                    return;
-                }else if (text.contains("上")){
-                    BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_UP,null);
-                    return;
-                }else if (text.contains("下")){
-                    BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_DOWN,null);
-                    return;
-                }else if (text.contains("左")){
-                    BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_LEFT,null);
-                    return;
-                }else if (text.contains("右")){
-                    BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_RIGHT,null);
-                    return;
-                }
-            }
+    // 语义理解对象（文本到语义）
+    private TextUnderstander mTextUnderstander;
 
+    /**
+     * 初始化监听器（文本到语义）。
+     */
+    private InitListener mTextUdrInitListener = new InitListener() {
+
+        @Override
+        public void onInit(int code) {
+            LogUtil.d("textUnderstanderListener init() code = " + code);
+            if (code != ErrorCode.SUCCESS) {
+                LogUtil.d("====== mTextUdrInitListener - onInit - init error, code: " + code);
+            }
+        }
+    };
+
+    private TextUnderstanderListener mTextUnderstanderListener = new TextUnderstanderListener() {
+
+        @Override
+        public void onResult(final UnderstanderResult result) {
+            LogUtil.d("========= TextUnderstanderListener - onResult =========");
+            if (null != result) {
+                // 显示
+                String UnderstandText = result.getResultString();
+                if (!TextUtils.isEmpty(UnderstandText)) {
+//					String showtext = mResultEdit.getText().toString();
+//					showtext += "\r\n";
+//					showtext += UnderstandText;
+//					mResultEdit.setText(showtext);
+                    LogUtil.d(UnderstandText);
+
+                    TextUnderstandResult textUnderstandResult = new TextUnderstandResult(UnderstandText);
+                    String ttsText = textUnderstandResult.getTtsText();
+                    LogUtil.d("====== ttsText: " + ttsText);
+                    if(ttsText != null && !ttsText.equals("")) {
+                        startTtsOutput(ttsText);
+                    }
+                }
+            } else {
+                LogUtil.d("understander result : null");
+            }
+            LogUtil.d("========================================================");
+        }
+
+        @Override
+        public void onError(SpeechError error) {
+            // 文本语义不能使用回调错误码14002，请确认您下载sdk时是否勾选语义场景和私有语义的发布
+            LogUtil.d("TextUnderstanderListener - onError Code："	+ error.getErrorCode());
+        }
+    };
+
+    private void initTextUnderstand() {
+        mTextUnderstander = TextUnderstander.createTextUnderstander(mContext, mTextUdrInitListener);
     }
+
+    private void understandResult(RecognizerResult results) {
+        String text = JsonParser.parseIatResult(results.getResultString());
+
+        String sn = null;
+        // 读取json结果中的sn字段
+        try {
+            JSONObject resultJson = new JSONObject(results.getResultString());
+            sn = resultJson.optString("sn");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        mIatResults.put(sn, text);
+
+        StringBuffer resultBuffer = new StringBuffer();
+        for (String key : mIatResults.keySet()) {
+            resultBuffer.append(mIatResults.get(key));
+        }
+
+//		LogUtil.d("======== result: " + resultBuffer.toString());
+
+        int ret = mTextUnderstander.understandText(text, mTextUnderstanderListener);
+        if(ret != 0)
+        {
+            LogUtil.d("text understand error: " + ret);
+        }
+    }
+
     /**
      * ==================================================================================
      *                               control led
@@ -503,5 +555,4 @@ public class BackgroundEcho implements CaeWakeupListener {
         }
         isShowLedGroupA = !isShowLedGroupA;
     }
-
 }

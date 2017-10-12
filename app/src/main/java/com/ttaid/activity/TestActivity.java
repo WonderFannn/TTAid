@@ -174,6 +174,8 @@ public class TestActivity extends Activity implements CaeWakeupListener {
     }
 
     public void start() {
+        mRecorder = new PcmRecorder();
+        mRecorder.startRecording(mPcmListener);
         if (mCaeWakeUpFileObserver != null) {
             mCaeWakeUpFileObserver.startWatching();
         }else {
@@ -183,6 +185,8 @@ public class TestActivity extends Activity implements CaeWakeupListener {
     }
 
     public void stop() {
+        mRecorder.stopRecording();
+        mRecorder = null;
         if (mCaeWakeUpFileObserver != null) {
             mCaeWakeUpFileObserver.stopWatching();
             mCaeWakeUpFileObserver = null;
@@ -195,7 +199,7 @@ public class TestActivity extends Activity implements CaeWakeupListener {
 
         Log.d("TAG", "Echo  onWakeUp - angle:"+angle+"chane:"+chanel);
         startTtsOutput(getEchoText(), true);
-        LedController.flashAllLed();
+//        LedController.flashAllLed();
     }
 
     private int mEchoIndex = 0;
@@ -415,8 +419,7 @@ public class TestActivity extends Activity implements CaeWakeupListener {
 
     private void initIat() {
         LogUtil.d("SmartEcho - initIat");
-        mRecorder = new PcmRecorder();
-        mRecorder.startRecording(mPcmListener);
+
 
         mIat = SpeechRecognizer.createRecognizer(mContext, null);
         setIatParam();
@@ -473,7 +476,7 @@ public class TestActivity extends Activity implements CaeWakeupListener {
         if(mIat != null && !mIat.isListening()) {
             mIat.startListening(mIatListener);
         }
-        showLedOnListener(true);
+//        showLedOnListener(true);
     }
 
     private void stopIat() {
@@ -482,7 +485,8 @@ public class TestActivity extends Activity implements CaeWakeupListener {
         if(mIat != null && mIat.isListening()) {
             mIat.stopListening();
         }
-        showLedOnListener(false);
+//        mRecorder.stopRecording();
+//        showLedOnListener(false);
     }
 
     private void setIatParam() {
