@@ -111,10 +111,10 @@ public class ToastUtil {
 	 * @param context
 	 * @param tvString
 	 */
-	public static void ShowTopToast(Context context, String tvString){
-		ShowTopToast(context, tvString, 1000);
+	public static void showTopToast(Context context, String tvString){
+		showTopToast(context, tvString, 1000);
 	}
-	public static void ShowTopToast(Context context, String tvString, int cntime) {
+	public static void showTopToast(Context context, String tvString, int cntime) {
 
 		if (toast == null) {
 			toast = new Toast(context);

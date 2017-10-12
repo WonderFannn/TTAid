@@ -75,6 +75,7 @@ public class BeoneAid implements CaeWakeupListener{
         LogUtil.d("SmartEcho - init");
         initTts();
         initIat();
+        initMac();
         mCaeWakeUpFileObserver = new CaeWakeUpFileObserver(this);
     }
 
@@ -168,6 +169,10 @@ public class BeoneAid implements CaeWakeupListener{
         // 设置参数
         setTtsParam();
         int code = mTts.startSpeaking(text, mTtsListener);
+        if (text.contains("哔湾")){
+            text = text.replace("哔湾","Beone");
+        }
+        ToastUtil.showTopToast(mContext,text);
         if (code != ErrorCode.SUCCESS) {
             LogUtil.d("tts error: " + code);
         }

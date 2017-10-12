@@ -35,6 +35,16 @@
 
         <service android:name=".service.BackgroungSpeechRecongnizerService" />
         <service android:name=".service.BackgroundEchoService" />
+        <service android:name=".service.BeoneAidService" />
+
+        <receiver android:name=".broad.BeoneAidReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
     </application>
 
     <uses-sdk android:minSdkVersion="15" />
