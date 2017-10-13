@@ -38,12 +38,13 @@ public class BeoneAidService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+
         String action = intent.getAction();
         if (action != null) {
             LogUtil.d("BeoneAidService - onStartCommand - " + action);
             if (SMART_ECHO_ACTION_START.equals(action)) {
                 if (!isEchoRunning) {
-                    mBeoneAid.startTtsOutput("灵犀灵犀来了", false);
+                    mBeoneAid.startTtsOutput("哔湾助手在后台", false);
                 }
             } else if(SMART_ECHO_ACTION_WAKEUP.equals(action)) {
                 mBeoneAid.onWakeUp(0, 0);

@@ -14,6 +14,7 @@ import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.iflytek.aiui.AIUIAgent;
 import com.iflytek.aiui.AIUIConstant;
 import com.iflytek.aiui.AIUIEvent;
@@ -31,7 +32,6 @@ import com.iflytek.cloud.SynthesizerListener;
 import com.ttaid.R;
 import com.ttaid.broad.BroadcastManager;
 import com.ttaid.dao.MovieInfo;
-import com.ttaid.led.LedController;
 import com.ttaid.smartecho.audio.PcmRecorder;
 import com.ttaid.util.GetMacUtil;
 import com.ttaid.util.JsonParser;
@@ -50,8 +50,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 
 /**
  * Created by wangfan on 2017/10/12.
@@ -75,6 +73,7 @@ public class BeoneAid implements CaeWakeupListener{
         LogUtil.d("SmartEcho - init");
         initTts();
         initIat();
+        initReqQue();
         initMac();
         mCaeWakeUpFileObserver = new CaeWakeUpFileObserver(this);
     }
@@ -104,7 +103,6 @@ public class BeoneAid implements CaeWakeupListener{
 
         Log.d("TAG", "Echo  onWakeUp - angle:"+angle+"chane:"+chanel);
         startTtsOutput(getEchoText(), true);
-        LedController.flashAllLed();
     }
 
     private int mEchoIndex = 0;
@@ -186,40 +184,23 @@ public class BeoneAid implements CaeWakeupListener{
 
         @Override
         public void onSpeakBegin() {
-            LogUtil.d("tts - start play");
         }
-
         @Override
         public void onSpeakPaused() {
-            LogUtil.d("tts - pause play");
         }
-
         @Override
         public void onSpeakResumed() {
-            LogUtil.d("tts - resume play");
         }
-
         @Override
         public void onBufferProgress(int percent, int beginPos, int endPos,
                                      String info) {
-            // 合成进度
-            mPercentForBuffering = percent;
-            LogUtil.d(String.format(mContext.getString(R.string.tts_toast_format),
-                    mPercentForBuffering, mPercentForPlaying));
         }
-
         @Override
         public void onSpeakProgress(int percent, int beginPos, int endPos) {
-            // 播放进度
-            mPercentForPlaying = percent;
-            LogUtil.d(String.format(mContext.getString(R.string.tts_toast_format),
-                    mPercentForBuffering, mPercentForPlaying));
         }
-
         @Override
         public void onCompleted(SpeechError error) {
             if (error == null) {
-                LogUtil.d("tts - play completed");
             } else if (error != null) {
                 LogUtil.d(error.getPlainDescription(true));
             }
@@ -227,7 +208,6 @@ public class BeoneAid implements CaeWakeupListener{
                 public void run() {
                     mIsOnTts = false;
                     if (mIsNeedStartIat) {
-                        LogUtil.d("tts - onCompleted - need start iat after tts");
                         mIsNeedStartIat = false;
                         startIat();
                     }
@@ -326,50 +306,42 @@ public class BeoneAid implements CaeWakeupListener{
 
         @Override
         public void onVolumeChanged(int arg0, byte[] arg1) {
-            LogUtil.d("====== mIatListener - onVolumeChanged");
         }
         @Override
         public void onResult(RecognizerResult result, boolean isLast) {
             String rltStr = printResult(result);
             if(isLast) {
                 parseOrder(rltStr);
+                ToastUtil.showShort(mContext,rltStr);
                 stopIat();
             }
         }
         @Override
         public void onEvent(int arg0, int arg1, int arg2, Bundle arg3) {
-            LogUtil.d("====== mIatListener - onEvent");
         }
         @Override
         public void onError(SpeechError arg0) {
-            LogUtil.d("====== mIatListener - onError");
             stopIat();
         }
         @Override
         public void onEndOfSpeech() {
-            LogUtil.d("====== mIatListener - onEndOfSpeech");
         }
         @Override
         public void onBeginOfSpeech() {
-            LogUtil.d("====== mIatListener - onBeginOfSpeech");
         }
     };
     private void startIat() {
-        LogUtil.d("SmartEcho - startIat");
         mStartRecognize = true;
         // start listening user
         if(mIat != null && !mIat.isListening()) {
             mIat.startListening(mIatListener);
         }
-        showLedOnListener(true);
     }
     private void stopIat() {
-        LogUtil.d("SmartEcho - stopIat");
         mStartRecognize = false;
         if(mIat != null && mIat.isListening()) {
             mIat.stopListening();
         }
-        showLedOnListener(false);
     }
 
     private void setIatParam() {
@@ -415,6 +387,7 @@ public class BeoneAid implements CaeWakeupListener{
             resultBuffer.append(mIatResults.get(key));
         }
         String resultStr = resultBuffer.toString();
+        LogUtil.d(resultStr);
         return resultStr;
     }
 
@@ -522,6 +495,10 @@ public class BeoneAid implements CaeWakeupListener{
     private RequestQueue mQueue;
     private List<MovieInfo> movieList;
     private int movListIndex = 0;
+
+    private void initReqQue(){
+        mQueue = Volley.newRequestQueue(mContext);
+    }
 
     private Response.ErrorListener RsErrorListener = new Response.ErrorListener() {
         @Override
@@ -906,49 +883,5 @@ public class BeoneAid implements CaeWakeupListener{
         }
 
     };
-    /**
-     * ==================================================================================
-     *                               control led
-     * ==================================================================================
-     */
-    private Timer mTimer;
-    private boolean isShowLedGroupA = true;
-    private TimerTask mLedTimerTask;
 
-    public void showLedOnListener(boolean isShow) {
-        LogUtil.d("SmartEcho - showLedOnListener: " + isShow);
-        if (isShow) {
-            if (mTimer == null ) {
-                mTimer = new Timer();
-                mLedTimerTask = new TimerTask() {
-                    @Override
-                    public void run() {
-                        controlLedOnListerner();
-                    }
-                };
-                mTimer.schedule(mLedTimerTask, 500, 1000);
-            }
-        } else {
-            if (mTimer != null) {
-                mTimer.cancel();
-                mTimer = null;
-            }
-            if (mLedTimerTask != null) {
-                mLedTimerTask.cancel();
-                mLedTimerTask = null;
-            }
-            LedController.setAllLedOff();
-        }
-    }
-
-    public void controlLedOnListerner() {
-        if (isShowLedGroupA) {
-            LedController.setGroupLedState("A", 255);
-            LedController.setGroupLedState("B", 0);
-        } else {
-            LedController.setGroupLedState("A", 0);
-            LedController.setGroupLedState("B", 255);
-        }
-        isShowLedGroupA = !isShowLedGroupA;
-    }
 }

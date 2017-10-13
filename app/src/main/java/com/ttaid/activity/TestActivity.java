@@ -41,7 +41,6 @@ import com.ttaid.R;
 import com.ttaid.application.BaseApplication;
 import com.ttaid.broad.BroadcastManager;
 import com.ttaid.dao.MovieInfo;
-import com.ttaid.led.LedController;
 import com.ttaid.service.BackgroundEchoService;
 import com.ttaid.smartecho.CaeWakeUpFileObserver;
 import com.ttaid.smartecho.CaeWakeupListener;
@@ -64,8 +63,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -1077,50 +1074,6 @@ public class TestActivity extends Activity implements CaeWakeupListener {
         }
 
     };
-     /**
-     * ==================================================================================
-     *                               control led
-     * ==================================================================================
-     */
-    private Timer mTimer;
-    private boolean isShowLedGroupA = true;
-    private TimerTask mLedTimerTask;
 
-    public void showLedOnListener(boolean isShow) {
-        LogUtil.d("SmartEcho - showLedOnListener: " + isShow);
-        if (isShow) {
-            if (mTimer == null ) {
-                mTimer = new Timer();
-                mLedTimerTask = new TimerTask() {
-                    @Override
-                    public void run() {
-                        controlLedOnListerner();
-                    }
-                };
-                mTimer.schedule(mLedTimerTask, 500, 1000);
-            }
-        } else {
-            if (mTimer != null) {
-                mTimer.cancel();
-                mTimer = null;
-            }
-            if (mLedTimerTask != null) {
-                mLedTimerTask.cancel();
-                mLedTimerTask = null;
-            }
-            LedController.setAllLedOff();
-        }
-    }
-
-    public void controlLedOnListerner() {
-        if (isShowLedGroupA) {
-            LedController.setGroupLedState("A", 255);
-            LedController.setGroupLedState("B", 0);
-        } else {
-            LedController.setGroupLedState("A", 0);
-            LedController.setGroupLedState("B", 255);
-        }
-        isShowLedGroupA = !isShowLedGroupA;
-    }
 
 }

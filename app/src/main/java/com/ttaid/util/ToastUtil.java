@@ -22,7 +22,6 @@ public class ToastUtil {
 
 	private static Toast toast;
 	private static Handler mHandler = new Handler(Looper.getMainLooper());
-
 	/**
 	 * 短时间显示Toast
 	 *
@@ -106,6 +105,7 @@ public class ToastUtil {
 	}
 
 	private static TextView text;
+
 	/**
 	 * 显示Toast
 	 * @param context
@@ -114,43 +114,44 @@ public class ToastUtil {
 	public static void showTopToast(Context context, String tvString){
 		showTopToast(context, tvString, 1000);
 	}
+	private static Toast topToast;
 	public static void showTopToast(Context context, String tvString, int cntime) {
 
-		if (toast == null) {
-			toast = new Toast(context);
-			toast.setGravity(Gravity.TOP | Gravity.FILL_HORIZONTAL, 0, 0);
-			toast.setDuration(Toast.LENGTH_LONG);
+		if (topToast == null) {
+			topToast = new Toast(context);
+			topToast.setGravity(Gravity.TOP | Gravity.CENTER, 0, 0);
+			topToast.setDuration(Toast.LENGTH_LONG);
 			View layout = LayoutInflater.from(context).inflate(R.layout.toast_xml, null);
 //            ImageView mImageView = (ImageView) layout.findViewById(R.id.iv);
 //            mImageView.setBackgroundResource(R.drawable.ic_launcher);
 			text = (TextView) layout.findViewById(R.id.text);
-			toast.setView(layout);
-			showMyToast(toast, cntime);
+			topToast.setView(layout);
+			showMyToast(topToast, cntime);
 		}
 		text.setText(tvString);
 		text.setTextColor(0xFFFFFFFF);
 		text.setTextSize(16);
-		if(toast!=null){
-			toast.show();
+		if(topToast!=null){
+			topToast.show();
 		}
 
 	}
 
 
 	//自定义停留时间
-	public static void showMyToast(final Toast toast, final int cnt) {
+	public static void showMyToast(final Toast topToast, final int cnt) {
 		final Timer timer = new Timer();
 		timer.schedule(new TimerTask() {
 			@Override
 			public void run() {
-				toast.show();
+				topToast.show();
 			}
 
 		}, 0, 3000);
 		new Timer().schedule(new TimerTask() {
 			@Override
 			public void run() {
-				toast.cancel();
+				topToast.cancel();
 				timer.cancel();
 			}
 
