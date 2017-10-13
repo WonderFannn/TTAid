@@ -71,7 +71,7 @@ public class BackgroundEcho implements CaeWakeupListener {
 
     public void stop() {
         mRecorder.stopRecording();
-        LogUtil.d("SmartEcho - stop");
+        mRecorder = null;
         if (mCaeWakeUpFileObserver != null) {
             mCaeWakeUpFileObserver.stopWatching();
         }
