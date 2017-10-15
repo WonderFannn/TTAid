@@ -20,7 +20,6 @@ import com.iflytek.cloud.TextUnderstander;
 import com.iflytek.cloud.TextUnderstanderListener;
 import com.iflytek.cloud.UnderstanderResult;
 import com.ttaid.R;
-import com.ttaid.led.LedController;
 import com.ttaid.smartecho.audio.PcmRecorder;
 import com.ttaid.smartecho.textunderstand.TextUnderstandResult;
 import com.ttaid.util.JsonParser;
@@ -31,8 +30,6 @@ import org.json.JSONObject;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.Timer;
-import java.util.TimerTask;
 
 /**
  * Created by yhc on 16-11-20.
@@ -82,7 +79,6 @@ public class SmartEcho implements CaeWakeupListener {
 
         Log.d("TAG", "Echo  onWakeUp - angle:"+angle+"chane:"+chanel);
         startTtsOutput(getEchoText(), true);
-        LedController.flashAllLed();
     }
 
     private int mEchoIndex = 0;
@@ -351,7 +347,6 @@ public class SmartEcho implements CaeWakeupListener {
         if(mIat != null && !mIat.isListening()) {
             mIat.startListening(mIatListener);
         }
-        showLedOnListener(true);
     }
 
     private void stopIat() {
@@ -360,7 +355,6 @@ public class SmartEcho implements CaeWakeupListener {
         if(mIat != null && mIat.isListening()) {
             mIat.stopListening();
         }
-        showLedOnListener(false);
     }
 
     private void setIatParam() {
@@ -519,52 +513,6 @@ public class SmartEcho implements CaeWakeupListener {
         {
             LogUtil.d("text understand error: " + ret);
         }
-    }
-
-    /**
-     * ==================================================================================
-     *                               control led
-     * ==================================================================================
-     */
-    private Timer mTimer;
-    private boolean isShowLedGroupA = true;
-    private TimerTask mLedTimerTask;
-
-    public void showLedOnListener(boolean isShow) {
-        LogUtil.d("SmartEcho - showLedOnListener: " + isShow);
-        if (isShow) {
-            if (mTimer == null ) {
-                mTimer = new Timer();
-                mLedTimerTask = new TimerTask() {
-                    @Override
-                    public void run() {
-                        controlLedOnListerner();
-                    }
-                };
-                mTimer.schedule(mLedTimerTask, 500, 1000);
-            }
-        } else {
-            if (mTimer != null) {
-                mTimer.cancel();
-                mTimer = null;
-            }
-            if (mLedTimerTask != null) {
-                mLedTimerTask.cancel();
-                mLedTimerTask = null;
-            }
-            LedController.setAllLedOff();
-        }
-    }
-
-    public void controlLedOnListerner() {
-        if (isShowLedGroupA) {
-            LedController.setGroupLedState("A", 255);
-            LedController.setGroupLedState("B", 0);
-        } else {
-            LedController.setGroupLedState("A", 0);
-            LedController.setGroupLedState("B", 255);
-        }
-        isShowLedGroupA = !isShowLedGroupA;
     }
 
 }
