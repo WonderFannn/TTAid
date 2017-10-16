@@ -412,70 +412,21 @@ public class BeoneAid implements CaeWakeupListener{
             }
             return;
         }else if(order.equals("中国中国")){
-            startTtsOutput("已为你切换到影视搜素模式");
+            startTtsOutput("已为你切换到影视搜索模式");
             parseMode = 0;
             return;
         }else if (order.equals("美国")){
             startTtsOutput("已为你切换到AIUI模式");
             parseMode = 2;
             return;
+        }else if (order.equals("英国")){
+            startTtsOutput("已为你切换到养老中心模式");
+            parseMode = 3;
+            return;
         }
         if (parseMode == 0) {
-            if (order.contains("播放")) {
-                if (movieList == null || movieList.size() == 0) {
-                    startTtsOutput("请先搜索电影");
-                    return;
-                }
-                int index;
-                if (order.contains("1") || order.contains("一")) {
-                    index = movListIndex;
-                } else if (order.contains("2") || order.contains("二")) {
-                    index = movListIndex + 1;
-                } else if (order.contains("3") || order.contains("三")) {
-                    index = movListIndex + 2;
-                } else {
-                    index = movListIndex + movieList.size();//下标越界
-                }
-                //例外情况
-                if (order.equals("播放")){
-                    index = movListIndex;
-                }
-                if (index >= movieList.size()) {
-                    startTtsOutput("您说错了吧");
-                    return;
-                }
-                String idString = movieList.get(index).getId() + "";
-                try{
-                    Intent intent = new Intent("com.tv.kuaisou.action.DetailActivity");
-                    intent.setPackage("com.tv.kuaisou");
-                    intent.putExtra("id", idString);
-                    mContext.startActivity(intent);
-                    BroadcastManager.sendBroadcast(BroadcastManager.ACTION_VOICE_EMULATE_KEY_OPEN, null);
-                }catch (Exception e){
-                    startTtsOutput("没有安装影视快搜，请安装");
-                }
-            } else if (order.indexOf("搜索") == 0) {
-                String movName = order.substring(order.indexOf("搜索") + 2, order.length());
-                searchMovie(movName);
-            } else if (order.contains("下一") || order.contains("向后")) {
-                if (movieList == null || movieList.size() == 0) {
-                    startTtsOutput("请先搜索电影");
-                    return;
-                }
-                movListIndex += 3;
-                shouMoveResult(movieList, movListIndex);
-            } else if (order.contains("上一") || order.contains("向前")) {
-                if (movieList == null || movieList.size() == 0) {
-                    startTtsOutput("请先搜索电影");
-                    return;
-                }
-                movListIndex -= 3;
-                if (movListIndex < 0) {
-                    movListIndex = 0;
-                }
-                shouMoveResult(movieList, movListIndex);
-            }
-        } else if (parseMode == 1) {
+            praseOrderByModeMovie(order);
+        }else if (parseMode == 1) {
             try {
                 getAIUIResult(order);
             } catch (JSONException e) {
@@ -485,11 +436,18 @@ public class BeoneAid implements CaeWakeupListener{
             if (checkAIUIAgent()){
                 startTextNlp(order);
             }
+        }else if (parseMode == 3){
+            if (!TextUtils.isEmpty(order)){
+                sendBroadcast(order);
+            }
         }
     }
+
+
+
     /**
      * ==================================================================================
-     *                               影视搜索
+     *                               影视搜索 mode == 0
      * ==================================================================================
      */
     private RequestQueue mQueue;
@@ -498,6 +456,63 @@ public class BeoneAid implements CaeWakeupListener{
 
     private void initReqQue(){
         mQueue = Volley.newRequestQueue(mContext);
+    }
+
+    private void praseOrderByModeMovie(String order){
+        if (order.contains("播放")) {
+            if (movieList == null || movieList.size() == 0) {
+                startTtsOutput("请先搜索电影");
+                return;
+            }
+            int index;
+            if (order.contains("1") || order.contains("一")) {
+                index = movListIndex;
+            } else if (order.contains("2") || order.contains("二")) {
+                index = movListIndex + 1;
+            } else if (order.contains("3") || order.contains("三")) {
+                index = movListIndex + 2;
+            } else {
+                index = movListIndex + movieList.size();//下标越界
+            }
+            //例外情况
+            if (order.equals("播放")){
+                index = movListIndex;
+            }
+            if (index >= movieList.size()) {
+                startTtsOutput("您说错了吧");
+                return;
+            }
+            String idString = movieList.get(index).getId() + "";
+            try{
+                Intent intent = new Intent("com.tv.kuaisou.action.DetailActivity");
+                intent.setPackage("com.tv.kuaisou");
+                intent.putExtra("id", idString);
+                mContext.startActivity(intent);
+                BroadcastManager.sendBroadcast(BroadcastManager.ACTION_VOICE_EMULATE_KEY_OPEN, null);
+            }catch (Exception e){
+                startTtsOutput("没有安装影视快搜，请安装");
+            }
+        } else if (order.indexOf("搜索") == 0) {
+            String movName = order.substring(order.indexOf("搜索") + 2, order.length());
+            searchMovie(movName);
+        } else if (order.contains("下一") || order.contains("向后")) {
+            if (movieList == null || movieList.size() == 0) {
+                startTtsOutput("请先搜索电影");
+                return;
+            }
+            movListIndex += 3;
+            shouMoveResult(movieList, movListIndex);
+        } else if (order.contains("上一") || order.contains("向前")) {
+            if (movieList == null || movieList.size() == 0) {
+                startTtsOutput("请先搜索电影");
+                return;
+            }
+            movListIndex -= 3;
+            if (movListIndex < 0) {
+                movListIndex = 0;
+            }
+            shouMoveResult(movieList, movListIndex);
+        }
     }
 
     private Response.ErrorListener RsErrorListener = new Response.ErrorListener() {
@@ -627,7 +642,7 @@ public class BeoneAid implements CaeWakeupListener{
 
     /**
      * ==================================================================================
-     *                               智慧家居
+     *                               智慧家居 mode == 1
      * ==================================================================================
      */
     private boolean isLogin = false;
@@ -743,7 +758,7 @@ public class BeoneAid implements CaeWakeupListener{
 
     /**
      * ==================================================================================
-     *                               AIUI
+     *                               AIUI mode == 2
      * ==================================================================================
      */
     private AIUIAgent mAIUIAgent = null;
@@ -884,4 +899,24 @@ public class BeoneAid implements CaeWakeupListener{
 
     };
 
+
+    /**
+     * ==================================================================================
+     *                               养老中心 mode == 3
+     * ==================================================================================
+     */
+
+    private String ACTION_OLD_PEOPLE_VOICE_MESSAGE = "action_old_people_voice_message";
+    private void sendBroadcast(String order) {
+        Bundle bundle = new Bundle();
+        byte[] orderByte = new byte[0];
+        try {
+            orderByte = order.getBytes("UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        bundle.putByteArray(ACTION_OLD_PEOPLE_VOICE_MESSAGE,orderByte);
+        BroadcastManager.sendBroadcast(ACTION_OLD_PEOPLE_VOICE_MESSAGE,bundle);
+        startTtsOutput("已经帮您通知了监控中心");
+    }
 }
