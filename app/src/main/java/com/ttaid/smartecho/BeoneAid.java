@@ -397,31 +397,29 @@ public class BeoneAid implements CaeWakeupListener{
      * ==================================================================================
      */
     private int parseMode = 0;
+    private String[] modeNames = {"影视搜索","哔湾智慧家居","AIUI","养老中心"};
+    public void setParseMode(int newMode){
+        startTtsOutput("已为你切换到"+modeNames[newMode]+"模式");
+        parseMode = newMode;
+    }
+
     private void parseOrder(String order) {
-        if (order.equals("中国")){
+        if(order.equals("中国中国")){
+            setParseMode(0);
+            return;
+        }else if (order.equals("中国")){
             if (isLogin) {
-                parseMode = 1;
-                startTtsOutput("已为你切换到哔湾智慧家居模式");
+                setParseMode(1);
             } else {
                 startTtsOutput("正在登录");
-                try {
-                    loginBeone();
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
+                loginBeone();
             }
             return;
-        }else if(order.equals("中国中国")){
-            startTtsOutput("已为你切换到影视搜索模式");
-            parseMode = 0;
-            return;
         }else if (order.equals("美国")){
-            startTtsOutput("已为你切换到AIUI模式");
-            parseMode = 2;
+            setParseMode(2);
             return;
         }else if (order.equals("英国")){
-            startTtsOutput("已为你切换到养老中心模式");
-            parseMode = 3;
+            setParseMode(3);
             return;
         }
         if (parseMode == 0) {
@@ -450,6 +448,7 @@ public class BeoneAid implements CaeWakeupListener{
      *                               影视搜索 mode == 0
      * ==================================================================================
      */
+    //影视搜索和智能家居模式共用RequestQueue
     private RequestQueue mQueue;
     private List<MovieInfo> movieList;
     private int movListIndex = 0;
@@ -689,34 +688,40 @@ public class BeoneAid implements CaeWakeupListener{
                 if (TextUtils.isEmpty(mSecretKey) || TextUtils.isEmpty(mAccount)) {
                     startTtsOutput("登录失败");
                     isLogin = false;
-                    parseMode = 0;
                 } else {
-                    startTtsOutput("已经切换到哔湾智慧家居模式");
                     isLogin = true;
-                    parseMode = 1;
+                    setParseMode(1);
                 }
             }
 
         }
     };
-    private void loginBeone() throws JSONException {
+    private void loginBeone() {
 
         SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
         Date curDate = new Date(System.currentTimeMillis());
         String time = formatter.format(curDate);
 
         JSONObject serviceContent = new JSONObject();
-        serviceContent.put("mac", mMac);
+        try {
+            serviceContent.put("mac", mMac);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
         JSONObject data = new JSONObject();
-        data.put("actionCode", "0");
-        data.put("activityCode", "T906");
-        data.put("bipCode", "B000");
-        data.put("bipVer", "1.0");
-        data.put("origDomain", "M000");
-        data.put("processTime", time);
-        data.put("homeDomain", "P000");
-        data.put("testFlag", "1");
-        data.put("serviceContent", serviceContent);
+        try {
+            data.put("actionCode", "0");
+            data.put("activityCode", "T906");
+            data.put("bipCode", "B000");
+            data.put("bipVer", "1.0");
+            data.put("origDomain", "M000");
+            data.put("processTime", time);
+            data.put("homeDomain", "P000");
+            data.put("testFlag", "1");
+            data.put("serviceContent", serviceContent);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
 
         String url = mContext.getString(R.string.beone_aiui_url) + data.toString();
         StringRequest stringRequest = new StringRequest(url, RsBeoneListener, RsErrorListener);
