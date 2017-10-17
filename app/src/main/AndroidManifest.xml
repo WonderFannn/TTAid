@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.ttaid"
+    package="com.beoneaid"
     android:installLocation="auto"
     android:versionCode="1">
 
@@ -24,6 +24,10 @@
         </activity>
         <activity android:name=".activity.MainActivity" />
         <activity android:name=".activity.TestActivity" />
+        <activity
+            android:name=".activity.ShowMovieActivity"
+            android:launchMode="singleTask">
+        </activity>
 
         <!-- 移动统计分析 -->
         <meta-data
