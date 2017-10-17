@@ -29,7 +29,7 @@ import com.iflytek.cloud.SpeechError;
 import com.iflytek.cloud.SpeechRecognizer;
 import com.iflytek.cloud.SpeechSynthesizer;
 import com.iflytek.cloud.SynthesizerListener;
-import com.ttaid.R;
+import com.beoneaid.R;
 import com.beoneaid.broad.BroadcastManager;
 import com.beoneaid.dao.MovieInfo;
 import com.beoneaid.smartecho.audio.PcmRecorder;
@@ -63,10 +63,19 @@ public class BeoneAid implements CaeWakeupListener{
     boolean mStartRecognize = false;
     boolean mIsOnTts = false;
     boolean mIsNeedStartIat = false;
+    private OnRecognizeResultListener onRecognizeResultListener = null;
 
     public BeoneAid(Context context) {
         mContext = context;
         init();
+    }
+
+    public interface OnRecognizeResultListener{
+        public void onRecognizeResult(String result);
+    }
+
+    public void setOnRecognizeResultListener(OnRecognizeResultListener resultListener){
+        onRecognizeResultListener = resultListener;
     }
 
     public void init() {
@@ -423,7 +432,8 @@ public class BeoneAid implements CaeWakeupListener{
             return;
         }
         if (parseMode == 0) {
-            praseOrderByModeMovie(order);
+//            praseOrderByModeMovie(order);
+            onRecognizeResultListener.onRecognizeResult(order);
         }else if (parseMode == 1) {
             try {
                 getAIUIResult(order);

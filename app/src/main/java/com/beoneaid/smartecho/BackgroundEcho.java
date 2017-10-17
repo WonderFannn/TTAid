@@ -16,7 +16,7 @@ import com.iflytek.cloud.SpeechError;
 import com.iflytek.cloud.SpeechRecognizer;
 import com.iflytek.cloud.SpeechSynthesizer;
 import com.iflytek.cloud.SynthesizerListener;
-import com.ttaid.R;
+import com.beoneaid.R;
 import com.beoneaid.application.BaseApplication;
 import com.beoneaid.broad.BroadcastManager;
 import com.beoneaid.smartecho.audio.PcmRecorder;

@@ -7,7 +7,11 @@ import android.os.Handler;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.beoneaid.R;
+import com.beoneaid.smartecho.audio.PcmRecorder;
 import com.beoneaid.smartecho.textunderstand.TextUnderstandResult;
+import com.beoneaid.util.JsonParser;
+import com.beoneaid.util.LogUtil;
 import com.iflytek.cloud.ErrorCode;
 import com.iflytek.cloud.InitListener;
 import com.iflytek.cloud.RecognizerListener;
@@ -20,10 +24,6 @@ import com.iflytek.cloud.SynthesizerListener;
 import com.iflytek.cloud.TextUnderstander;
 import com.iflytek.cloud.TextUnderstanderListener;
 import com.iflytek.cloud.UnderstanderResult;
-import com.ttaid.R;
-import com.beoneaid.smartecho.audio.PcmRecorder;
-import com.beoneaid.util.JsonParser;
-import com.beoneaid.util.LogUtil;
 
 import org.json.JSONException;
 import org.json.JSONObject;

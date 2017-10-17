@@ -16,7 +16,7 @@ import com.iflytek.cloud.RecognizerResult;
 import com.iflytek.cloud.SpeechConstant;
 import com.iflytek.cloud.SpeechError;
 import com.iflytek.cloud.SpeechRecognizer;
-import com.ttaid.R;
+import com.beoneaid.R;
 import com.beoneaid.application.BaseApplication;
 import com.beoneaid.broad.BroadcastManager;
 import com.beoneaid.util.JsonParser;

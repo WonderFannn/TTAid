@@ -14,7 +14,7 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.ImageRequest;
 import com.android.volley.toolbox.Volley;
-import com.ttaid.R;
+import com.beoneaid.R;
 import com.beoneaid.dao.MovieInfo;
 import com.beoneaid.events.UpdateMovieEvent;
 
@@ -71,7 +71,7 @@ public class ShowMovieActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(com.ttaid.R.layout.main_activity);
+        setContentView(R.layout.main_activity);
         ButterKnife.bind(this);
         processExtraData();
         EventBus.getDefault().register(this);

@@ -9,7 +9,7 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.ttaid.R;
+import com.beoneaid.R;
 
 import java.util.Timer;
 import java.util.TimerTask;

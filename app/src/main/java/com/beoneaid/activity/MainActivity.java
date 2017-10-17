@@ -26,12 +26,19 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.ImageRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.beoneaid.R;
+import com.beoneaid.application.BaseApplication;
+import com.beoneaid.broad.BroadcastManager;
 import com.beoneaid.broad.NetworkStateReceiver;
 import com.beoneaid.dao.MovieInfo;
 import com.beoneaid.service.BackgroungSpeechRecongnizerService;
 import com.beoneaid.smartecho.CaeWakeUpFileObserver;
+import com.beoneaid.smartecho.CaeWakeupListener;
+import com.beoneaid.smartecho.Config;
 import com.beoneaid.smartecho.SmartEcho;
 import com.beoneaid.util.GetMacUtil;
+import com.beoneaid.util.JsonParser;
+import com.beoneaid.util.LogUtil;
 import com.iflytek.aiui.AIUIAgent;
 import com.iflytek.aiui.AIUIConstant;
 import com.iflytek.aiui.AIUIEvent;
@@ -46,13 +53,6 @@ import com.iflytek.cloud.SpeechError;
 import com.iflytek.cloud.SpeechRecognizer;
 import com.iflytek.cloud.SpeechSynthesizer;
 import com.iflytek.cloud.SynthesizerListener;
-import com.ttaid.R;
-import com.beoneaid.application.BaseApplication;
-import com.beoneaid.broad.BroadcastManager;
-import com.beoneaid.smartecho.CaeWakeupListener;
-import com.beoneaid.smartecho.Config;
-import com.beoneaid.util.JsonParser;
-import com.beoneaid.util.LogUtil;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -303,7 +303,7 @@ public class MainActivity extends Activity implements CaeWakeupListener {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
-        setContentView(com.ttaid.R.layout.main_activity);
+        setContentView(R.layout.main_activity);
         ButterKnife.bind(this);
         //启动后台语音识别服务
         Intent mBootIntent = new Intent(BaseApplication.getContext(), BackgroungSpeechRecongnizerService.class);

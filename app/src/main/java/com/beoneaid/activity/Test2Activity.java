@@ -5,7 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 
 import com.beoneaid.service.BeoneAidService;
-import com.ttaid.R;
+import com.beoneaid.R;
 
 /**
  * Created by wangfan on 2017/10/13.

@@ -6,7 +6,7 @@ import android.content.Context;
 
 import com.iflytek.cloud.SpeechUtility;
 import com.tencent.bugly.crashreport.CrashReport;
-import com.ttaid.R;
+import com.beoneaid.R;
 
 public class BaseApplication extends Application {
 	private static Context context;
