@@ -39,7 +39,10 @@
 
         <service android:name=".service.BackgroungSpeechRecongnizerService" />
         <service android:name=".service.BackgroundEchoService" />
-        <service android:name=".service.BeoneAidService" >
+
+
+        <service android:name=".service.BeoneAidService"
+            >
             <intent-filter>
                 <action android:name="com.beoneaid.api.IBeoneAidService"/>
             </intent-filter>

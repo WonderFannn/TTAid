@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.IBinder;
 import android.os.RemoteCallbackList;
 import android.os.RemoteException;
+import android.util.Log;
 
 import com.beoneaid.api.IBeoneAidService;
 import com.beoneaid.api.IBeoneAidServiceCallback;
@@ -29,10 +30,20 @@ public class BeoneAidService extends Service implements BeoneAid.OnRecognizeResu
         mBeoneAid.start();
         mBeoneAid.setOnRecognizeResultListener(this);
     }
-    
+
     @Override
     public IBinder onBind(Intent intent) {
+
+
+        Log.d("TAG", "onBind: ");
+
         return mBinder;
+    }
+
+    @Override
+    public boolean onUnbind(Intent intent) {
+        Log.d("TAG", "onUnbind: ");
+        return super.onUnbind(intent);
     }
 
     @Override
@@ -59,15 +70,38 @@ public class BeoneAidService extends Service implements BeoneAid.OnRecognizeResu
     }
 
     void callback(String result) {
+        Log.d("TAG", "callback: ");
         final int N = mCallbacks.beginBroadcast();
+        Log.d("TAG", "callback: N=="+N);
         for (int i=0; i<N; i++) {
             try {
+                Log.d("TAG", "callback: try"+result);
                 mCallbacks.getBroadcastItem(i).recognizeResultCallback(result);
             }
             catch (RemoteException e) {
+            }finally {
+                mCallbacks.finishBroadcast();
             }
         }
-        mCallbacks.finishBroadcast();
+
+//        try {
+//            final int n = mCallbacks.beginBroadcast();
+//            Log.e("TAG", " n = " + n);
+//            for (int i = 0; i < n; i++) {
+//                mCallbacks.getBroadcastItem(i).recognizeResultCallback(result);
+//            }
+//        }catch (RemoteException e) {
+//            Log.w("TAG", "Error while diffusing message to listener", e);
+//        }catch (IllegalArgumentException illegalArgumentException) {
+//            Log.w("TAG", "Error while diffusing message to listener", illegalArgumentException);
+//        }finally{
+//            try {
+//                mCallbacks.finishBroadcast();
+//            }catch (IllegalArgumentException illegalArgumentException) {
+//                Log.w("TAG", "Error while diffusing message to listener  finishBroadcast ", illegalArgumentException);
+//            }
+//
+//        }
     }
 
     private final IBeoneAidService.Stub mBinder = new IBeoneAidService.Stub() {
@@ -88,10 +122,11 @@ public class BeoneAidService extends Service implements BeoneAid.OnRecognizeResu
         }
     };
 
-    final RemoteCallbackList<IBeoneAidServiceCallback> mCallbacks = new RemoteCallbackList <>();
+    final RemoteCallbackList<IBeoneAidServiceCallback> mCallbacks = new RemoteCallbackList <IBeoneAidServiceCallback>();
 
     @Override
     public void onRecognizeResult(String result) {
         callback(result);
     }
+
 }

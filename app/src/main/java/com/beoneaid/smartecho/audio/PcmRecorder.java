@@ -109,7 +109,7 @@ public class PcmRecorder {
 					mDataCount += readCount;
 					long time = System.currentTimeMillis();
 					
-					Log.d(TAG, String.format("bufferSize=%d, readCount=%d, time=%dms", mBufferSize, readCount, time));
+//					Log.d(TAG, String.format("bufferSize=%d, readCount=%d, time=%dms", mBufferSize, readCount, time));
 					
 					if (0 >= readCount) {
 						break;
