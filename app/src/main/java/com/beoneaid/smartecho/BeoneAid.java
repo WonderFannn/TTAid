@@ -406,7 +406,7 @@ public class BeoneAid implements CaeWakeupListener{
      * ==================================================================================
      */
     private int parseMode = 0;
-    private String[] modeNames = {"影视搜索","哔湾智慧家居","AIUI","养老中心"};
+    private String[] modeNames = {"API","哔湾智慧家居","AIUI","养老中心"};
     public void setParseMode(int newMode){
         startTtsOutput("已为你切换到"+modeNames[newMode]+"模式");
         parseMode = newMode;
