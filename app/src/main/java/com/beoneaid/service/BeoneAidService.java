@@ -83,25 +83,6 @@ public class BeoneAidService extends Service implements BeoneAid.OnRecognizeResu
                 mCallbacks.finishBroadcast();
             }
         }
-
-//        try {
-//            final int n = mCallbacks.beginBroadcast();
-//            Log.e("TAG", " n = " + n);
-//            for (int i = 0; i < n; i++) {
-//                mCallbacks.getBroadcastItem(i).recognizeResultCallback(result);
-//            }
-//        }catch (RemoteException e) {
-//            Log.w("TAG", "Error while diffusing message to listener", e);
-//        }catch (IllegalArgumentException illegalArgumentException) {
-//            Log.w("TAG", "Error while diffusing message to listener", illegalArgumentException);
-//        }finally{
-//            try {
-//                mCallbacks.finishBroadcast();
-//            }catch (IllegalArgumentException illegalArgumentException) {
-//                Log.w("TAG", "Error while diffusing message to listener  finishBroadcast ", illegalArgumentException);
-//            }
-//
-//        }
     }
 
     private final IBeoneAidService.Stub mBinder = new IBeoneAidService.Stub() {
@@ -109,6 +90,11 @@ public class BeoneAidService extends Service implements BeoneAid.OnRecognizeResu
         public void startSpeaking(String s){
             mBeoneAid.startTtsOutput(s);
         }
+
+        public void setMode(int i){
+            mBeoneAid.setParseMode(i);
+        }
+
         public void registerCallback(IBeoneAidServiceCallback cb) {
             if (cb != null) {
                 mCallbacks.register(cb);

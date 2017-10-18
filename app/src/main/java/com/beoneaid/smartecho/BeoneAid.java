@@ -71,7 +71,7 @@ public class BeoneAid implements CaeWakeupListener{
     }
 
     public interface OnRecognizeResultListener{
-        public void onRecognizeResult(String result);
+        void onRecognizeResult(String result);
     }
 
     public void setOnRecognizeResultListener(OnRecognizeResultListener resultListener){
