@@ -1,7 +1,6 @@
 package com.beoneaid.smartecho;
 
 import android.content.Context;
-import android.content.Intent;
 import android.content.res.AssetManager;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
@@ -15,6 +14,14 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.beoneaid.R;
+import com.beoneaid.application.BaseApplication;
+import com.beoneaid.broad.BroadcastManager;
+import com.beoneaid.smartecho.audio.PcmRecorder;
+import com.beoneaid.util.GetMacUtil;
+import com.beoneaid.util.JsonParser;
+import com.beoneaid.util.LogUtil;
+import com.beoneaid.util.ToastUtil;
 import com.iflytek.aiui.AIUIAgent;
 import com.iflytek.aiui.AIUIConstant;
 import com.iflytek.aiui.AIUIEvent;
@@ -29,14 +36,6 @@ import com.iflytek.cloud.SpeechError;
 import com.iflytek.cloud.SpeechRecognizer;
 import com.iflytek.cloud.SpeechSynthesizer;
 import com.iflytek.cloud.SynthesizerListener;
-import com.beoneaid.R;
-import com.beoneaid.broad.BroadcastManager;
-import com.beoneaid.dao.MovieInfo;
-import com.beoneaid.smartecho.audio.PcmRecorder;
-import com.beoneaid.util.GetMacUtil;
-import com.beoneaid.util.JsonParser;
-import com.beoneaid.util.LogUtil;
-import com.beoneaid.util.ToastUtil;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -49,7 +48,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
 
 /**
  * Created by wangfan on 2017/10/12.
@@ -63,20 +61,12 @@ public class BeoneAid implements CaeWakeupListener{
     boolean mStartRecognize = false;
     boolean mIsOnTts = false;
     boolean mIsNeedStartIat = false;
-    private OnRecognizeResultListener onRecognizeResultListener = null;
 
     public BeoneAid(Context context) {
         mContext = context;
         init();
     }
 
-    public interface OnRecognizeResultListener{
-        void onRecognizeResult(String result);
-    }
-
-    public void setOnRecognizeResultListener(OnRecognizeResultListener resultListener){
-        onRecognizeResultListener = resultListener;
-    }
 
     public void init() {
         LogUtil.d("SmartEcho - init");
@@ -226,12 +216,6 @@ public class BeoneAid implements CaeWakeupListener{
 
         @Override
         public void onEvent(int eventType, int arg1, int arg2, Bundle obj) {
-            // 以下代码用于获取与云端的会话id，当业务出错时将会话id提供给技术支持人员，可用于查询会话日志，定位出错原因
-            // 若使用本地能力，会话id为null
-            //	if (SpeechEvent.EVENT_SESSION_ID == eventType) {
-            //		String sid = obj.getString(SpeechEvent.KEY_EVENT_SESSION_ID);
-            //		Log.d(TAG, "session id =" + sid);
-            //	}
         }
     };
 
@@ -406,7 +390,7 @@ public class BeoneAid implements CaeWakeupListener{
      * ==================================================================================
      */
     private int parseMode = 0;
-    private String[] modeNames = {"API","哔湾智慧家居","AIUI","养老中心"};
+    private String[] modeNames = {"API","哔湾智慧家居","AIUI","养老中心","按键模拟"};
     public void setParseMode(int newMode){
         startTtsOutput("已为你切换到"+modeNames[newMode]+"模式");
         parseMode = newMode;
@@ -432,7 +416,6 @@ public class BeoneAid implements CaeWakeupListener{
             return;
         }
         if (parseMode == 0) {
-//            praseOrderByModeMovie(order);
             onRecognizeResultListener.onRecognizeResult(order);
         }else if (parseMode == 1) {
             try {
@@ -448,6 +431,8 @@ public class BeoneAid implements CaeWakeupListener{
             if (!TextUtils.isEmpty(order)){
                 sendBroadcast(order);
             }
+        }else if (parseMode == 4){
+            sendSimulateKeyBroadcast(order);
         }
     }
 
@@ -455,198 +440,18 @@ public class BeoneAid implements CaeWakeupListener{
 
     /**
      * ==================================================================================
-     *                               影视搜索 mode == 0
+     *                               API mode == 0
      * ==================================================================================
      */
-    //影视搜索和智能家居模式共用RequestQueue
-    private RequestQueue mQueue;
-    private List<MovieInfo> movieList;
-    private int movListIndex = 0;
 
-    private void initReqQue(){
-        mQueue = Volley.newRequestQueue(mContext);
+    private OnRecognizeResultListener onRecognizeResultListener = null;
+
+    public interface OnRecognizeResultListener{
+        void onRecognizeResult(String result);
     }
 
-    private void praseOrderByModeMovie(String order){
-        if (order.contains("播放")) {
-            if (movieList == null || movieList.size() == 0) {
-                startTtsOutput("请先搜索电影");
-                return;
-            }
-            int index;
-            if (order.contains("1") || order.contains("一")) {
-                index = movListIndex;
-            } else if (order.contains("2") || order.contains("二")) {
-                index = movListIndex + 1;
-            } else if (order.contains("3") || order.contains("三")) {
-                index = movListIndex + 2;
-            } else {
-                index = movListIndex + movieList.size();//下标越界
-            }
-            //例外情况
-            if (order.equals("播放")){
-                index = movListIndex;
-            }
-            if (index >= movieList.size()) {
-                startTtsOutput("您说错了吧");
-                return;
-            }
-            String idString = movieList.get(index).getId() + "";
-            try{
-                Intent intent = new Intent("com.tv.kuaisou.action.DetailActivity");
-                intent.setPackage("com.tv.kuaisou");
-                intent.putExtra("id", idString);
-                mContext.startActivity(intent);
-                BroadcastManager.sendBroadcast(BroadcastManager.ACTION_VOICE_EMULATE_KEY_OPEN, null);
-            }catch (Exception e){
-                startTtsOutput("没有安装影视快搜，请安装");
-            }
-        } else if (order.indexOf("搜索") == 0) {
-            String movName = order.substring(order.indexOf("搜索") + 2, order.length());
-            searchMovie(movName);
-        } else if (order.contains("下一") || order.contains("向后")) {
-            if (movieList == null || movieList.size() == 0) {
-                startTtsOutput("请先搜索电影");
-                return;
-            }
-            movListIndex += 3;
-            shouMoveResult(movieList, movListIndex);
-        } else if (order.contains("上一") || order.contains("向前")) {
-            if (movieList == null || movieList.size() == 0) {
-                startTtsOutput("请先搜索电影");
-                return;
-            }
-            movListIndex -= 3;
-            if (movListIndex < 0) {
-                movListIndex = 0;
-            }
-            shouMoveResult(movieList, movListIndex);
-        }
-    }
-
-    private Response.ErrorListener RsErrorListener = new Response.ErrorListener() {
-        @Override
-        public void onErrorResponse(VolleyError error) {
-        }
-    };
-
-    private Response.Listener<String> RsListener = new Response.Listener<String>() {
-        @Override
-        public void onResponse(final String response) {
-            movieList = JsonParser.parseMovieResult(response);
-            if (movieList != null) {
-                if (movieList.size() > 0) {
-                    startTtsOutput("为你找到" + movieList.size() + "个结果");
-                    //TODO 更新界面
-                } else {
-                    startTtsOutput("没有搜索到结果，请重新搜索 ");
-                }
-            }
-        }
-    };
-
-    private void searchMovie(String movName) {
-         if (movieList != null) {
-             movieList.clear();
-         }
-         movListIndex = 0;
-         startTtsOutput("正在为你查找《" + movName + "》相关的内容");
-         String codes = null;
-         try {
-             codes = URLEncoder.encode(movName, "UTF-8");
-         } catch (UnsupportedEncodingException e) {
-             e.printStackTrace();
-         }
-         String url = mContext.getString(R.string.search_movie_url) + codes;
-         StringRequest stringRequest = new StringRequest(url, RsListener, RsErrorListener);
-         mQueue.add(stringRequest);
-     }
-
-    private void shouMoveResult(List<MovieInfo> movieList, int movListIndex) {
-        shouMoveResult(movieList, movListIndex, true);
-    }
-
-    private void shouMoveResult(List<MovieInfo> movieList, int movListIndex, boolean speak) {
-        //TODO 通知更新界面
-//        if (movieList.size() - movListIndex <= 0) {
-//            startTtsOutput("没有下一组了");
-//            this.movListIndex = movListIndex - 3;
-//            return;
-//        }
-//        if (speak) {
-//            startTtsOutput("现在显示第" + (movListIndex / 3 + 1) + "组结果");
-//        }
-//        clearMovieShow();
-//        if ((movieList.size() - movListIndex) >= 3) {
-//            ll1.setVisibility(View.VISIBLE);
-//            ll2.setVisibility(View.VISIBLE);
-//            ll3.setVisibility(View.VISIBLE);
-//            tv1.setText(movieList.get(movListIndex).getTitle());
-//            tv2.setText(movieList.get(movListIndex + 1).getTitle());
-//            tv3.setText(movieList.get(movListIndex + 2).getTitle());
-//            ImageRequest imageRequest1 = new ImageRequest(
-//                    movieList.get(movListIndex).getPic(),
-//                    new Response.Listener<Bitmap>() {
-//                        @Override
-//                        public void onResponse(Bitmap response) {
-//                            iv1.setImageBitmap(response);
-//                        }
-//                    }, 0, 0, Bitmap.Config.RGB_565, RsErrorListener);
-//            ImageRequest imageRequest2 = new ImageRequest(
-//                    movieList.get(movListIndex + 1).getPic(),
-//                    new Response.Listener<Bitmap>() {
-//                        @Override
-//                        public void onResponse(Bitmap response) {
-//                            iv2.setImageBitmap(response);
-//                        }
-//                    }, 0, 0, Bitmap.Config.RGB_565, RsErrorListener);
-//            ImageRequest imageRequest3 = new ImageRequest(
-//                    movieList.get(movListIndex + 2).getPic(),
-//                    new Response.Listener<Bitmap>() {
-//                        @Override
-//                        public void onResponse(Bitmap response) {
-//                            iv3.setImageBitmap(response);
-//                        }
-//                    }, 0, 0, Bitmap.Config.RGB_565, RsErrorListener);
-//            mQueue.add(imageRequest1);
-//            mQueue.add(imageRequest2);
-//            mQueue.add(imageRequest3);
-//        } else if ((movieList.size() - movListIndex) == 2) {
-//            ll1.setVisibility(View.VISIBLE);
-//            ll3.setVisibility(View.VISIBLE);
-//            tv1.setText(movieList.get(movListIndex).getTitle());
-//            tv3.setText(movieList.get(movListIndex + 1).getTitle());
-//            ImageRequest imageRequest1 = new ImageRequest(
-//                    movieList.get(movListIndex).getPic(),
-//                    new Response.Listener<Bitmap>() {
-//                        @Override
-//                        public void onResponse(Bitmap response) {
-//                            iv1.setImageBitmap(response);
-//                        }
-//                    }, 0, 0, Bitmap.Config.RGB_565, RsErrorListener);
-//            ImageRequest imageRequest2 = new ImageRequest(
-//                    movieList.get(movListIndex + 1).getPic(),
-//                    new Response.Listener<Bitmap>() {
-//                        @Override
-//                        public void onResponse(Bitmap response) {
-//                            iv3.setImageBitmap(response);
-//                        }
-//                    }, 0, 0, Bitmap.Config.RGB_565, RsErrorListener);
-//            mQueue.add(imageRequest1);
-//            mQueue.add(imageRequest2);
-//        } else if ((movieList.size() - movListIndex) == 1) {
-//            ll2.setVisibility(View.VISIBLE);
-//            tv2.setText(movieList.get(movListIndex).getTitle());
-//            ImageRequest imageRequest1 = new ImageRequest(
-//                    movieList.get(movListIndex).getPic(),
-//                    new Response.Listener<Bitmap>() {
-//                        @Override
-//                        public void onResponse(Bitmap response) {
-//                            iv2.setImageBitmap(response);
-//                        }
-//                    }, 0, 0, Bitmap.Config.RGB_565, RsErrorListener);
-//            mQueue.add(imageRequest1);
-//        }
+    public void setOnRecognizeResultListener(OnRecognizeResultListener resultListener){
+        onRecognizeResultListener = resultListener;
     }
 
     /**
@@ -654,6 +459,16 @@ public class BeoneAid implements CaeWakeupListener{
      *                               智慧家居 mode == 1
      * ==================================================================================
      */
+
+    private RequestQueue mQueue;
+    private void initReqQue() {
+        mQueue = Volley.newRequestQueue(mContext);
+    }
+    private Response.ErrorListener RsErrorListener = new Response.ErrorListener() {
+        @Override
+        public void onErrorResponse(VolleyError error) {
+        }
+    };
     private boolean isLogin = false;
     private String mSecretKey;
     private String mAccount;
@@ -933,5 +748,36 @@ public class BeoneAid implements CaeWakeupListener{
         bundle.putByteArray(ACTION_OLD_PEOPLE_VOICE_MESSAGE,orderByte);
         BroadcastManager.sendBroadcast(ACTION_OLD_PEOPLE_VOICE_MESSAGE,bundle);
 //        startTtsOutput("已经帮您通知了监控中心");
+    }
+
+    /**
+     * ==================================================================================
+     *                               按键模式 mode == 4
+     * ==================================================================================
+     */
+
+    private void sendSimulateKeyBroadcast(String text) {
+        if(!TextUtils.isEmpty(text)){
+            ToastUtil.showShort(BaseApplication.getContext(),text);
+            if (text.contains("返回")){
+                BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_BACK,null);
+                return;
+            }else if (text.contains("确定")){
+                BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_CENTER,null);
+                return;
+            }else if (text.contains("上")){
+                BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_UP,null);
+                return;
+            }else if (text.contains("下")){
+                BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_DOWN,null);
+                return;
+            }else if (text.contains("左")){
+                BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_LEFT,null);
+                return;
+            }else if (text.contains("右")){
+                BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_RIGHT,null);
+                return;
+            }
+        }
     }
 }

@@ -209,6 +209,7 @@ public class MainActivity extends Activity implements CaeWakeupListener {
     private Response.ErrorListener RsErrorListener = new Response.ErrorListener() {
         @Override
         public void onErrorResponse(VolleyError error) {
+            Log.d(TAG, "onErrorResponse: ");
         }
     };
 

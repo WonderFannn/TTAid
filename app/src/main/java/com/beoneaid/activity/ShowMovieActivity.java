@@ -54,9 +54,9 @@ public class ShowMovieActivity extends Activity {
     @BindView(R.id.tv_3)
     TextView tv3;
 
-    private RequestQueue mQueue;
     private List<MovieInfo> movieList;
     private int movListIndex = 0;
+    private RequestQueue mQueue;
 
     private Response.ErrorListener RsErrorListener = new Response.ErrorListener() {
         @Override
