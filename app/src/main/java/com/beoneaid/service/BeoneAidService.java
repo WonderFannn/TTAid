@@ -33,10 +33,9 @@ public class BeoneAidService extends Service implements BeoneAid.OnRecognizeResu
 
     @Override
     public IBinder onBind(Intent intent) {
-
-
+        //当服务被绑定时切换到api模式
+        mBeoneAid.setParseMode(0);
         Log.d("TAG", "onBind: ");
-
         return mBinder;
     }
 

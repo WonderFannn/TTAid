@@ -2,7 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.beoneaid"
     android:installLocation="auto"
-    android:versionCode="1">
+    android:versionCode="1"
+    android:versionName="1.1.1019">
 
     <application
         android:icon="@drawable/icon"
@@ -22,12 +23,6 @@
         <activity
             android:name=".activity.SettingActivity">
         </activity>
-        <activity android:name=".activity.MainActivity" />
-        <activity android:name=".activity.TestActivity" />
-        <activity
-            android:name=".activity.ShowMovieActivity"
-            android:launchMode="singleTask">
-        </activity>
 
         <!-- 移动统计分析 -->
         <meta-data
@@ -37,18 +32,16 @@
             android:name="IFLYTEK_CHANNEL"
             android:value="Android_Demo" />
 
-        <service android:name=".service.BackgroungSpeechRecongnizerService" />
-        <service android:name=".service.BackgroundEchoService" />
 
-
-        <service android:name=".service.BeoneAidService"
-            >
+        <service
+            android:name=".service.BeoneAidService">
             <intent-filter>
                 <action android:name="com.beoneaid.api.IBeoneAidService"/>
             </intent-filter>
         </service>
 
-        <receiver android:name=".broad.BeoneAidReceiver"
+        <receiver
+            android:name=".broad.BeoneAidReceiver"
             android:enabled="true"
             android:exported="true">
             <intent-filter>
