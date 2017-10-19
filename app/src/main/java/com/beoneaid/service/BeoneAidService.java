@@ -66,10 +66,12 @@ public class BeoneAidService extends Service implements BeoneAid.OnRecognizeResu
     public void onDestroy() {
         super.onDestroy();
         mBeoneAid.stop();
+        Intent intent = new Intent(this, BeoneAidService.class);
+        intent.setAction(BeoneAidService.SMART_ECHO_ACTION_START);
+        startService(intent);
     }
 
     void callback(String result) {
-        Log.d("TAG", "callback: ");
         final int N = mCallbacks.beginBroadcast();
         Log.d("TAG", "callback: N=="+N);
         for (int i=0; i<N; i++) {

@@ -1,217 +1,262 @@
 package com.beoneaid.activity;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.os.Environment;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.Window;
-import android.widget.TextView;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
 
-import com.iflytek.cloud.ErrorCode;
-import com.iflytek.cloud.InitListener;
-import com.iflytek.cloud.RecognizerListener;
-import com.iflytek.cloud.RecognizerResult;
-import com.iflytek.cloud.SpeechConstant;
-import com.iflytek.cloud.SpeechError;
-import com.iflytek.cloud.SpeechRecognizer;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.beoneaid.R;
 import com.beoneaid.application.BaseApplication;
-import com.beoneaid.broad.BroadcastManager;
-import com.beoneaid.util.JsonParser;
+import com.beoneaid.service.BeoneAidService;
+import com.beoneaid.util.Config;
 import com.beoneaid.util.ToastUtil;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
-import butterknife.BindViews;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 
 /**
- * Created by wangfan on 2017/9/13.
+ * Created by wangfan on 2017/10/13.
  */
 
-public class SettingActivity extends Activity {
+public class SettingActivity extends Activity implements View.OnClickListener {
 
     private static final String TAG = "SettingActivity";
+    @BindView(R.id.et_api_mode)
+    EditText mEtApiMode;
+    @BindView(R.id.et_smarthome_mode)
+    EditText mEtSmarthomeMode;
+    @BindView(R.id.et_aiui_mode)
+    EditText mEtAiuiMode;
+    @BindView(R.id.btn_upload)
+    Button mBtnUpload;
+    @BindView(R.id.btn_pull)
+    Button mBtnPull;
 
-    //UI相关
-    @BindViews({ R.id.tv_language, R.id.tv_vad_bos, R.id.tv_vad_eos, R.id.tv_asr_ptt,
-                    R.id.tv_voice_name, R.id.tv_speed, R.id.tv_pitch, R.id.tv_volume})
-    List<TextView> tvShow;
-
-    private SharedPreferences settings;
-    // 语音听写对象
-    private SpeechRecognizer mIat;
-    private HashMap<String, String> mIatResults = new LinkedHashMap<String, String>();
-    private ListeningThread mListenlingThread;
-    private String mEngineType = SpeechConstant.TYPE_CLOUD;
-    /**
-     * 初始化监听器。
-     */
-    private InitListener mInitListener = new InitListener() {
-
-        @Override
-        public void onInit(int code) {
-            Log.d(TAG, "SpeechRecognizer init() code = " + code);
-            if (code != ErrorCode.SUCCESS) {
-                ToastUtil.showShort(BaseApplication.getContext(),"初始化失败，错误码：" + code);
-            }
-        }
-    };
-
-    /**
-     * 听写监听器。
-     */
-    private RecognizerListener mRecognizerListener = new RecognizerListener() {
-        @Override
-        public void onBeginOfSpeech() {
-        }
-
-        @Override
-        public void onError(SpeechError error) {
-        }
-
-        @Override
-        public void onEndOfSpeech() {
-        }
-
-        @Override
-        public void onResult(RecognizerResult results, boolean isLast) {
-            Log.d(TAG, results.getResultString());
-            String resultText = printResult(results);
-            ToastUtil.showShort(BaseApplication.getContext(), resultText);
-            if (isLast && !TextUtils.isEmpty(resultText)) {
-                parseOrder(resultText);
-            }
-        }
-
-        @Override
-        public void onVolumeChanged(int volume, byte[] data) {
-        }
-
-        @Override
-        public void onEvent(int eventType, int arg1, int arg2, Bundle obj) {
-        }
-    };
-
+    SharedPreferences mSharedPreferences;
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    public void onCreate( Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        requestWindowFeature(Window.FEATURE_NO_TITLE);
-        setContentView(R.layout.setting_activity);
+        setContentView(R.layout.main_activity);
         ButterKnife.bind(this);
+
+        Intent intent = new Intent(this, BeoneAidService.class);
+        intent.setAction(BeoneAidService.SMART_ECHO_ACTION_START);
+        startService(intent);
+
+        initReqQue();
+        initData();
+        initView();
+        mMac = "0000128581425294";
     }
 
-
-    @Override
-    protected void onResume() {
-        BroadcastManager.sendBroadcast(BroadcastManager.ACTION_VOICE_WAKE_CLOSE, null);
-        // 初始化识别无UI识别对象
-        // 使用SpeechRecognizer对象，可根据回调消息自定义界面；
-        settings = getSharedPreferences(getString(R.string.setting_prf),0);
-        mIat = SpeechRecognizer.createRecognizer(this, mInitListener);
-        setParam();
-        mListenlingThread = new ListeningThread();
-        mListenlingThread.start();
-        super.onResume();
+    private void initData() {
+        mSharedPreferences = getSharedPreferences(Config.SHAREDPREFRENCES_NAME,MODE_PRIVATE);
+        mSharedPreferences.registerOnSharedPreferenceChangeListener(new SharedPreferences.OnSharedPreferenceChangeListener() {
+            @Override
+            public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
+                initView();
+            }
+        });
     }
 
-    @Override
-    protected void onPause() {
-        if (mListenlingThread != null) {
-            mListenlingThread.interrupt();
-            mListenlingThread = null;
+    private void initView() {
+        mEtApiMode.setText(getSPOrder(0));
+        mEtSmarthomeMode.setText(getSPOrder(1));
+        mEtAiuiMode.setText(getSPOrder(2));
+        mBtnUpload.setOnClickListener(this);
+        mBtnPull.setOnClickListener(this);
+    }
+
+    private String getSPOrder(int index){
+        String order = "";
+        switch (index){
+            case 0:
+                order = mSharedPreferences.getString(Config.ModeSetting.API_MODE,Config.ModeSetting.API_MODE_DEFULT_ORDER);
+                break;
+            case 1:
+                order = mSharedPreferences.getString(Config.ModeSetting.SMARTHOMR_MODE,Config.ModeSetting.SMARTHOMR_MODE_DEFULT_ORDER);
+                break;
+            case 2:
+                order = mSharedPreferences.getString(Config.ModeSetting.AIUI_MODE,Config.ModeSetting.AIUI_MODE_DEFULT_ORDER);
         }
-        super.onPause();
+        return order;
+    }
+    @Override
+    public void onClick(View view) {
+        if (view == mBtnUpload){
+            ToastUtil.showShort(this,"平台说没时间开发接口，我也很无奈");
+//            uploadOrder(mEtApiMode.getText().toString(),mEtSmarthomeMode.getText().toString(),mEtAiuiMode.getText().toString());
+        }else if (view == mBtnPull){
+            ToastUtil.showShort(this,"平台说没法测，我也很无奈");
+//            pullOrder();
+        }
+
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if (null != mIat) {
-            // 退出时释放连接
-            mIat.cancel();
-            mIat.destroy();
+    /**
+     *  网络请求相关
+     */
+    private RequestQueue mQueue;
+    private boolean isLogin = false;
+    private String mMac;
+    private String mSecretKey;
+    private String mAccount;
+
+    private void initReqQue(){
+        mQueue = Volley.newRequestQueue(this);
+    }
+
+    private Response.Listener<String> RsUploadListener = new Response.Listener<String>() {
+        @Override
+        public void onResponse(final String response) {
+            Log.e(TAG, "onResponse: " + response.toString());
+        }
+    };
+
+    private Response.Listener<String> RsPullListener = new Response.Listener<String>() {
+        @Override
+        public void onResponse(final String response) {
+            Log.e(TAG, "onResponse: " + response.toString());
+        }
+    };
+    private Response.ErrorListener RsErrorListener = new Response.ErrorListener() {
+        @Override
+        public void onErrorResponse(VolleyError error) {
+            Log.d(TAG, "onErrorResponse: "+error.getMessage());
+        }
+    };
+
+    private void uploadOrder(String s1, String s2, String s3){
+        if (s1.equals(s2) || s1.equals(s3) || s2.equals(s3)){
+            ToastUtil.showShort(this,"命令词不能相同");
+            return;
+        }
+        if (s1.equals(getSPOrder(0)) && s2.equals(getSPOrder(1)) && s3.equals(getSPOrder(2))){
+            ToastUtil.showShort(this,"命令词未更新，无需上传");
+            return;
+        }
+
+        String url = getString(R.string.beone_aiui_url) ;
+        StringRequest stringRequest = new StringRequest(url, RsUploadListener, RsErrorListener);
+        mQueue.add(stringRequest);
+    }
+
+
+    private void pullOrder() {
+
+        //{"activityCode":"T902",
+        // "bipCode":"B004",
+        // "origDomain":"P000",
+        // "homeDomain":"0000",
+        // "serviceContent":{
+        //      "account":"C280010034",
+        //      "updateTime":"20171019150100",
+        //      "mac":"0000128581425294",
+        //      "secretKey":"EFBFEAF6F4E044412640FD374A5E9296"}
+        // }
+        if (isLogin){
+            SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
+            Date curDate = new Date(System.currentTimeMillis());
+            String time = formatter.format(curDate);
+            JSONObject serviceContent = new JSONObject();
+            try {
+                serviceContent.put("secretKey", mSecretKey);
+                serviceContent.put("account", mAccount);
+                serviceContent.put("mac", mMac);
+                serviceContent.put("updateTime", time);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            JSONObject data = new JSONObject();
+            try {
+                data.put("activityCode", "T902");
+                data.put("bipCode", "B004");
+                data.put("origDomain", "M000");
+                data.put("homeDomain", "0000");
+                data.put("serviceContent", serviceContent);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            String url = getString(R.string.beone_aiui_url_test) + data.toString();
+            StringRequest stringRequest = new StringRequest(url, RsPullListener, RsErrorListener);
+            mQueue.add(stringRequest);
+        }else {
+            loginBeone();
         }
     }
-    private void parseOrder(String order) {
-        if (order.equals("返回")){
-            finish();
-        }
-    }
-    private String printResult(RecognizerResult results) {
-        String text = JsonParser.parseIatResult(results.getResultString());
-        String sn = null;
-        // 读取json结果中的sn字段
+
+    private void loginBeone() {
+
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
+        Date curDate = new Date(System.currentTimeMillis());
+        String time = formatter.format(curDate);
+
+        JSONObject serviceContent = new JSONObject();
         try {
-            JSONObject resultJson = new JSONObject(results.getResultString());
-            sn = resultJson.optString("sn");
+            serviceContent.put("mac", mMac);
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        mIatResults.put(sn, text);
-        StringBuffer resultBuffer = new StringBuffer();
-        for (String key : mIatResults.keySet()) {
-            resultBuffer.append(mIatResults.get(key));
+        JSONObject data = new JSONObject();
+        try {
+            data.put("actionCode", "0");
+            data.put("activityCode", "T906");
+            data.put("bipCode", "B000");
+            data.put("bipVer", "1.0");
+            data.put("origDomain", "M000");
+            data.put("processTime", time);
+            data.put("homeDomain", "P000");
+            data.put("testFlag", "1");
+            data.put("serviceContent", serviceContent);
+        } catch (JSONException e) {
+            e.printStackTrace();
         }
-        return resultBuffer.toString();
-    }
-    /**
-     * 参数设置
-     */
-    public void setParam() {
-        // 清空参数
-        mIat.setParameter(SpeechConstant.PARAMS, null);
-        // 设置听写引擎
-        mIat.setParameter(SpeechConstant.ENGINE_TYPE, mEngineType);
-        // 设置返回结果格式
-        mIat.setParameter(SpeechConstant.RESULT_TYPE, "json");
-        // 设置语言
-        mIat.setParameter(SpeechConstant.LANGUAGE,settings.getString(SpeechConstant.LANGUAGE,"zh_cn"));
-        // 设置语言区域
-        mIat.setParameter(SpeechConstant.ACCENT, "mandarin");
-        // 设置语音前端点:静音超时时间，即用户多长时间不说话则当做超时处理
-        mIat.setParameter(SpeechConstant.VAD_BOS, settings.getString(SpeechConstant.VAD_BOS,"4000"));
-        // 设置语音后端点:后端点静音检测时间，即用户停止说话多长时间内即认为不再输入， 自动停止录音
-        mIat.setParameter(SpeechConstant.VAD_EOS, settings.getString(SpeechConstant.VAD_EOS,"1000"));
-        // 设置标点符号,设置为"0"返回结果无标点,设置为"1"返回结果有标点
-        mIat.setParameter(SpeechConstant.ASR_PTT, settings.getString(SpeechConstant.ASR_PTT,"0"));
-        // 设置音频保存路径，保存音频格式支持pcm、wav，设置路径为sd卡请注意WRITE_EXTERNAL_STORAGE权限
-        // 注：AUDIO_FORMAT参数语记需要更新版本才能生效
-        mIat.setParameter(SpeechConstant.AUDIO_FORMAT, "wav");
-        mIat.setParameter(SpeechConstant.ASR_AUDIO_PATH, Environment.getExternalStorageDirectory() + "/msc/iat.wav");
-    }
 
-    private void setPrf(String key,String value){
-        SharedPreferences.Editor editor = settings.edit();
-        editor.putString(key,value);
-        editor.commit();
+        String url = getString(R.string.beone_aiui_url_test) + data.toString();
+        Log.d(TAG, "loginBeone: " +url);
+        StringRequest stringRequest = new StringRequest(url, RsBeoneListener, RsErrorListener);
+        mQueue.add(stringRequest);
 
     }
 
-    class ListeningThread extends Thread {
+    private Response.Listener<String> RsBeoneListener = new Response.Listener<String>() {
         @Override
-        public void run() {
-            super.run();
-            Log.d(TAG, "ListeningThread run: ");
+        public void onResponse(String response) {
             try {
-                while (true) {
-                    if (mIat != null && !mIat.isListening()) {
-                        Thread.sleep(300);
-                        mIatResults.clear();
-                        mIat.startListening(mRecognizerListener);
-                    }
-                }
-            } catch (Exception e) {
+                JSONObject data = new JSONObject(response);
+                JSONObject serviceContent = data.optJSONObject("serviceContent");
+                mSecretKey = serviceContent.optString("secretKey");
+                mAccount = serviceContent.optString("account");
+            } catch (JSONException e) {
                 e.printStackTrace();
             }
+            if (TextUtils.isEmpty(mSecretKey) || TextUtils.isEmpty(mAccount)) {
+                ToastUtil.showShort(BaseApplication.getContext(),"登录失败");
+                Log.d(TAG, "onResponse: 登陆失败");
+                isLogin = false;
+            } else {
+                ToastUtil.showShort(BaseApplication.getContext(),"登录成功");
+                Log.d(TAG, "onResponse: 登录成功");
+                isLogin = true;
+            }
         }
-    }
+    };
 }

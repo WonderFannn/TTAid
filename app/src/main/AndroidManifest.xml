@@ -11,7 +11,7 @@
         android:label="Beone助手" >
 
         <activity
-            android:name=".activity.Test2Activity"
+            android:name=".activity.SettingActivity"
             android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|orientation|screenLayout|fontScale"
             android:screenOrientation="portrait" >
             <intent-filter>
@@ -19,9 +19,6 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
-        <activity
-            android:name=".activity.SettingActivity">
         </activity>
 
         <!-- 移动统计分析 -->

@@ -18,6 +18,7 @@ import com.beoneaid.R;
 import com.beoneaid.application.BaseApplication;
 import com.beoneaid.broad.BroadcastManager;
 import com.beoneaid.smartecho.audio.PcmRecorder;
+import com.beoneaid.util.Config;
 import com.beoneaid.util.GetMacUtil;
 import com.beoneaid.util.JsonParser;
 import com.beoneaid.util.LogUtil;
@@ -390,10 +391,13 @@ public class BeoneAid implements CaeWakeupListener{
      * ==================================================================================
      */
     private int parseMode = 0;
-    private String[] modeNames = {"API","哔湾智慧家居","AIUI","养老中心","按键模拟"};
     public void setParseMode(int newMode){
-        startTtsOutput("已为你切换到"+modeNames[newMode]+"模式");
-        parseMode = newMode;
+        if (newMode <= Config.MODE_NAME_ARRAY.length){
+            startTtsOutput("已为你切换到"+Config.MODE_NAME_ARRAY[newMode]);
+            parseMode = newMode;
+        }else {
+            startTtsOutput("模式值超出范围");
+        }
     }
 
     private void parseOrder(String order) {
