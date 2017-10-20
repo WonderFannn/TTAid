@@ -11,7 +11,7 @@ public class Config {
             "哔湾应用接口模式",
             "哔湾智慧家居模式",
             "哔湾人工智能模式",
-            "按键模拟模式"
+            "养老中心模式"
     };
 
     public static final String SHAREDPREFRENCES_NAME = "com.jinxin.beoneaid";

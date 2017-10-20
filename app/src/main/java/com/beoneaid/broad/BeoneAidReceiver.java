@@ -24,12 +24,5 @@ public class BeoneAidReceiver extends BroadcastReceiver {
             i.setAction(BeoneAidService.SMART_ECHO_ACTION_START);
             context.startService(i);
         }
-//        else if (SMART_ECHO_BROADCAST_ACTION_WAKEUP.equals(intent.getAction())) {
-//            Log.d("rk", "==================== SmartEchoService Wakeup ======================");
-//            Intent i = new Intent(context, SmartEchoService.class);
-////            i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-//            i.setAction(SmartEchoService.SMART_ECHO_ACTION_WAKEUP);
-//            context.startService(i);
-//        }
     }
 }

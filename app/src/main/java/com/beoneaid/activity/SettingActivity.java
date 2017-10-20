@@ -3,6 +3,7 @@ package com.beoneaid.activity;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -19,8 +20,10 @@ import com.beoneaid.R;
 import com.beoneaid.application.BaseApplication;
 import com.beoneaid.service.BeoneAidService;
 import com.beoneaid.util.Config;
+import com.beoneaid.util.GetMacUtil;
 import com.beoneaid.util.ToastUtil;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -49,6 +52,11 @@ public class SettingActivity extends Activity implements View.OnClickListener {
     Button mBtnPull;
 
     SharedPreferences mSharedPreferences;
+    private boolean needPull = false;
+
+    String apiModeOrder = "";
+    String shModeOrder = "";
+    String aiuiModeOrder = "";
 
     @Override
     public void onCreate( Bundle savedInstanceState) {
@@ -63,7 +71,8 @@ public class SettingActivity extends Activity implements View.OnClickListener {
         initReqQue();
         initData();
         initView();
-        mMac = "0000128581425294";
+        initMac();
+//      mMac = "0000128581425294";
     }
 
     private void initData() {
@@ -80,8 +89,21 @@ public class SettingActivity extends Activity implements View.OnClickListener {
         mEtApiMode.setText(getSPOrder(0));
         mEtSmarthomeMode.setText(getSPOrder(1));
         mEtAiuiMode.setText(getSPOrder(2));
-        mBtnUpload.setOnClickListener(this);
+        mBtnUpload.setVisibility(View.GONE);
         mBtnPull.setOnClickListener(this);
+    }
+
+    private void initMac(){
+        WifiManager wm = (WifiManager)getApplicationContext().getSystemService(WIFI_SERVICE);
+        mMac = wm.getConnectionInfo().getMacAddress();
+        if(!TextUtils.isEmpty(GetMacUtil.getMacAddress())) {
+            mMac = GetMacUtil.getMacAddress();
+            mMac = mMac.replace(":", "");
+            mMac = "0000" + mMac;
+        }
+        if(TextUtils.isEmpty(mMac)){
+            mMac = "0000F64F73A999618";
+        }
     }
 
     private String getSPOrder(int index){
@@ -101,11 +123,8 @@ public class SettingActivity extends Activity implements View.OnClickListener {
     @Override
     public void onClick(View view) {
         if (view == mBtnUpload){
-            ToastUtil.showShort(this,"平台说没时间开发接口，我也很无奈");
-//            uploadOrder(mEtApiMode.getText().toString(),mEtSmarthomeMode.getText().toString(),mEtAiuiMode.getText().toString());
         }else if (view == mBtnPull){
-            ToastUtil.showShort(this,"平台说没法测，我也很无奈");
-//            pullOrder();
+            pullOrder();
         }
 
     }
@@ -123,19 +142,6 @@ public class SettingActivity extends Activity implements View.OnClickListener {
         mQueue = Volley.newRequestQueue(this);
     }
 
-    private Response.Listener<String> RsUploadListener = new Response.Listener<String>() {
-        @Override
-        public void onResponse(final String response) {
-            Log.e(TAG, "onResponse: " + response.toString());
-        }
-    };
-
-    private Response.Listener<String> RsPullListener = new Response.Listener<String>() {
-        @Override
-        public void onResponse(final String response) {
-            Log.e(TAG, "onResponse: " + response.toString());
-        }
-    };
     private Response.ErrorListener RsErrorListener = new Response.ErrorListener() {
         @Override
         public void onErrorResponse(VolleyError error) {
@@ -143,34 +149,8 @@ public class SettingActivity extends Activity implements View.OnClickListener {
         }
     };
 
-    private void uploadOrder(String s1, String s2, String s3){
-        if (s1.equals(s2) || s1.equals(s3) || s2.equals(s3)){
-            ToastUtil.showShort(this,"命令词不能相同");
-            return;
-        }
-        if (s1.equals(getSPOrder(0)) && s2.equals(getSPOrder(1)) && s3.equals(getSPOrder(2))){
-            ToastUtil.showShort(this,"命令词未更新，无需上传");
-            return;
-        }
-
-        String url = getString(R.string.beone_aiui_url) ;
-        StringRequest stringRequest = new StringRequest(url, RsUploadListener, RsErrorListener);
-        mQueue.add(stringRequest);
-    }
-
-
     private void pullOrder() {
 
-        //{"activityCode":"T902",
-        // "bipCode":"B004",
-        // "origDomain":"P000",
-        // "homeDomain":"0000",
-        // "serviceContent":{
-        //      "account":"C280010034",
-        //      "updateTime":"20171019150100",
-        //      "mac":"0000128581425294",
-        //      "secretKey":"EFBFEAF6F4E044412640FD374A5E9296"}
-        // }
         if (isLogin){
             SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
             Date curDate = new Date(System.currentTimeMillis());
@@ -195,11 +175,12 @@ public class SettingActivity extends Activity implements View.OnClickListener {
                 e.printStackTrace();
             }
 
-            String url = getString(R.string.beone_aiui_url_test) + data.toString();
-            StringRequest stringRequest = new StringRequest(url, RsPullListener, RsErrorListener);
+            String url = getString(R.string.beone_aiui_url) + data.toString();
+            StringRequest stringRequest = new StringRequest(url, RsBeoneListener, RsErrorListener);
             mQueue.add(stringRequest);
         }else {
             loginBeone();
+            needPull = true;
         }
     }
 
@@ -230,7 +211,7 @@ public class SettingActivity extends Activity implements View.OnClickListener {
             e.printStackTrace();
         }
 
-        String url = getString(R.string.beone_aiui_url_test) + data.toString();
+        String url = getString(R.string.beone_aiui_url) + data.toString();
         Log.d(TAG, "loginBeone: " +url);
         StringRequest stringRequest = new StringRequest(url, RsBeoneListener, RsErrorListener);
         mQueue.add(stringRequest);
@@ -240,22 +221,57 @@ public class SettingActivity extends Activity implements View.OnClickListener {
     private Response.Listener<String> RsBeoneListener = new Response.Listener<String>() {
         @Override
         public void onResponse(String response) {
-            try {
-                JSONObject data = new JSONObject(response);
-                JSONObject serviceContent = data.optJSONObject("serviceContent");
-                mSecretKey = serviceContent.optString("secretKey");
-                mAccount = serviceContent.optString("account");
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            if (TextUtils.isEmpty(mSecretKey) || TextUtils.isEmpty(mAccount)) {
-                ToastUtil.showShort(BaseApplication.getContext(),"登录失败");
-                Log.d(TAG, "onResponse: 登陆失败");
-                isLogin = false;
-            } else {
-                ToastUtil.showShort(BaseApplication.getContext(),"登录成功");
-                Log.d(TAG, "onResponse: 登录成功");
-                isLogin = true;
+            Log.e(TAG, "onResponse: "+response );
+            if (isLogin){
+                try {
+                    JSONObject data = new JSONObject(response);
+                    JSONArray serArrary = data.optJSONArray("serviceContent");
+                    String funParams = serArrary.getJSONObject(0).optString("funParams");
+                    JSONObject fpJO = new JSONObject(funParams);
+                    apiModeOrder += fpJO.optJSONObject("audio").optString("key1")+",";
+                    apiModeOrder += fpJO.optJSONObject("audio").optString("key2")+",";
+                    apiModeOrder += fpJO.optJSONObject("audio").optString("key3");
+                    shModeOrder += fpJO.optJSONObject("dev").optString("key1")+",";
+                    shModeOrder += fpJO.optJSONObject("dev").optString("key2")+",";
+                    shModeOrder += fpJO.optJSONObject("dev").optString("key3");
+                    aiuiModeOrder += fpJO.optJSONObject("aiui").optString("key1") + ",";
+                    aiuiModeOrder += fpJO.optJSONObject("aiui").optString("key2") + ",";
+                    aiuiModeOrder += fpJO.optJSONObject("aiui").optString("key3") ;
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                if (TextUtils.isEmpty(apiModeOrder)||TextUtils.isEmpty(shModeOrder)||TextUtils.isEmpty(aiuiModeOrder)){
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            mEtApiMode.setText(apiModeOrder);
+                            mEtSmarthomeMode.setText(shModeOrder);
+                            mEtAiuiMode.setText(aiuiModeOrder);
+                            ToastUtil.showShort(BaseApplication.getContext(),"命令词获取成功");
+                        }
+                    });
+                }
+            }else {
+                try {
+                    JSONObject data = new JSONObject(response);
+                    JSONObject serviceContent = data.optJSONObject("serviceContent");
+                    mSecretKey = serviceContent.optString("secretKey");
+                    mAccount = serviceContent.optString("account");
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                if (TextUtils.isEmpty(mSecretKey) || TextUtils.isEmpty(mAccount)) {
+                    ToastUtil.showShort(BaseApplication.getContext(), "登录失败");
+                    Log.d(TAG, "onResponse: 登陆失败");
+                    isLogin = false;
+                } else {
+                    ToastUtil.showShort(BaseApplication.getContext(), "登录成功");
+                    Log.d(TAG, "onResponse: 登录成功");
+                    isLogin = true;
+                    if (needPull) {
+                        pullOrder();
+                    }
+                }
             }
         }
     };

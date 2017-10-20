@@ -38,6 +38,7 @@ import com.iflytek.cloud.SpeechRecognizer;
 import com.iflytek.cloud.SpeechSynthesizer;
 import com.iflytek.cloud.SynthesizerListener;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -55,6 +56,8 @@ import java.util.LinkedHashMap;
  */
 
 public class BeoneAid implements CaeWakeupListener{
+
+    private static final String TAG = "BeoneAid";
     private Context mContext;
 
     private CaeWakeUpFileObserver mCaeWakeUpFileObserver;
@@ -85,6 +88,7 @@ public class BeoneAid implements CaeWakeupListener{
         if (mCaeWakeUpFileObserver != null) {
             mCaeWakeUpFileObserver.startWatching();
         }
+        getOrderFromRemote();
     }
 
     public void stop() {
@@ -390,6 +394,10 @@ public class BeoneAid implements CaeWakeupListener{
      *                              命令解析
      * ==================================================================================
      */
+
+    private boolean needPull = false;
+    private String[][] parserModeOrder = {{"中国中国"},{"中国"},{"美国"},{"英国"}};
+
     private int parseMode = 0;
     public void setParseMode(int newMode){
         if (newMode <= Config.MODE_NAME_ARRAY.length){
@@ -400,7 +408,107 @@ public class BeoneAid implements CaeWakeupListener{
         }
     }
 
+    public void getOrderFromRemote(){
+        needPull = false;
+        if (isLogin){
+            SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
+            Date curDate = new Date(System.currentTimeMillis());
+            String time = formatter.format(curDate);
+            JSONObject serviceContent = new JSONObject();
+            try {
+                serviceContent.put("secretKey", mSecretKey);
+                serviceContent.put("account", mAccount);
+                serviceContent.put("mac", mMac);
+                serviceContent.put("updateTime", time);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            JSONObject data = new JSONObject();
+            try {
+                data.put("activityCode", "T902");
+                data.put("bipCode", "B004");
+                data.put("origDomain", "M000");
+                data.put("homeDomain", "0000");
+                data.put("serviceContent", serviceContent);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            String url = mContext.getString(R.string.beone_aiui_url) + data.toString();
+            Log.d(TAG, "getOrderFromRemote: url == " +url);
+            StringRequest stringRequest = new StringRequest(url, RsPullListener, RsErrorListener);
+            mQueue.add(stringRequest);
+        }else {
+            needPull = true;
+            loginBeone();
+        }
+
+    }
+    private Response.Listener<String> RsPullListener = new Response.Listener<String>() {
+        @Override
+        public void onResponse(String response) {
+            Log.d(TAG, "onResponse: 获取命令词"+response);
+            try {
+                JSONObject data = new JSONObject(response);
+                JSONArray serArrary = data.getJSONArray("serviceContent");
+                String funParams = serArrary.getJSONObject(0).getString("funParams");
+                JSONObject fpJO = new JSONObject(funParams);
+                String[][] s = new String[3][3];
+                s[0][0] = fpJO.optJSONObject("audio").optString("key1");
+                s[0][1] = fpJO.optJSONObject("audio").optString("key2");
+                s[0][2] = fpJO.optJSONObject("audio").optString("key3");
+                s[1][0] = fpJO.optJSONObject("dev").optString("key1");
+                s[1][1] = fpJO.optJSONObject("dev").optString("key2");
+                s[1][2] = fpJO.optJSONObject("dev").optString("key3");
+                s[2][0] = fpJO.optJSONObject("aiui").optString("key1");
+                s[2][1] = fpJO.optJSONObject("aiui").optString("key2");
+                s[2][2] = fpJO.optJSONObject("aiui").optString("key3");
+                if((s[0][0]!=null || s[0][1]!=null || s[0][2]!=null)
+                        && (s[1][0]!=null || s[1][1]!=null || s[1][2]!=null)
+                        && (s[2][0]!=null || s[2][1]!=null || s[2][2]!=null)){
+                    setParserModeOrder(s);
+                    startTtsOutput("从平台获取模式命令词成功");
+                }else {
+                    startTtsOutput("从平台获取模式命令词失败，请使用默认命令词");
+                }
+            } catch (JSONException e) {
+                Log.e("TAG", "onResponse: "+e.getMessage());
+                e.printStackTrace();
+                startTtsOutput("从平台获取模式命令词失败，请使用默认命令词");
+            }
+        }
+    };
+
+    public void setParserModeOrder(String[][] s){
+        parserModeOrder = s;
+        for (int i = 0; i < parserModeOrder.length; i++){
+            for (int j = 0; j < parserModeOrder[i].length; j++) {
+                Log.d(TAG, "setParserModeOrder: "+i+j+parserModeOrder[i][j]);
+            }
+        }
+    }
+
     private void parseOrder(String order) {
+        for (int i = 0; i < parserModeOrder.length; i++){
+            for (int j = 0; j < parserModeOrder[i].length; j++) {
+                if (order.equals(parserModeOrder[i][j])){
+                    if (i == 1){
+                        if (isLogin) {
+                            setParseMode(1);
+                        } else {
+                            startTtsOutput("正在登录");
+                            loginBeone();
+                        }
+                    }else {
+                        setParseMode(i);
+                    }
+                    return;
+                }
+            }
+        }
+        if (order.equals("更新命令词")){
+            getOrderFromRemote();
+        }
         if(order.equals("中国中国")){
             setParseMode(0);
             return;
@@ -419,6 +527,7 @@ public class BeoneAid implements CaeWakeupListener{
             setParseMode(3);
             return;
         }
+
         if (parseMode == 0) {
             onRecognizeResultListener.onRecognizeResult(order);
         }else if (parseMode == 1) {
@@ -489,10 +598,12 @@ public class BeoneAid implements CaeWakeupListener{
         if(TextUtils.isEmpty(mMac)){
             mMac = "0000F64F73A999618";
         }
+        Log.d(TAG, "initMac: MAC=="+mMac);
     }
     private Response.Listener<String> RsBeoneListener = new Response.Listener<String>() {
         @Override
         public void onResponse(String response) {
+            Log.d(TAG, "onResponse: BeoneListener"+response);
             if (isLogin) {
                 try {
                     JSONObject data = new JSONObject(response);
@@ -508,18 +619,23 @@ public class BeoneAid implements CaeWakeupListener{
             } else {
                 try {
                     JSONObject data = new JSONObject(response);
-                    JSONObject serviceContent = data.optJSONObject("serviceContent");
+                    JSONObject serviceContent = data.getJSONObject("serviceContent");
                     mSecretKey = serviceContent.optString("secretKey");
                     mAccount = serviceContent.optString("account");
                 } catch (JSONException e) {
                     e.printStackTrace();
+                    Log.e(TAG, "onResponse: BeoneListener:"+e.getMessage() );
                 }
                 if (TextUtils.isEmpty(mSecretKey) || TextUtils.isEmpty(mAccount)) {
                     startTtsOutput("登录失败");
                     isLogin = false;
                 } else {
                     isLogin = true;
-                    setParseMode(1);
+                    if (needPull){
+                        getOrderFromRemote();
+                    }else {
+                        setParseMode(1);
+                    }
                 }
             }
 
@@ -553,6 +669,7 @@ public class BeoneAid implements CaeWakeupListener{
         }
 
         String url = mContext.getString(R.string.beone_aiui_url) + data.toString();
+        Log.d(TAG, "loginBeone: URL =="+url);
         StringRequest stringRequest = new StringRequest(url, RsBeoneListener, RsErrorListener);
         mQueue.add(stringRequest);
 
