@@ -508,6 +508,7 @@ public class BeoneAid implements CaeWakeupListener{
         }
         if (order.equals("更新命令词")){
             getOrderFromRemote();
+            return;
         }
         if(order.equals("中国中国")){
             setParseMode(0);
@@ -598,7 +599,6 @@ public class BeoneAid implements CaeWakeupListener{
         if(TextUtils.isEmpty(mMac)){
             mMac = "0000F64F73A999618";
         }
-        Log.d(TAG, "initMac: MAC=="+mMac);
     }
     private Response.Listener<String> RsBeoneListener = new Response.Listener<String>() {
         @Override

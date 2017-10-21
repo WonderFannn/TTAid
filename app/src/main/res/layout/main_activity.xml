@@ -9,21 +9,55 @@
     android:paddingLeft="10dp"
     android:paddingRight="10dp" >
 
-    <TextView
-        android:id="@+id/textView"
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
-        android:gravity="center|left"
-        android:padding="10dp"
-        android:text="命令词修改"
-        android:textSize="20sp" />
+        android:layout_weight="1">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" >
+
+            <TextView
+                android:id="@+id/textView"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:gravity="center|left"
+                android:padding="10dp"
+                android:text="目前语音命令还是需要在唤醒后发出，唤醒词：宝贝宝贝，老公老公，老婆老婆
+                \n（若玲珑宝没做过唤醒词修改，则还是灵犀灵犀）\nBeone助手目前已经升级为玲珑宝核心语音服务，开机会自动运行。
+                \n（目前安装后会有一个图标，第一次安装后需打开一次启动服务）
+                \nBeone助手启动后，会自动获取平台已经设定好的修改模式命令词
+                \n获取到命令词后即可使用平台命令词修改模式，若未获取到命令词，则只能使用默认命令词修改模式\n
+                \n命令词说明：
+                \n在任意模式下，说“更新命令词”可从平台拉取最新的模式命令词
+                \n在任意模式下，说模式命令词即可切换到相应的模式
+                \n
+                \n模式说明：
+                \n1，Beone应用接口模式（默认命令词：中国中国）
+                    \n该模式为Beone助手默认模式，用于对其他应用程序提供语音识别接口，将识别到的语音结果通知
+                    \n 其他的应用程序。如：Beone影视搜索。详细使用方法请参阅Beone影视搜索说明文档
+                \n2，Beone智慧家居模式（默认命令词：中国）
+                    \n该模式状态下可以控制与玲珑宝绑定账号下的智能设备，如：开关灯，开关窗帘，开关音乐
+                \n3，Beone人工智能模式（默认命令词：美国）
+                    \n该模式状态下，可与玲珑宝进行智能对话，如：查询天气，查询火车票，数学计算等
+                \n4，按键助手模式（无命令词）
+	                \n该模式无法通过命令词切换，仅提供给应用主动切换使用，使用方法请参阅Beone影视搜索说明文档
+                \n//以下为特别版本说明，仅供本次养老中心系统展示使用，正式版不会出现
+                \n5，养老中心模式（命令词：英国）
+                \n该模式为养老中心系统展示使用，将语音信息发往养老中心的控制中心"
+                android:textSize="20sp" />
+        </LinearLayout>
+    </ScrollView>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:visibility="gone">
 
         <TextView
             android:layout_width="0dp"
@@ -48,7 +82,8 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:visibility="gone">
 
         <TextView
             android:layout_width="0dp"
@@ -73,7 +108,8 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:visibility="gone">
 
         <TextView
             android:layout_width="0dp"
@@ -98,6 +134,7 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
+        android:visibility="gone"
         android:orientation="horizontal">
 
         <Button

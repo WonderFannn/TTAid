@@ -68,10 +68,10 @@ public class SettingActivity extends Activity implements View.OnClickListener {
         intent.setAction(BeoneAidService.SMART_ECHO_ACTION_START);
         startService(intent);
 
-        initReqQue();
-        initData();
-        initView();
-        initMac();
+//        initReqQue();
+//        initData();
+//        initView();
+//        initMac();
 //      mMac = "0000128581425294";
     }
 
