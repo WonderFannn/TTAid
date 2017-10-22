@@ -48,7 +48,10 @@ public class BeoneAidService extends Service implements BeoneAid.OnRecognizeResu
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
-        String action = intent.getAction();
+        String action = null;
+        if (intent != null){
+            action = intent.getAction();
+        }
         if (action != null) {
             LogUtil.d("BeoneAidService - onStartCommand - " + action);
             if (SMART_ECHO_ACTION_START.equals(action)) {
