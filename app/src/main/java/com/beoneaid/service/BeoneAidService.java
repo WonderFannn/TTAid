@@ -69,6 +69,7 @@ public class BeoneAidService extends Service implements BeoneAid.OnRecognizeResu
     public void onDestroy() {
         super.onDestroy();
         mBeoneAid.stop();
+        mCallbacks.kill();
         Intent intent = new Intent(this, BeoneAidService.class);
         intent.setAction(BeoneAidService.SMART_ECHO_ACTION_START);
         startService(intent);
@@ -79,14 +80,13 @@ public class BeoneAidService extends Service implements BeoneAid.OnRecognizeResu
         Log.d("TAG", "callback: N=="+N);
         for (int i=0; i<N; i++) {
             try {
-                Log.d("TAG", "callback: try"+result);
+                Log.d("TAG", "callback: try" + result);
                 mCallbacks.getBroadcastItem(i).recognizeResultCallback(result);
-            }
-            catch (RemoteException e) {
-            }finally {
-                mCallbacks.finishBroadcast();
+            } catch (RemoteException e) {
+                Log.e("BeoneAidService", "callback: E ==" + e.getMessage());
             }
         }
+        mCallbacks.finishBroadcast();
     }
 
     private final IBeoneAidService.Stub mBinder = new IBeoneAidService.Stub() {
