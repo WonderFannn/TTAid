@@ -188,6 +188,7 @@ public class BeoneAid implements CaeWakeupListener{
 
         @Override
         public void onSpeakBegin() {
+            stopIat();
         }
         @Override
         public void onSpeakPaused() {
@@ -211,7 +212,7 @@ public class BeoneAid implements CaeWakeupListener{
             new Handler().postDelayed(new Runnable(){
                 public void run() {
                     mIsOnTts = false;
-                    if (mIsNeedStartIat) {
+                    if (mIsNeedStartIat || continuousSpeechRecognition) {
                         mIsNeedStartIat = false;
                         startIat();
                     }
@@ -299,6 +300,7 @@ public class BeoneAid implements CaeWakeupListener{
         mIat = SpeechRecognizer.createRecognizer(mContext, null);
         setIatParam();
     }
+    private boolean continuousSpeechRecognition = false;
     // 听写监听器
     private RecognizerListener mIatListener = new RecognizerListener() {
 
@@ -307,11 +309,16 @@ public class BeoneAid implements CaeWakeupListener{
         }
         @Override
         public void onResult(RecognizerResult result, boolean isLast) {
+            Log.d(TAG, "onResult: isLast"+isLast);
             String rltStr = printResult(result);
             if(isLast) {
-                parseOrder(rltStr);
-                ToastUtil.showShort(mContext,rltStr);
                 stopIat();
+                if (rltStr.equals("。")){
+
+                }else {
+                    parseOrder(rltStr);
+                    ToastUtil.showShort(mContext,rltStr);
+                }
             }
         }
         @Override
@@ -331,8 +338,14 @@ public class BeoneAid implements CaeWakeupListener{
     private void startIat() {
         mStartRecognize = true;
         // start listening user
-        if(mIat != null && !mIat.isListening()) {
-            mIat.startListening(mIatListener);
+        if (continuousSpeechRecognition){
+            if (mIat != null && !mIat.isListening()) {
+                mIat.startListening(mIatListener);
+            }
+        }else {
+            if (mIat != null && !mIat.isListening()) {
+                mIat.startListening(mIatListener);
+            }
         }
     }
     private void stopIat() {
@@ -355,9 +368,9 @@ public class BeoneAid implements CaeWakeupListener{
         // 设置语言区域
         mIat.setParameter(SpeechConstant.ACCENT, "mandarin");
         // 设置语音前端点:静音超时时间，即用户多长时间不说话则当做超时处理
-        mIat.setParameter(SpeechConstant.VAD_BOS, "4000");
+        mIat.setParameter(SpeechConstant.VAD_BOS, "5000");
         // 设置语音后端点:后端点静音检测时间，即用户停止说话多长时间内即认为不再输入， 自动停止录音
-        mIat.setParameter(SpeechConstant.VAD_EOS, "1000");
+        mIat.setParameter(SpeechConstant.VAD_EOS, "1500");
         // 设置标点符号,设置为"0"返回结果无标点,设置为"1"返回结果有标点
         mIat.setParameter(SpeechConstant.ASR_PTT, "0");
         // 设置音频保存路径，保存音频格式支持pcm、wav，设置路径为sd卡请注意WRITE_EXTERNAL_STORAGE权限
@@ -526,6 +539,16 @@ public class BeoneAid implements CaeWakeupListener{
             return;
         }else if (order.equals("英国")){
             setParseMode(3);
+            return;
+        }
+
+        if (order.equals("法国")){
+            continuousSpeechRecognition = true;
+            startTtsOutput("连续识别模式开启");
+            return;
+        }else if (order.equals("德国") || order.contains("单次识别模式") || order.contains("单词识别模式") || order.contains("当次识别模式")){
+            continuousSpeechRecognition =false;
+            startTtsOutput("单次识别模式开启");
             return;
         }
 
@@ -888,16 +911,22 @@ public class BeoneAid implements CaeWakeupListener{
                 return;
             }else if (text.contains("上")){
                 BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_UP,null);
+                startTtsOutput("好的");
                 return;
             }else if (text.contains("下")){
                 BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_DOWN,null);
+                startTtsOutput("好的");
                 return;
             }else if (text.contains("左")){
                 BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_LEFT,null);
+                startTtsOutput("好的");
                 return;
             }else if (text.contains("右")){
                 BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_RIGHT,null);
+                startTtsOutput("好的");
                 return;
+            }else{
+                startTtsOutput("我不明白");
             }
         }
     }
