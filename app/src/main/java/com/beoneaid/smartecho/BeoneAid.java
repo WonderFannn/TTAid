@@ -891,7 +891,6 @@ public class BeoneAid implements CaeWakeupListener{
         }
         bundle.putByteArray(ACTION_OLD_PEOPLE_VOICE_MESSAGE,orderByte);
         BroadcastManager.sendBroadcast(ACTION_OLD_PEOPLE_VOICE_MESSAGE,bundle);
-//        startTtsOutput("已经帮您通知了监控中心");
     }
 
     /**
@@ -899,7 +898,14 @@ public class BeoneAid implements CaeWakeupListener{
      *                               按键模式 mode == 4
      * ==================================================================================
      */
-
+    private int mSRIndex = 0;
+    private String getSRText() {
+        mSRIndex++;
+        if(mSRIndex >= Config.SMIULATEKEY_REPLY.length) {
+            mSRIndex = 0;
+        }
+        return Config.SMIULATEKEY_REPLY[mSRIndex];
+    }
     private void sendSimulateKeyBroadcast(String text) {
         if(!TextUtils.isEmpty(text)){
             ToastUtil.showShort(BaseApplication.getContext(),text);
@@ -911,19 +917,19 @@ public class BeoneAid implements CaeWakeupListener{
                 return;
             }else if (text.contains("上")){
                 BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_UP,null);
-                startTtsOutput("好的");
+                startTtsOutput(getSRText());
                 return;
             }else if (text.contains("下")){
                 BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_DOWN,null);
-                startTtsOutput("好的");
+                startTtsOutput(getSRText());
                 return;
             }else if (text.contains("左")){
                 BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_LEFT,null);
-                startTtsOutput("好的");
+                startTtsOutput(getSRText());
                 return;
             }else if (text.contains("右")){
                 BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_RIGHT,null);
-                startTtsOutput("好的");
+                startTtsOutput(getSRText());
                 return;
             }else{
                 startTtsOutput("我不明白");

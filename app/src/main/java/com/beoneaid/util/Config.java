@@ -7,6 +7,11 @@ public class Config {
             "我在",
             "在"
     };
+    public static final String[] SMIULATEKEY_REPLY = {
+            "好的",
+            "好",
+            "OK"
+    };
     public static final String[] MODE_NAME_ARRAY = {
             "哔湾应用接口模式",
             "哔湾智慧家居模式",
