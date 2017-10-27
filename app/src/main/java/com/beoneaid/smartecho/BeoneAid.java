@@ -158,7 +158,7 @@ public class BeoneAid implements CaeWakeupListener{
     };
 
     public int startTtsOutput(String text) {
-        return startTtsOutput(text, false);
+        return startTtsOutput(text, true);
     }
 
     public int startTtsOutput(String text, boolean needStartIatAfterTts) {
@@ -212,7 +212,7 @@ public class BeoneAid implements CaeWakeupListener{
             new Handler().postDelayed(new Runnable(){
                 public void run() {
                     mIsOnTts = false;
-                    if (mIsNeedStartIat || continuousSpeechRecognition) {
+                    if (mIsNeedStartIat) {
                         mIsNeedStartIat = false;
                         startIat();
                     }
@@ -300,7 +300,6 @@ public class BeoneAid implements CaeWakeupListener{
         mIat = SpeechRecognizer.createRecognizer(mContext, null);
         setIatParam();
     }
-    private boolean continuousSpeechRecognition = false;
     // 听写监听器
     private RecognizerListener mIatListener = new RecognizerListener() {
 
@@ -338,15 +337,10 @@ public class BeoneAid implements CaeWakeupListener{
     private void startIat() {
         mStartRecognize = true;
         // start listening user
-        if (continuousSpeechRecognition){
-            if (mIat != null && !mIat.isListening()) {
-                mIat.startListening(mIatListener);
-            }
-        }else {
-            if (mIat != null && !mIat.isListening()) {
-                mIat.startListening(mIatListener);
-            }
+        if (mIat != null && !mIat.isListening()) {
+            mIat.startListening(mIatListener);
         }
+
     }
     private void stopIat() {
         mStartRecognize = false;
@@ -480,14 +474,14 @@ public class BeoneAid implements CaeWakeupListener{
                         && (s[1][0]!=null || s[1][1]!=null || s[1][2]!=null)
                         && (s[2][0]!=null || s[2][1]!=null || s[2][2]!=null)){
                     setParserModeOrder(s);
-                    startTtsOutput("从平台获取模式命令词成功");
+                    startTtsOutput("从平台获取模式命令词成功",false);
                 }else {
-                    startTtsOutput("从平台获取模式命令词失败，请使用默认命令词");
+                    startTtsOutput("从平台获取模式命令词失败，请使用默认命令词",false);
                 }
             } catch (JSONException e) {
                 Log.e("TAG", "onResponse: "+e.getMessage());
                 e.printStackTrace();
-                startTtsOutput("从平台获取模式命令词失败，请使用默认命令词");
+                startTtsOutput("从平台获取模式命令词失败，请使用默认命令词",false);
             }
         }
     };
@@ -509,7 +503,7 @@ public class BeoneAid implements CaeWakeupListener{
                         if (isLogin) {
                             setParseMode(1);
                         } else {
-                            startTtsOutput("正在登录");
+                            startTtsOutput("正在登录",false);
                             loginBeone();
                         }
                     }else {
@@ -542,15 +536,6 @@ public class BeoneAid implements CaeWakeupListener{
             return;
         }
 
-        if (order.equals("法国")){
-            continuousSpeechRecognition = true;
-            startTtsOutput("连续识别模式开启");
-            return;
-        }else if (order.equals("德国") || order.contains("单次识别模式") || order.contains("单词识别模式") || order.contains("当次识别模式")){
-            continuousSpeechRecognition =false;
-            startTtsOutput("单次识别模式开启");
-            return;
-        }
 
         if (parseMode == 0) {
             onRecognizeResultListener.onRecognizeResult(order);
