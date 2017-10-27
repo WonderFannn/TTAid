@@ -312,11 +312,12 @@ public class BeoneAid implements CaeWakeupListener{
             String rltStr = printResult(result);
             if(isLast) {
                 stopIat();
-                if (rltStr.equals("。")){
-
-                }else {
+                if (rltStr.contains("。")){
+                    rltStr = rltStr.replaceAll("。","");
+                }
+                if(!TextUtils.isEmpty(rltStr)) {
                     parseOrder(rltStr);
-                    ToastUtil.showShort(mContext,rltStr);
+                    ToastUtil.showShort(mContext, rltStr);
                 }
             }
         }
