@@ -2,6 +2,7 @@ package com.beoneaid.smartecho;
 
 import android.content.Context;
 import android.content.res.AssetManager;
+import android.media.AudioManager;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Environment;
@@ -78,6 +79,7 @@ public class BeoneAid implements CaeWakeupListener{
         initIat();
         initReqQue();
         initMac();
+        initAudioManager();
         mCaeWakeUpFileObserver = new CaeWakeUpFileObserver(this);
     }
 
@@ -319,6 +321,7 @@ public class BeoneAid implements CaeWakeupListener{
                     parseOrder(rltStr);
                     ToastUtil.showShort(mContext, rltStr);
                 }
+//                resetCurrentValume();
             }
         }
         @Override
@@ -329,11 +332,14 @@ public class BeoneAid implements CaeWakeupListener{
             stopIat();
         }
         @Override
-        public void onEndOfSpeech() {
+        public void onBeginOfSpeech() {
+
         }
         @Override
-        public void onBeginOfSpeech() {
+        public void onEndOfSpeech() {
+            resetCurrentValume();
         }
+
     };
     private void startIat() {
         mStartRecognize = true;
@@ -341,7 +347,7 @@ public class BeoneAid implements CaeWakeupListener{
         if (mIat != null && !mIat.isListening()) {
             mIat.startListening(mIatListener);
         }
-
+        getSystemCurrentValume();
     }
     private void stopIat() {
         mStartRecognize = false;
@@ -413,6 +419,7 @@ public class BeoneAid implements CaeWakeupListener{
             parseMode = newMode;
         }else {
             startTtsOutput("模式值超出范围");
+            Log.d(TAG, "setParseMode: =="+newMode);
         }
     }
 
@@ -921,5 +928,29 @@ public class BeoneAid implements CaeWakeupListener{
                 startTtsOutput("我不明白");
             }
         }
+    }
+
+
+    /**
+     * ==================================================================================
+     *                               音量设置相关
+     * ==================================================================================
+     */
+    private AudioManager mAudioManager;
+    private int mMusicValumeMin;
+    private int currentValume;
+    private void initAudioManager(){
+        mAudioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
+        mMusicValumeMin = mAudioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)/10+1;
+    }
+
+    private void getSystemCurrentValume() {
+        currentValume = mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+        mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, mMusicValumeMin, 0);
+        Log.d(TAG, "getSystemCurrentValume: currentValume"+currentValume);
+    }
+    private void resetCurrentValume(){
+        mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, currentValume, 0);
+        Log.d(TAG, "resetCurrentValume: "+currentValume);
     }
 }

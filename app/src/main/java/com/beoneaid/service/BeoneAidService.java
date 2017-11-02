@@ -91,6 +91,10 @@ public class BeoneAidService extends Service implements BeoneAid.OnRecognizeResu
 
     private final IBeoneAidService.Stub mBinder = new IBeoneAidService.Stub() {
 
+        public void startSpeakingWithoutRecognize(String s){
+            mBeoneAid.startTtsOutput(s,false);
+        }
+
         public void startSpeaking(String s){
             mBeoneAid.startTtsOutput(s);
         }

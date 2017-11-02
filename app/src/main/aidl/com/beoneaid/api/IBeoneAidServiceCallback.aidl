@@ -1,5 +1,5 @@
 package com.beoneaid.api;
 
 interface IBeoneAidServiceCallback {
-    void recognizeResultCallback(String actionId);
+    void recognizeResultCallback(String result);
 }
