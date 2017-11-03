@@ -321,7 +321,6 @@ public class BeoneAid implements CaeWakeupListener{
                     parseOrder(rltStr);
                     ToastUtil.showShort(mContext, rltStr);
                 }
-//                resetCurrentValume();
             }
         }
         @Override
@@ -346,8 +345,8 @@ public class BeoneAid implements CaeWakeupListener{
         // start listening user
         if (mIat != null && !mIat.isListening()) {
             mIat.startListening(mIatListener);
+            getSystemCurrentValume();
         }
-        getSystemCurrentValume();
     }
     private void stopIat() {
         mStartRecognize = false;
@@ -942,10 +941,14 @@ public class BeoneAid implements CaeWakeupListener{
     private void initAudioManager(){
         mAudioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
         mMusicValumeMin = mAudioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)/10+1;
+        currentValume = mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
     }
 
     private void getSystemCurrentValume() {
-        currentValume = mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+        int getVolume = mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+        if ( getVolume > mMusicValumeMin){
+            currentValume = getVolume;
+        }
         mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, mMusicValumeMin, 0);
         Log.d(TAG, "getSystemCurrentValume: currentValume"+currentValume);
     }
