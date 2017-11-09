@@ -55,7 +55,6 @@ public class PcmRecorder {
 		mBufferSize = AudioRecord.getMinBufferSize(mSampleRate, mChannelConfig, AudioFormat.ENCODING_PCM_16BIT);
 		
 		Log.d(TAG, String.format("minBufferSize=%d", mBufferSize));
-		
 		mAudioRecord = new AudioRecord(AudioSource.MIC, mSampleRate,
 									mChannelConfig, 
 									AudioFormat.ENCODING_PCM_16BIT,
