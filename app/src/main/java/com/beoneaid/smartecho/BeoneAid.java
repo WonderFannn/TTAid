@@ -1,6 +1,7 @@
 package com.beoneaid.smartecho;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.AssetManager;
 import android.media.AudioManager;
 import android.net.wifi.WifiManager;
@@ -549,7 +550,7 @@ public class BeoneAid implements CaeWakeupListener{
 
 
         if (parseMode == 0) {
-            onRecognizeResultListener.onRecognizeResult(order);
+            sendOrder2App(order);
         }else if (parseMode == 1) {
             try {
                 getAIUIResult(order);
@@ -576,6 +577,30 @@ public class BeoneAid implements CaeWakeupListener{
      *                               API mode == 0
      * ==================================================================================
      */
+    private void sendOrder2App(String order){
+        String od = order;
+        if (od.startsWith("我要")||od.startsWith("我想")){
+            od = od.substring(2);
+            if (od.startsWith("听音乐")||od.startsWith("听歌")){
+                openActivity("","");
+                return;
+            }else if (od.startsWith("看电影")){
+                openActivity("","");
+                return;
+            }
+        }
+        if (od.startsWith("打开")){
+            od = od.substring(2);
+            if (od.startsWith("音乐")||od.startsWith("云音乐")){
+                openActivity("","");
+                return;
+            }else if (od.startsWith("影视搜索")||od.startsWith("电影搜索")){
+                openActivity("","");
+                return;
+            }
+        }
+        onRecognizeResultListener.onRecognizeResult(order);
+    }
 
     private OnRecognizeResultListener onRecognizeResultListener = null;
 
@@ -587,7 +612,17 @@ public class BeoneAid implements CaeWakeupListener{
         onRecognizeResultListener = resultListener;
     }
 
-    /**
+    private void openActivity(String action,String packageName){
+        try{
+            Intent intent = new Intent(action);
+            intent.setPackage(packageName);
+            mContext.startActivity(intent);
+        }catch (Exception e){
+            startTtsOutput("没有安装相关应用，请安装");
+        }
+    }
+
+    /*
      * ==================================================================================
      *                               智慧家居 mode == 1
      * ==================================================================================
