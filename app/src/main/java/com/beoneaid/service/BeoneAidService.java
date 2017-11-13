@@ -40,9 +40,18 @@ public class BeoneAidService extends Service implements BeoneAid.OnRecognizeResu
     }
 
     @Override
+    public void onRebind(Intent intent) {
+        mBeoneAid.setParseMode(0);
+        Log.d("TAG", "onRebind: ");
+        super.onRebind(intent);
+    }
+
+    @Override
     public boolean onUnbind(Intent intent) {
         Log.d("TAG", "onUnbind: ");
-        return super.onUnbind(intent);
+        super.onUnbind(intent);
+        return true;
+
     }
 
     @Override
@@ -83,7 +92,7 @@ public class BeoneAidService extends Service implements BeoneAid.OnRecognizeResu
                 Log.d("TAG", "callback: try" + result);
                 mCallbacks.getBroadcastItem(i).recognizeResultCallback(result);
             } catch (RemoteException e) {
-                Log.e("BeoneAidService", "callback: E ==" + e.getMessage());
+                Log.e("TAG", "callback: E ==" + e.getMessage());
             }
         }
         mCallbacks.finishBroadcast();
