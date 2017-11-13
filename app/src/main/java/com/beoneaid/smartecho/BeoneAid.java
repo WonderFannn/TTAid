@@ -582,20 +582,20 @@ public class BeoneAid implements CaeWakeupListener{
         if (od.startsWith("我要")||od.startsWith("我想")){
             od = od.substring(2);
             if (od.startsWith("听音乐")||od.startsWith("听歌")){
-                openActivity("","");
+                openActivity("com.jinxin.cloudmusic");
                 return;
             }else if (od.startsWith("看电影")){
-                openActivity("","");
+                openActivity("com.jinxin.beonemoviesearcher");
                 return;
             }
         }
         if (od.startsWith("打开")){
             od = od.substring(2);
             if (od.startsWith("音乐")||od.startsWith("云音乐")){
-                openActivity("","");
+                openActivity("com.jinxin.cloudmusic");
                 return;
             }else if (od.startsWith("影视搜索")||od.startsWith("电影搜索")){
-                openActivity("","");
+                openActivity("com.jinxin.beonemoviesearcher");
                 return;
             }
         }
@@ -612,10 +612,9 @@ public class BeoneAid implements CaeWakeupListener{
         onRecognizeResultListener = resultListener;
     }
 
-    private void openActivity(String action,String packageName){
+    private void openActivity(String packageName){
         try{
-            Intent intent = new Intent(action);
-            intent.setPackage(packageName);
+            Intent intent = mContext.getPackageManager().getLaunchIntentForPackage(packageName);
             mContext.startActivity(intent);
         }catch (Exception e){
             startTtsOutput("没有安装相关应用，请安装");
