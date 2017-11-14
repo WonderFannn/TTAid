@@ -82,6 +82,7 @@ public class BeoneAid implements CaeWakeupListener{
         initMac();
         initAudioManager();
         mCaeWakeUpFileObserver = new CaeWakeUpFileObserver(this);
+        mSelfCheckThread.start();
     }
 
     public void start() {
@@ -285,7 +286,8 @@ public class BeoneAid implements CaeWakeupListener{
 
         @Override
         public void onPcmData(byte[] data, int dataLen) {
-            Log.d(TAG, "onPcmData: !write"+dataLen);
+            Log.d("onPcmData", "onPcmData: !write"+dataLen);
+            PCM_IS_RUN = true;
 //			write2File(data);
             if (mStartRecognize && !mIsOnTts) {
                 // 写入16K采样率音频，开始听写
@@ -973,6 +975,7 @@ public class BeoneAid implements CaeWakeupListener{
      *                               音量设置相关
      * ==================================================================================
      */
+
     private AudioManager mAudioManager;
     private int mMusicValumeMin;
     private int currentValume;
@@ -993,5 +996,41 @@ public class BeoneAid implements CaeWakeupListener{
     private void resetCurrentValume(){
         mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, currentValume, 0);
         Log.d(TAG, "resetCurrentValume: "+currentValume);
+    }
+
+     /**
+     * ==================================================================================
+     *                               定时自检
+     * ==================================================================================
+     */
+
+    public static boolean PCM_IS_RUN = false;
+    private SelfCheckThread mSelfCheckThread = new SelfCheckThread(this);
+    class SelfCheckThread extends Thread {
+        private BeoneAid mBeoneAid;
+
+        public SelfCheckThread(BeoneAid beoneAid) {
+            mBeoneAid = beoneAid;
+        }
+
+        @Override
+        public void run() {
+            while (true){
+                try {
+                    Thread.sleep(10000);
+                    PCM_IS_RUN = false;
+                    Log.d(TAG, "run: 自检线程运行中1  PCM_IS_RUN  ==" +PCM_IS_RUN);
+                    Thread.sleep(5000);
+                    Log.d(TAG, "run: 自检线程运行中2  PCM_IS_RUN  ==" +PCM_IS_RUN);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                if (!PCM_IS_RUN){
+                    mBeoneAid.stop();
+                    mBeoneAid.start();
+                    Log.e(TAG, "PCM_RUN :restart");
+                }
+            }
+        }
     }
 }
