@@ -912,17 +912,8 @@ public class BeoneAid implements CaeWakeupListener{
      * ==================================================================================
      */
 
-    private String ACTION_OLD_PEOPLE_VOICE_MESSAGE = "action_old_people_voice_message";
     private void sendBroadcast(String order) {
-        Bundle bundle = new Bundle();
-        byte[] orderByte = new byte[0];
-        try {
-            orderByte = order.getBytes("UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
-        bundle.putByteArray(ACTION_OLD_PEOPLE_VOICE_MESSAGE,orderByte);
-        BroadcastManager.sendBroadcast(ACTION_OLD_PEOPLE_VOICE_MESSAGE,bundle);
+        startTtsOutput("此模式目前已停用，会在下个版本中删除",false);
     }
 
     /**
