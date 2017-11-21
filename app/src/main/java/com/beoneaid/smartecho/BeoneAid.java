@@ -3,7 +3,6 @@ package com.beoneaid.smartecho;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.AssetManager;
-import android.media.AudioManager;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Environment;
@@ -80,7 +79,7 @@ public class BeoneAid implements CaeWakeupListener{
         initIat();
         initReqQue();
         initMac();
-        initAudioManager();
+//        initAudioManager();
         mCaeWakeUpFileObserver = new CaeWakeUpFileObserver(this);
         mSelfCheckThread.start();
     }
@@ -342,7 +341,7 @@ public class BeoneAid implements CaeWakeupListener{
         }
         @Override
         public void onEndOfSpeech() {
-            resetCurrentValume();
+//            resetCurrentValume();
             stopIat();
         }
 
@@ -352,7 +351,7 @@ public class BeoneAid implements CaeWakeupListener{
         // start listening user
         if (mIat != null && !mIat.isListening()) {
             mIat.startListening(mIatListener);
-            getSystemCurrentValume();
+//            getSystemCurrentValume();
         }
     }
     private void stopIat() {
@@ -416,7 +415,7 @@ public class BeoneAid implements CaeWakeupListener{
      */
 
     private boolean needPull = false;
-    private String[][] parserModeOrder = {{"中国中国"},{"中国"},{"美国"},{"英国"}};
+    private String[][] parserModeOrder = {{"中国中国"},{"中国"},{"美国"}};
 
     private int parseMode = 0;
     public void setParseMode(int newMode){
@@ -545,11 +544,7 @@ public class BeoneAid implements CaeWakeupListener{
         }else if (order.equals("美国")){
             setParseMode(2);
             return;
-        }else if (order.equals("英国")){
-            setParseMode(3);
-            return;
         }
-
 
         if (parseMode == 0) {
             sendOrder2App(order);
@@ -562,10 +557,6 @@ public class BeoneAid implements CaeWakeupListener{
         }else if (parseMode == 2){
             if (checkAIUIAgent()){
                 startTextNlp(order);
-            }
-        }else if (parseMode == 3){
-            if (!TextUtils.isEmpty(order)){
-                sendBroadcast(order);
             }
         }else if (parseMode == 4){
             sendSimulateKeyBroadcast(order);
@@ -623,7 +614,7 @@ public class BeoneAid implements CaeWakeupListener{
         }
     }
 
-    /*
+    /**
      * ==================================================================================
      *                               智慧家居 mode == 1
      * ==================================================================================
@@ -905,17 +896,6 @@ public class BeoneAid implements CaeWakeupListener{
 
     };
 
-
-    /**
-     * ==================================================================================
-     *                               养老中心 mode == 3
-     * ==================================================================================
-     */
-
-    private void sendBroadcast(String order) {
-        startTtsOutput("此模式目前已停用，会在下个版本中删除",false);
-    }
-
     /**
      * ==================================================================================
      *                               按键模式 mode == 4
@@ -967,27 +947,27 @@ public class BeoneAid implements CaeWakeupListener{
      * ==================================================================================
      */
 
-    private AudioManager mAudioManager;
-    private int mMusicValumeMin;
-    private int currentValume;
-    private void initAudioManager(){
-        mAudioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
-        mMusicValumeMin = mAudioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)/10+1;
-        currentValume = mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
-    }
-
-    private void getSystemCurrentValume() {
-        int getVolume = mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
-        if ( getVolume > mMusicValumeMin){
-            currentValume = getVolume;
-        }
-        mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, mMusicValumeMin, 0);
-        Log.d(TAG, "getSystemCurrentValume: currentValume"+currentValume);
-    }
-    private void resetCurrentValume(){
-        mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, currentValume, 0);
-        Log.d(TAG, "resetCurrentValume: "+currentValume);
-    }
+//    private AudioManager mAudioManager;
+//    private int mMusicValumeMin;
+//    private int currentValume;
+//    private void initAudioManager(){
+//        mAudioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
+//        mMusicValumeMin = mAudioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)/10+1;
+//        currentValume = mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+//    }
+//
+//    private void getSystemCurrentValume() {
+//        int getVolume = mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+//        if ( getVolume > mMusicValumeMin){
+//            currentValume = getVolume;
+//        }
+//        mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, mMusicValumeMin, 0);
+//        Log.d(TAG, "getSystemCurrentValume: currentValume"+currentValume);
+//    }
+//    private void resetCurrentValume(){
+//        mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, currentValume, 0);
+//        Log.d(TAG, "resetCurrentValume: "+currentValume);
+//    }
 
      /**
      * ==================================================================================
