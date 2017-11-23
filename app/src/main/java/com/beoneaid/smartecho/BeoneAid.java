@@ -1,11 +1,11 @@
 package com.beoneaid.smartecho;
 
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.AssetManager;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.text.TextUtils;
 import android.util.Log;
@@ -265,8 +265,10 @@ public class BeoneAid implements CaeWakeupListener{
         // 设置音频保存路径，保存音频格式支持pcm、wav，设置路径为sd卡请注意WRITE_EXTERNAL_STORAGE权限
         // 注：AUDIO_FORMAT参数语记需要更新版本才能生效
         mTts.setParameter(SpeechConstant.AUDIO_FORMAT, "wav");
-        mTts.setParameter(SpeechConstant.TTS_AUDIO_PATH, Environment.getExternalStorageDirectory()+"/msc/tts.wav");
+//        mTts.setParameter(SpeechConstant.TTS_AUDIO_PATH, Environment.getExternalStorageDirectory()+"/msc/tts.wav");
+        mTts.setParameter(SpeechConstant.TTS_AUDIO_PATH, mContext.getExternalFilesDir(null)+"/msc/tts.wav");
     }
+
 
     /**
      * ==================================================================================
@@ -382,7 +384,8 @@ public class BeoneAid implements CaeWakeupListener{
         // 设置音频保存路径，保存音频格式支持pcm、wav，设置路径为sd卡请注意WRITE_EXTERNAL_STORAGE权限
         // 注：AUDIO_FORMAT参数语记需要更新版本才能生效
         mIat.setParameter(SpeechConstant.AUDIO_FORMAT,"wav");
-        mIat.setParameter(SpeechConstant.ASR_AUDIO_PATH, Environment.getExternalStorageDirectory()+"/msc/wftest/iat.wav");
+//        mIat.setParameter(SpeechConstant.ASR_AUDIO_PATH, Environment.getExternalStorageDirectory()+"/msc/wftest/iat.wav");
+        mIat.setParameter(SpeechConstant.ASR_AUDIO_PATH, mContext.getExternalFilesDir(null)+"/msc/wftest/iat.wav");
         mIat.setParameter(SpeechConstant.NOTIFY_RECORD_DATA, "0");
         mIat.setParameter("domain", "fariat");
     }
@@ -578,7 +581,7 @@ public class BeoneAid implements CaeWakeupListener{
                 openActivity("com.jinxin.cloudmusic");
                 return;
             }else if (od.startsWith("看电影")){
-                openActivity("com.jinxin.beonemoviesearcher");
+                openActivity("com.jinxin.beonemoviesearcher","com.beonemoviesearcher.activity.MainActivity");
                 return;
             }
         }
@@ -588,7 +591,7 @@ public class BeoneAid implements CaeWakeupListener{
                 openActivity("com.jinxin.cloudmusic");
                 return;
             }else if (od.startsWith("影视搜索")||od.startsWith("电影搜索")){
-                openActivity("com.jinxin.beonemoviesearcher");
+                openActivity("com.jinxin.beonemoviesearcher","com.beonemoviesearcher.activity.MainActivity");
                 return;
             }
         }
@@ -613,6 +616,21 @@ public class BeoneAid implements CaeWakeupListener{
             startTtsOutput("没有安装相关应用，请安装");
         }
     }
+
+    private void openActivity(String packageName,String activityName){
+        Intent intent = new Intent();
+        ComponentName cn = new ComponentName(packageName, activityName);
+        try {
+            intent.setComponent(cn);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            mContext.startActivity(intent);
+        } catch (Exception e) {
+            Log.e(TAG, "openActivity: "+e.getMessage() );
+            startTtsOutput("没有安装相关应用，请安装");
+        }
+    }
+
 
     /**
      * ==================================================================================
@@ -933,6 +951,10 @@ public class BeoneAid implements CaeWakeupListener{
             }else if (text.contains("右")){
                 BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_RIGHT,null);
                 startTtsOutput(getSRText());
+                return;
+            }else if (text.contains("显示桌面")||text.contains("显示主页")||text.contains("退出")){
+                BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_HOME,null);
+                setParseMode(0);
                 return;
             }else{
                 startTtsOutput("我不明白");

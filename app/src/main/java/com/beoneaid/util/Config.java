@@ -9,8 +9,7 @@ public class Config {
     };
     public static final String[] SMIULATEKEY_REPLY = {
             "好的",
-            "好",
-            "OK"
+            "好"
     };
     public static final String[] MODE_NAME_ARRAY = {
             "哔湾应用接口模式",
