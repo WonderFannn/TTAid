@@ -20,6 +20,7 @@ import com.beoneaid.application.BaseApplication;
 import com.beoneaid.broad.BroadcastManager;
 import com.beoneaid.smartecho.audio.PcmRecorder;
 import com.beoneaid.util.Config;
+import com.beoneaid.util.DesktopPetManager;
 import com.beoneaid.util.GetMacUtil;
 import com.beoneaid.util.JsonParser;
 import com.beoneaid.util.LogUtil;
@@ -79,6 +80,7 @@ public class BeoneAid implements CaeWakeupListener{
         initIat();
         initReqQue();
         initMac();
+        creatPet();
 //        initAudioManager();
         mCaeWakeUpFileObserver = new CaeWakeUpFileObserver(this);
         mSelfCheckThread.start();
@@ -91,6 +93,7 @@ public class BeoneAid implements CaeWakeupListener{
         if (mCaeWakeUpFileObserver != null) {
             mCaeWakeUpFileObserver.startWatching();
         }
+
         getOrderFromRemote();
     }
 
@@ -177,7 +180,11 @@ public class BeoneAid implements CaeWakeupListener{
         if (text.contains("哔湾")){
             text = text.replace("哔湾","Beone");
         }
-        ToastUtil.showTopToast(mContext,text);
+        if (PETSHOW){
+            petTalk(text);
+        }else {
+            ToastUtil.showTopToast(mContext,text);
+        }
         if (code != ErrorCode.SUCCESS) {
             LogUtil.d("tts error: " + code);
         }
@@ -221,6 +228,9 @@ public class BeoneAid implements CaeWakeupListener{
                     }
                 }
             }, 500);
+            if (PETSHOW){
+                petTalk("");
+            }
         }
 
         @Override
@@ -961,7 +971,35 @@ public class BeoneAid implements CaeWakeupListener{
             }
         }
     }
+    /**
+     * ==================================================================================
+     *                               桌面宠物管理
+     * ==================================================================================
+     */
 
+
+    /**
+     * 用于在线程中创建或移除悬浮窗。
+     */
+    private Handler handler = new Handler();
+
+    private boolean PETSHOW = true;
+    private void creatPet(){
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                DesktopPetManager.createdesktopPetView(mContext);
+            }
+        });
+    }
+    private void petTalk(final String text){
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                DesktopPetManager.updatePetTalk(text);
+            }
+        });
+    }
 
     /**
      * ==================================================================================
