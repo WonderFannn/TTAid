@@ -543,6 +543,13 @@ public class BeoneAid implements CaeWakeupListener{
             getOrderFromRemote();
             return;
         }
+        if (order.equals("关闭桌面宠物")){
+            destroyPet();
+            return;
+        }else if (order.equals("打开桌面宠物")){
+            creatPet();
+            return;
+        }
         if(order.equals("中国中国")){
             setParseMode(0);
             return;
@@ -991,6 +998,16 @@ public class BeoneAid implements CaeWakeupListener{
                 DesktopPetManager.createdesktopPetView(mContext);
             }
         });
+        PETSHOW = true;
+    }
+    private void destroyPet(){
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                DesktopPetManager.removedesktopPetView(mContext);
+            }
+        });
+        PETSHOW = false;
     }
     private void petTalk(final String text){
         handler.post(new Runnable() {
