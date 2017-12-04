@@ -16,9 +16,12 @@
     <TextView
         android:id="@+id/tv_talk"
         android:layout_width="wrap_content"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:gravity="center"
         android:layout_marginLeft="5dp"
-        android:text="123213" />
+        android:background="@drawable/message_box_left"
+        android:text="123213"
+        android:visibility="gone"
+        android:textColor="#0972CE"/>
 
 </LinearLayout>

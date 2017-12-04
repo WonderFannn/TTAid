@@ -115,29 +115,31 @@ public class ToastUtil {
 		showTopToast(context, tvString, 1000);
 	}
 	private static Toast topToast;
-	public static void showTopToast(Context context, String tvString, int cntime) {
-
-		if (topToast == null) {
-			topToast = new Toast(context);
-			topToast.setGravity(Gravity.TOP | Gravity.CENTER, 0, 0);
-			topToast.setDuration(Toast.LENGTH_LONG);
-			View layout = LayoutInflater.from(context).inflate(R.layout.toast_xml, null);
+	public static void showTopToast(final Context context, final String tvString, final int cntime) {
+		mHandler.post(new Runnable() {
+			@Override
+			public void run() {
+				if (topToast == null) {
+				    topToast = new Toast(context);
+				    topToast.setGravity(Gravity.TOP | Gravity.CENTER, 0, 0);
+				    topToast.setDuration(Toast.LENGTH_LONG);
+				    View layout = LayoutInflater.from(context).inflate(R.layout.toast_xml, null);
 //            ImageView mImageView = (ImageView) layout.findViewById(R.id.iv);
 //            mImageView.setBackgroundResource(R.drawable.ic_launcher);
-			text = (TextView) layout.findViewById(R.id.text);
-			topToast.setView(layout);
-			showMyToast(topToast, cntime);
-		}
-		text.setText(tvString);
-		text.setTextColor(0xFFFFFFFF);
-		text.setTextSize(16);
-		if(topToast!=null){
-			topToast.show();
-		}
+				    text = (TextView) layout.findViewById(R.id.text);
+				    topToast.setView(layout);
+				    showMyToast(topToast, cntime);
+				}
+				text.setText(tvString);
+			    text.setTextColor(0xFFFFFFFF);
+			    text.setTextSize(16);
+			    if(topToast!=null){
+				    topToast.show();
+			    }
+			}
+		});
 
 	}
-
-
 	//自定义停留时间
 	public static void showMyToast(final Toast topToast, final int cnt) {
 		final Timer timer = new Timer();

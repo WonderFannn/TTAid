@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.PixelFormat;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.View;
 import android.view.WindowManager;
 import android.widget.TextView;
 
@@ -97,6 +98,10 @@ public class DesktopPetManager {
             Log.d(TAG, "updatePetTalk: ");
             TextView percentView = (TextView) desktopPetView.findViewById(R.id.tv_talk);
             percentView.setText(str);
+            percentView.setVisibility(View.VISIBLE);
+            if (str.equals("")){
+                percentView.setVisibility(View.GONE);
+            }
 //            desktopPetView.setTalkText(str);
         }
     }

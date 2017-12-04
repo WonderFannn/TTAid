@@ -610,6 +610,9 @@ public class BeoneAid implements CaeWakeupListener{
             }else if (od.startsWith("影视搜索")||od.startsWith("电影搜索")){
                 openActivity("com.jinxin.beonemoviesearcher","com.beonemoviesearcher.activity.MainActivity");
                 return;
+            }else if (od.startsWith("帮助")){
+                openActivity("com.jinxin.voicehelp");
+                return;
             }
         }
         onRecognizeResultListener.onRecognizeResult(order);
@@ -1014,6 +1017,7 @@ public class BeoneAid implements CaeWakeupListener{
             @Override
             public void run() {
                 DesktopPetManager.updatePetTalk(text);
+
             }
         });
     }
