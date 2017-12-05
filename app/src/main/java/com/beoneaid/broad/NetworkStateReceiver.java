@@ -7,8 +7,7 @@ import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkInfo;
 
-import com.beoneaid.application.BaseApplication;
-import com.beoneaid.util.ToastUtil;
+import com.beoneaid.service.BeoneAidService;
 
 
 /**
@@ -21,10 +20,8 @@ public class NetworkStateReceiver extends BroadcastReceiver {
         System.out.println("网络状态发生变化");
         //检测API是不是小于23，因为到了API23之后getNetworkInfo(int networkType)方法被弃用
         if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.LOLLIPOP) {
-
             //获得ConnectivityManager对象
             ConnectivityManager connMgr = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-
             //获取ConnectivityManager对象对应的NetworkInfo对象
             //获取WIFI连接的信息
             NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
@@ -32,11 +29,9 @@ public class NetworkStateReceiver extends BroadcastReceiver {
                 if(networkInfo.isConnected()) {
                     isConnected = true;
                 }
-
             }
         //API大于23时使用下面的方式进行网络监听
         }else {
-
             System.out.println("API level 大于23");
             //获得ConnectivityManager对象
             ConnectivityManager connMgr = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -52,7 +47,9 @@ public class NetworkStateReceiver extends BroadcastReceiver {
             }
         }
 
-        String networkStr = isConnected ? "连接" : "断开";
-        ToastUtil.showShort(BaseApplication.getContext(),"网络已"+networkStr);
+        String networkStr = isConnected ? BeoneAidService.SMART_ECHO_ACTION_NETWORK_CONNECTED : BeoneAidService.SMART_ECHO_ACTION_NETWORK_DISCONNECTED;
+        Intent i = new Intent(context, BeoneAidService.class);
+        i.setAction(networkStr);
+        context.startService(i);
     }
 }

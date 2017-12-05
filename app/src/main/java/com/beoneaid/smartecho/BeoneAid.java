@@ -539,6 +539,10 @@ public class BeoneAid implements CaeWakeupListener{
                 }
             }
         }
+        if (order.equals("1234567")){
+            startTtsOutput("主人，网络断开了，我休息了",false);
+            return;
+        }
         if (order.equals("更新命令词")){
             getOrderFromRemote();
             return;

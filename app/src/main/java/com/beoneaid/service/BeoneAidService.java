@@ -1,7 +1,13 @@
 package com.beoneaid.service;
 
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
+import android.content.res.AssetFileDescriptor;
+import android.content.res.AssetManager;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.RemoteCallbackList;
 import android.os.RemoteException;
@@ -9,8 +15,12 @@ import android.util.Log;
 
 import com.beoneaid.api.IBeoneAidService;
 import com.beoneaid.api.IBeoneAidServiceCallback;
+import com.beoneaid.application.BaseApplication;
 import com.beoneaid.smartecho.BeoneAid;
 import com.beoneaid.util.LogUtil;
+import com.beoneaid.util.ToastUtil;
+
+import java.io.IOException;
 
 /**
  * Created by wangfan on 2017/10/12.
@@ -20,12 +30,18 @@ public class BeoneAidService extends Service implements BeoneAid.OnRecognizeResu
 
     public static final String SMART_ECHO_ACTION_START = "com.rockchip.echoOnWakeUp.ACTION.START";
     public static final String SMART_ECHO_ACTION_WAKEUP = "com.rockchip.echoOnWakeUp.ACTION.CAE.WAKEUP";
+    public static final String SMART_ECHO_ACTION_NETWORK_DISCONNECTED = "com.rockchip.echoOnWakeUp.ACTION.NETWORK.DISCONNECTED";
+    public static final String SMART_ECHO_ACTION_NETWORK_CONNECTED = "com.rockchip.echoOnWakeUp.ACTION.NETWORK.CONNECTED";
 
+
+    private AudioManager mAm;
+    private boolean checkNet = true;
     private BeoneAid mBeoneAid;
     private boolean isEchoRunning = false;
     @Override
     public void onCreate() {
         super.onCreate();
+        mAm = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
         mBeoneAid = new BeoneAid(getApplicationContext());
         mBeoneAid.start();
         mBeoneAid.setOnRecognizeResultListener(this);
@@ -66,9 +82,46 @@ public class BeoneAidService extends Service implements BeoneAid.OnRecognizeResu
             if (SMART_ECHO_ACTION_START.equals(action)) {
                 if (!isEchoRunning) {
                     mBeoneAid.startTtsOutput("哔湾助手在后台", false);
+                    isEchoRunning = true;
                 }
             } else if(SMART_ECHO_ACTION_WAKEUP.equals(action)) {
                 mBeoneAid.onWakeUp(0, 0);
+            } else if (SMART_ECHO_ACTION_NETWORK_DISCONNECTED.equals(action)){
+                if (isEchoRunning){
+                    if (checkNet) {
+                        checkNet = false;
+                        new Handler().postDelayed(new Runnable(){
+                            public void run() {
+                                checkNet = true;
+                            }
+                        }, 2000);
+                        ToastUtil.showTopToast(BaseApplication.getContext(), "主人，网络断开了，我休息了");
+                        AssetManager assetManager = getApplicationContext().getAssets();
+                        AssetFileDescriptor afd = null;
+                        try {
+                            afd = assetManager.openFd("net_disconnected.wav");
+                            mAm.requestAudioFocus(null, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+                            MediaPlayer player = new MediaPlayer();
+                            player.setDataSource(afd.getFileDescriptor(),
+                                    afd.getStartOffset(), afd.getLength());
+                            player.prepare();
+                            player.start();
+                            player.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                                @Override
+                                public void onCompletion(MediaPlayer mp) {
+                                    mAm.abandonAudioFocus(null);
+                                }
+                            });
+
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            } else if (SMART_ECHO_ACTION_NETWORK_CONNECTED.equals(action)){
+                if (isEchoRunning) {
+                    mBeoneAid.startTtsOutput("主人，网络连接了，我回来了", false);
+                }
             }
         }
         return START_STICKY;
