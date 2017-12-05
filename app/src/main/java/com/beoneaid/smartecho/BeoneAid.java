@@ -669,6 +669,15 @@ public class BeoneAid implements CaeWakeupListener{
     private Response.ErrorListener RsErrorListener = new Response.ErrorListener() {
         @Override
         public void onErrorResponse(VolleyError error) {
+            Log.d("Volley", "onErrorResponse1: " + error.getMessage());
+            Log.d("Volley", "onErrorResponse2: " + error.getLocalizedMessage());
+            Log.d("Volley", "onErrorResponse3: " + error.getNetworkTimeMs());
+        }
+    };
+    private Response.ErrorListener getOFRErrorListener = new Response.ErrorListener() {
+        @Override
+        public void onErrorResponse(VolleyError error) {
+            startTtsOutput("平台返回超时");
         }
     };
     private boolean isLogin = false;
@@ -791,7 +800,7 @@ public class BeoneAid implements CaeWakeupListener{
         data.put("serviceContent", serviceContent);
 
         String url = mContext.getString(R.string.beone_aiui_url) + data.toString();
-        StringRequest stringRequest = new StringRequest(url, RsBeoneListener, RsErrorListener);
+        StringRequest stringRequest = new StringRequest(url, RsBeoneListener, getOFRErrorListener);
         mQueue.add(stringRequest);
     }
 
