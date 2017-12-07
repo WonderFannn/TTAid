@@ -486,6 +486,7 @@ public class BeoneAid implements CaeWakeupListener{
                 JSONArray serArrary = data.getJSONArray("serviceContent");
                 String funParams = serArrary.getJSONObject(0).getString("funParams");
                 JSONObject fpJO = new JSONObject(funParams);
+                String timeString = fpJO.optString("time");
                 String[][] s = new String[3][3];
                 s[0][0] = fpJO.optJSONObject("audio").optString("key1");
                 s[0][1] = fpJO.optJSONObject("audio").optString("key2");
@@ -503,6 +504,19 @@ public class BeoneAid implements CaeWakeupListener{
                     startTtsOutput("从平台获取模式命令词成功",false);
                 }else {
                     startTtsOutput("从平台获取模式命令词失败，请使用默认命令词",false);
+                }
+                if (!TextUtils.isEmpty(timeString)){
+                    try {
+                        int time = Integer.valueOf(timeString);
+                        if (time > 0){
+                            mIat.setParameter(SpeechConstant.VAD_BOS, time+"000");
+                            Log.d("TAG", "onResponse: 获取到平台设置识别时间"+time+"秒");
+                        }else {
+                            ToastUtil.showLong(BaseApplication.getContext(),"从平台获取识别时间失败，默认设置为5秒");
+                        }
+                    }catch (Exception e){
+                        ToastUtil.showLong(BaseApplication.getContext(),"从平台获取识别时间失败，默认设置为5秒");
+                    }
                 }
             } catch (JSONException e) {
                 Log.e("TAG", "onResponse: "+e.getMessage());
