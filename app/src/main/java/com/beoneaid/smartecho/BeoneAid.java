@@ -25,6 +25,9 @@ import com.beoneaid.util.GetMacUtil;
 import com.beoneaid.util.JsonParser;
 import com.beoneaid.util.LogUtil;
 import com.beoneaid.util.ToastUtil;
+import com.beoneaid.util.versionupdate.CheckVersionTask;
+import com.beoneaid.util.versionupdate.IParse;
+import com.beoneaid.util.versionupdate.VersionInfo;
 import com.iflytek.aiui.AIUIAgent;
 import com.iflytek.aiui.AIUIConstant;
 import com.iflytek.aiui.AIUIEvent;
@@ -95,6 +98,7 @@ public class BeoneAid implements CaeWakeupListener{
         }
 
         getOrderFromRemote();
+//        checkUpdateFromRemote();
     }
 
     public void stop() {
@@ -477,6 +481,7 @@ public class BeoneAid implements CaeWakeupListener{
         }
 
     }
+
     private Response.Listener<String> RsPullListener = new Response.Listener<String>() {
         @Override
         public void onResponse(String response) {
@@ -744,6 +749,7 @@ public class BeoneAid implements CaeWakeupListener{
                     isLogin = true;
                     if (needPull){
                         getOrderFromRemote();
+                        checkUpdateFromRemote();
                     }else {
                         setParseMode(1);
                     }
@@ -770,7 +776,7 @@ public class BeoneAid implements CaeWakeupListener{
             data.put("activityCode", "T906");
             data.put("bipCode", "B000");
             data.put("bipVer", "1.0");
-            data.put("origDomain", "M000");
+            data.put("origDomain", "VA000");
             data.put("processTime", time);
             data.put("homeDomain", "P000");
             data.put("testFlag", "1");
@@ -807,7 +813,7 @@ public class BeoneAid implements CaeWakeupListener{
         data.put("activityCode", "T901");
         data.put("bipCode", "B040");
         data.put("bipVer", "1.0");
-        data.put("origDomain", "M000");
+        data.put("origDomain", "VA000");
         data.put("processTime", time);
         data.put("homeDomain", "P000");
         data.put("testFlag", "1");
@@ -1050,6 +1056,79 @@ public class BeoneAid implements CaeWakeupListener{
     }
 
     /**
+     * ==================================================================================
+     *                               更新
+     * ==================================================================================
+     */
+
+    public void checkUpdateFromRemote(){
+        needPull = false;
+        if (isLogin){
+            SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
+            Date curDate = new Date(System.currentTimeMillis());
+            String time = formatter.format(curDate);
+            JSONObject serviceContent = new JSONObject();
+            try {
+                serviceContent.put("secretKey", mSecretKey);
+                serviceContent.put("account", mAccount);
+                serviceContent.put("mac", mMac);
+                serviceContent.put("updateTime", time);
+                serviceContent.put("appVersion", CheckVersionTask.getVersionName(mContext));
+                serviceContent.put("appType", "10");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            JSONObject data = new JSONObject();
+            try {
+                data.put("activityCode", "T901");
+                data.put("bipCode", "B007");
+                data.put("origDomain", "VA000");
+                data.put("homeDomain", "0000");
+                data.put("serviceContent", serviceContent);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            final String url = mContext.getString(R.string.beone_aiui_url) + data.toString();
+            Log.d(TAG, "CheckUpdateFromRemote: url == " +url);
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    CheckVersionTask.setHttpUrlConnGet(mContext, new IParse() {
+                        @Override
+                        public VersionInfo parseData(String str) throws JSONException {
+                            JSONObject data = new JSONObject(str);
+                            JSONObject serviceContent = data.optJSONObject("serviceContent");
+                            if (serviceContent == null){
+                                return null;
+                            }
+                            Log.d(TAG, "parseData: serviceContent = "+serviceContent.toString());
+                            VersionInfo info = new VersionInfo(
+                                    serviceContent.optInt("id"),
+                                    serviceContent.optInt("appType"),
+                                    serviceContent.optString("appVersion"),
+                                    serviceContent.optInt("publishTime"),
+                                    serviceContent.optInt("publishUser"),
+                                    serviceContent.optInt("downloadTimes"),
+                                    serviceContent.optInt("status"),
+                                    serviceContent.optString("comments"),
+                                    serviceContent.optString("oldName"),
+                                    serviceContent.optString("newName"),
+                                    serviceContent.optString("appPath"),
+                                    serviceContent.optInt("appSize"));
+                            Log.d(TAG, "parseData: info = "+info.getAppVersion() );
+                            return info;
+                        }
+                    },url);
+                }
+            }).start();
+        }else {
+            needPull = true;
+            loginBeone();
+        }
+
+    }
+     /**
      * ==================================================================================
      *                               音量设置相关
      * ==================================================================================

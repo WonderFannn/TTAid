@@ -13,10 +13,12 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
+import android.view.WindowManager;
 import android.widget.Toast;
 
-import com.alibaba.fastjson.JSONObject;
 import com.beoneaid.activity.SettingActivity;
+
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -29,6 +31,7 @@ import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Map;
+
 import static android.content.ContentValues.TAG;
 
 /**
@@ -94,29 +97,25 @@ public class CheckVersionTask {
     }
 
     //1 获取当前程序的版本号
-    public String getVersionName() throws Exception {
+    public static String getVersionName(Context context) throws Exception {
         //获取packagemanager的实例,getPackageName()是你当前类的包名，0代表是获取版本信息
         PackageManager packageManager = context.getPackageManager();
         PackageInfo packInfo = packageManager.getPackageInfo(context.getPackageName(), 0);
         return packInfo.versionName;
     }
 
+    public static void  setHttpUrlConnGet(Context context,IParse p,String baseUrl){
+        getInstance().httpUrlConnGet(context,p,baseUrl);
+    }
+
     //2 发送请求到服务器
     //发送get请求
-    public void httpUrlConnGet(String baseUrl, Map<String, Object> map) {
+    public void httpUrlConnGet(Context context,IParse p,String baseUrl) {
+        this.p = p;
+        this.context = context;
         HttpURLConnection urlConnection = null;
         URL url = null;
         try {
-            //拼接地址url
-            int i = 1;//计数
-            for (Map.Entry<String, Object> entry : map.entrySet()) {
-                if (i == 1) {
-                    baseUrl += "?" + entry.getKey() + "=" + entry.getValue();
-                } else {
-                    baseUrl += "&" + entry.getKey() + "=" + entry.getValue();
-                }
-                i++;
-            }
             url = new URL(baseUrl);
             urlConnection = (HttpURLConnection) url.openConnection();
             urlConnection.connect();
@@ -132,8 +131,13 @@ public class CheckVersionTask {
                 br.close();
                 //对result继续解析，拿到平台最新的versionCode
                 String result = buffer.toString();
+                Log.d(TAG, "httpUrlConnGet: result"+result);
                 info = p.parseData(result);
-                versionname = getVersionName();
+                if (info == null){
+                    return;
+                }
+                versionname = getVersionName(context);
+                Log.d(TAG, "httpUrlConnGet: info"+info.getAppVersion());
                 if (info.getAppVersion().equals(versionname)) {
                     Log.i(TAG, "版本号相同无需升级");
                     //LoginMain();
@@ -148,7 +152,7 @@ public class CheckVersionTask {
                 handler.obtainMessage(CONN_FIALED).sendToTarget();
             }
         } catch (Exception e) {
-            Log.e("---", e.toString());
+            Log.e(TAG, e.toString());
             handler.obtainMessage(CONN_FIALED).sendToTarget();
         } finally {
             urlConnection.disconnect();
@@ -181,7 +185,7 @@ public class CheckVersionTask {
 
             OutputStream out = urlConnection.getOutputStream();
             BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(out));
-            bw.write(jsonObject.toJSONString());
+            bw.write(jsonObject.toString());
             bw.flush();
             out.close();
             bw.close();
@@ -200,7 +204,7 @@ public class CheckVersionTask {
                 Log.e("buffer", buffer.toString());
                 //对result继续解析，拿到平台最新的versionCode
                 info = p.parseData(result);
-                versionname = getVersionName();
+                versionname = getVersionName(context);
                 if (info.getAppVersion().equals(versionname)) {
                     Log.i(TAG, "版本号相同无需升级");
                     //LoginMain();
@@ -229,7 +233,7 @@ public class CheckVersionTask {
      */
     protected void showUpdataDialog(final Context context) {
         AlertDialog.Builder builer = new AlertDialog.Builder(context);
-        builer.setTitle("版本升级");
+        builer.setTitle("版本升级"+info.getAppVersion());
         builer.setMessage(info.getComments());
         builer.setPositiveButton("确定", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
@@ -244,6 +248,7 @@ public class CheckVersionTask {
             }
         });
         AlertDialog dialog = builer.create();
+        dialog.getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT);
         dialog.show();
     }
 
@@ -255,24 +260,24 @@ public class CheckVersionTask {
         pd = new ProgressDialog(context);
         pd.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
         pd.setMessage("正在下载更新");
+        pd.getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT);
         pd.show();
         new Thread() {
             @Override
             public void run() {
                 try {
                     String urlStr = info.getAppPath();
-                    String path = "file";
+                    String path = "BeoneAidDownLoad";
                     String fileName = info.getNewName();//最新下载下来apk的名字
                     OutputStream output = null;
                     URL url = new URL(urlStr);
                     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                    String SDCard = Environment.getExternalStorageDirectory() + "";
-                    String pathName = SDCard + "/" + path + "/" + fileName;//文件存储路径
+                    File SDCard = Environment.getExternalStorageDirectory();
+                    String pathName = SDCard + "/" + path + "/" + info.getAppVersion() + fileName;//文件存储路径
                     File file = new File(pathName);
                     InputStream input = conn.getInputStream();
                     if (file.exists()) {
                         System.out.println("exits");
-                        return;
                     } else {
                         String dir = SDCard + "/" + path;
                         new File(dir).mkdir();//新建文件夹
@@ -296,6 +301,7 @@ public class CheckVersionTask {
                 } catch (Exception e) {
                     handler.obtainMessage(DOWN_ERROR).sendToTarget();
                     e.printStackTrace();
+                    Log.e(TAG, "run: " +e.getMessage());
                 }
             }
         }.start();
@@ -306,6 +312,7 @@ public class CheckVersionTask {
         Intent intent = new Intent();
         intent.setAction(Intent.ACTION_VIEW);
         intent.setDataAndType(Uri.fromFile(file), "application/vnd.android.package-archive");
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         context.startActivity(intent);
     }
 
