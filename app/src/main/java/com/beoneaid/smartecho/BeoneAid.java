@@ -636,6 +636,9 @@ public class BeoneAid implements CaeWakeupListener{
             }else if (od.startsWith("帮助")){
                 openActivity("com.jinxin.voicehelp");
                 return;
+            }else if (od.startsWith("呼叫中心")){
+                openActivity("com.jinxin.jxpensioncall");
+                return;
             }
         }
         onRecognizeResultListener.onRecognizeResult(order);

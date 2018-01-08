@@ -276,9 +276,7 @@ public class CheckVersionTask {
                     String pathName = SDCard + "/" + path + "/" + info.getAppVersion() + fileName;//文件存储路径
                     File file = new File(pathName);
                     InputStream input = conn.getInputStream();
-                    if (file.exists()) {
-                        System.out.println("exits");
-                    } else {
+
                         String dir = SDCard + "/" + path;
                         new File(dir).mkdir();//新建文件夹
                         file.createNewFile();//新建文件
@@ -294,7 +292,7 @@ public class CheckVersionTask {
                             Log.e("---len", sum + "");
                         }
                         output.flush();
-                    }
+
                     sleep(3000);
                     installApk(file, context);
                     pd.dismiss(); //结束掉进度条对话框
