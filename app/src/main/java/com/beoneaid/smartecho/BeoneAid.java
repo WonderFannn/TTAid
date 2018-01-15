@@ -456,7 +456,7 @@ public class BeoneAid implements CaeWakeupListener{
                 serviceContent.put("secretKey", mSecretKey);
                 serviceContent.put("account", mAccount);
                 serviceContent.put("mac", mMac);
-                serviceContent.put("updateTime", time);
+                serviceContent.put("updateTime", "20160101090000");
             } catch (JSONException e) {
                 e.printStackTrace();
             }
@@ -464,7 +464,7 @@ public class BeoneAid implements CaeWakeupListener{
             try {
                 data.put("activityCode", "T902");
                 data.put("bipCode", "B004");
-                data.put("origDomain", "M000");
+                data.put("origDomain", "VA000");
                 data.put("homeDomain", "0000");
                 data.put("serviceContent", serviceContent);
             } catch (JSONException e) {
