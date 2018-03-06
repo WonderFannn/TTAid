@@ -42,8 +42,11 @@ public class CaeWakeUpFileObserver extends FileObserver {
                 if(temp_str[1] != null && !temp_str[1].equals("")) {
                     mAngle = Integer.parseInt(temp_str[1]);
                 }
-                if(temp_str[2] != null && !temp_str[1].equals("")) {
+                if(temp_str[2] != null && !temp_str[2].equals("")) {
                     mChanel = Integer.parseInt(temp_str[2]);
+                }
+                if(temp_str[4] != null && !temp_str[4].equals("")) {
+                    // TODO: 06/03/2018 获取keyword
                 }
                 LogUtil.d("===== mIsWakeup: " + isWakeup + " mAngle: " + mAngle
                         + " mChanel: " + mChanel);
@@ -71,7 +74,7 @@ public class CaeWakeUpFileObserver extends FileObserver {
 
     public void setCaeWakeupState(boolean isWakeup, int angle, int chanel) {
         String write_str = isWakeup + " " + angle + " " + chanel;
-        LogUtil.d("====== update " + CAE_WAKEUP_FILE + " : " + write_str);
+//        LogUtil.d("====== update " + CAE_WAKEUP_FILE + " : " + write_str);
         try{
             FileOutputStream fout = new FileOutputStream(CAE_WAKEUP_FILE);
             byte [] bytes = write_str.getBytes();
@@ -89,7 +92,7 @@ public class CaeWakeUpFileObserver extends FileObserver {
     @Override
     public void onEvent(int i, String s) {
         if (i == FileObserver.MODIFY) {
-            LogUtil.d("====== " + CAE_WAKEUP_FILE + " has been modify, read it go!");
+//            LogUtil.d("====== " + CAE_WAKEUP_FILE + " has been modify, read it go!");
             boolean isWakeup = getCAEWakeState();
             if(isWakeup) {
                 mCaeWakeupListener.onWakeUp(mAngle, mChanel);
