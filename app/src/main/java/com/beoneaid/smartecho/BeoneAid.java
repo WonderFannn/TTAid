@@ -112,10 +112,10 @@ public class BeoneAid implements CaeWakeupListener{
     }
 
     @Override
-    public void onWakeUp(int angle, int chanel) {
+    public void onWakeUp(int angle, int channel, int keywordID) {
         LogUtil.d("SmartEcho - onWakeUp");
-
-        Log.d("TAG", "Echo  onWakeUp - angle:"+angle+"chane:"+chanel);
+        parseMode = keywordID;
+        Log.d("TAG", "Echo  onWakeUp - angle:"+angle+"chane:"+channel);
         startTtsOutput(getEchoText(), true);
     }
 

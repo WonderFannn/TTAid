@@ -5,5 +5,5 @@ package com.beoneaid.smartecho;
  */
 
 public interface CaeWakeupListener {
-    void onWakeUp(int angle, int chanel);
+    void onWakeUp(int angle, int channel, int keywordID);
 }

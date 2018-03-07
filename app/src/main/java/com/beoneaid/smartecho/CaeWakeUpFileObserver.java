@@ -1,10 +1,13 @@
 package com.beoneaid.smartecho;
 
 import android.os.FileObserver;
+import android.util.Log;
 
 import com.beoneaid.util.LogUtil;
 
 import org.apache.http.util.EncodingUtils;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -16,11 +19,14 @@ import java.io.IOException;
  */
 
 public class CaeWakeUpFileObserver extends FileObserver {
-
+    private static final String TAG = "CaeWakeUpFileObserver";
     CaeWakeupListener mCaeWakeupListener;
     static final String CAE_WAKEUP_FILE = "/data/cae_wakeup";
     int mAngle = -1;
     int mChanel = -1;
+    int mKeywordID = 0;
+
+    String[] keywords = {"ling2xi1ling2xi1","ding1dong1ding1dong1"};
 
     public CaeWakeUpFileObserver(CaeWakeupListener caeWakeupListener) {
         super(CAE_WAKEUP_FILE);
@@ -45,8 +51,22 @@ public class CaeWakeUpFileObserver extends FileObserver {
                 if(temp_str[2] != null && !temp_str[2].equals("")) {
                     mChanel = Integer.parseInt(temp_str[2]);
                 }
-                if(temp_str[4] != null && !temp_str[4].equals("")) {
+                if (temp_str.length >= 5) {
+                    String jsonString = cae_wakeup_file_str.substring(cae_wakeup_file_str.indexOf("{"),cae_wakeup_file_str.indexOf("}")+1);
                     // TODO: 06/03/2018 获取keyword
+                    try {
+                        JSONObject data = new JSONObject(jsonString);
+                        String keyword = data.optString("keyword").replace(" ", "");
+                        Log.d(TAG, "getCAEWakeState: " + keyword);
+                        if (keyword.equals(keywords[0])) {
+                            mKeywordID = 0;
+                        } else if (keyword.equals(keywords[1])) {
+                            mKeywordID = 1;
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+
                 }
                 LogUtil.d("===== mIsWakeup: " + isWakeup + " mAngle: " + mAngle
                         + " mChanel: " + mChanel);
@@ -95,7 +115,7 @@ public class CaeWakeUpFileObserver extends FileObserver {
 //            LogUtil.d("====== " + CAE_WAKEUP_FILE + " has been modify, read it go!");
             boolean isWakeup = getCAEWakeState();
             if(isWakeup) {
-                mCaeWakeupListener.onWakeUp(mAngle, mChanel);
+                mCaeWakeupListener.onWakeUp(mAngle, mChanel, mKeywordID);
                 setCaeWakeupState(false);
             }
         }

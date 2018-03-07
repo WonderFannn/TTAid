@@ -85,7 +85,7 @@ public class BeoneAidService extends Service implements BeoneAid.OnRecognizeResu
                     isEchoRunning = true;
                 }
             } else if(SMART_ECHO_ACTION_WAKEUP.equals(action)) {
-                mBeoneAid.onWakeUp(0, 0);
+                mBeoneAid.onWakeUp(0, 0, 0);
             } else if (SMART_ECHO_ACTION_NETWORK_DISCONNECTED.equals(action)){
                 if (isEchoRunning){
                     if (checkNet) {
