@@ -43,7 +43,6 @@ import com.iflytek.cloud.SpeechRecognizer;
 import com.iflytek.cloud.SpeechSynthesizer;
 import com.iflytek.cloud.SynthesizerListener;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -96,9 +95,7 @@ public class BeoneAid implements CaeWakeupListener{
         if (mCaeWakeUpFileObserver != null) {
             mCaeWakeUpFileObserver.startWatching();
         }
-
-        getOrderFromRemote();
-//        checkUpdateFromRemote();
+        checkUpdateFromRemote();
     }
 
     public void stop() {
@@ -114,7 +111,9 @@ public class BeoneAid implements CaeWakeupListener{
     @Override
     public void onWakeUp(int angle, int channel, int keywordID) {
         LogUtil.d("SmartEcho - onWakeUp");
-        parseMode = keywordID;
+        if (parseMode != 4){
+            parseMode = keywordID;
+        }
         Log.d("TAG", "Echo  onWakeUp - angle:"+angle+"chane:"+channel);
         startTtsOutput(getEchoText(), true);
     }
@@ -432,7 +431,7 @@ public class BeoneAid implements CaeWakeupListener{
      */
 
     private boolean needPull = false;
-    private String[][] parserModeOrder = {{"中国中国"},{"中国"},{"美国"}};
+//    private String[][] parserModeOrder = {{"中国中国"},{"中国"},{"美国"}};
 
     private int parseMode = 0;
     public void setParseMode(int newMode){
@@ -444,126 +443,98 @@ public class BeoneAid implements CaeWakeupListener{
             Log.d(TAG, "setParseMode: =="+newMode);
         }
     }
+// TODO: 08/03/2018 改写成从平台获取唤醒词，需平台提供接口
+//    public void getOrderFromRemote(){
+//        needPull = false;
+//        if (isLogin){
+//            SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
+//            Date curDate = new Date(System.currentTimeMillis());
+//            String time = formatter.format(curDate);
+//            JSONObject serviceContent = new JSONObject();
+//            try {
+//                serviceContent.put("secretKey", mSecretKey);
+//                serviceContent.put("account", mAccount);
+//                serviceContent.put("mac", mMac);
+//                serviceContent.put("updateTime", "20160101090000");
+//            } catch (JSONException e) {
+//                e.printStackTrace();
+//            }
+//            JSONObject data = new JSONObject();
+//            try {
+//                data.put("activityCode", "T902");
+//                data.put("bipCode", "B004");
+//                data.put("origDomain", "VA000");
+//                data.put("homeDomain", "0000");
+//                data.put("serviceContent", serviceContent);
+//            } catch (JSONException e) {
+//                e.printStackTrace();
+//            }
+//
+//            String url = mContext.getString(R.string.beone_aiui_url) + data.toString();
+//            Log.d(TAG, "getOrderFromRemote: url == " +url);
+//            StringRequest stringRequest = new StringRequest(url, RsPullListener, RsErrorListener);
+//            mQueue.add(stringRequest);
+//        }else {
+//            needPull = true;
+//            loginBeone();
+//        }
+//
+//    }
 
-    public void getOrderFromRemote(){
-        needPull = false;
-        if (isLogin){
-            SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
-            Date curDate = new Date(System.currentTimeMillis());
-            String time = formatter.format(curDate);
-            JSONObject serviceContent = new JSONObject();
-            try {
-                serviceContent.put("secretKey", mSecretKey);
-                serviceContent.put("account", mAccount);
-                serviceContent.put("mac", mMac);
-                serviceContent.put("updateTime", "20160101090000");
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            JSONObject data = new JSONObject();
-            try {
-                data.put("activityCode", "T902");
-                data.put("bipCode", "B004");
-                data.put("origDomain", "VA000");
-                data.put("homeDomain", "0000");
-                data.put("serviceContent", serviceContent);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
+//    private Response.Listener<String> RsPullListener = new Response.Listener<String>() {
+//        @Override
+//        public void onResponse(String response) {
+//            Log.d(TAG, "onResponse: 获取命令词"+response);
+//            try {
+//                JSONObject data = new JSONObject(response);
+//                JSONArray serArrary = data.getJSONArray("serviceContent");
+//                String funParams = serArrary.getJSONObject(0).getString("funParams");
+//                JSONObject fpJO = new JSONObject(funParams);
+//                String timeString = fpJO.optString("time");
+//                String[][] s = new String[3][3];
+//                s[0][0] = fpJO.optJSONObject("audio").optString("key1");
+//                s[0][1] = fpJO.optJSONObject("audio").optString("key2");
+//                s[0][2] = fpJO.optJSONObject("audio").optString("key3");
+//                s[1][0] = fpJO.optJSONObject("dev").optString("key1");
+//                s[1][1] = fpJO.optJSONObject("dev").optString("key2");
+//                s[1][2] = fpJO.optJSONObject("dev").optString("key3");
+//                s[2][0] = fpJO.optJSONObject("aiui").optString("key1");
+//                s[2][1] = fpJO.optJSONObject("aiui").optString("key2");
+//                s[2][2] = fpJO.optJSONObject("aiui").optString("key3");
+//                if((s[0][0]!=null || s[0][1]!=null || s[0][2]!=null)
+//                        && (s[1][0]!=null || s[1][1]!=null || s[1][2]!=null)
+//                        && (s[2][0]!=null || s[2][1]!=null || s[2][2]!=null)){
+////                    setParserModeOrder(s);
+//                    startTtsOutput("从平台获取模式命令词成功",false);
+//                }else {
+//                    startTtsOutput("从平台获取模式命令词失败，请使用默认命令词",false);
+//                }
+//                if (!TextUtils.isEmpty(timeString)){
+//                    try {
+//                        int time = Integer.valueOf(timeString);
+//                        if (time > 0){
+//                            mIat.setParameter(SpeechConstant.VAD_BOS, time+"000");
+//                            Log.d("TAG", "onResponse: 获取到平台设置识别时间"+time+"秒");
+//                        }else {
+//                            ToastUtil.showLong(BaseApplication.getContext(),"从平台获取识别时间失败，默认设置为5秒");
+//                        }
+//                    }catch (Exception e){
+//                        ToastUtil.showLong(BaseApplication.getContext(),"从平台获取识别时间失败，默认设置为5秒");
+//                    }
+//                }
+//            } catch (JSONException e) {
+//                Log.e("TAG", "onResponse: "+e.getMessage());
+//                e.printStackTrace();
+//                startTtsOutput("从平台获取模式命令词失败，请使用默认命令词",false);
+//            }
+//        }
+//    };
 
-            String url = mContext.getString(R.string.beone_aiui_url) + data.toString();
-            Log.d(TAG, "getOrderFromRemote: url == " +url);
-            StringRequest stringRequest = new StringRequest(url, RsPullListener, RsErrorListener);
-            mQueue.add(stringRequest);
-        }else {
-            needPull = true;
-            loginBeone();
-        }
-
-    }
-
-    private Response.Listener<String> RsPullListener = new Response.Listener<String>() {
-        @Override
-        public void onResponse(String response) {
-            Log.d(TAG, "onResponse: 获取命令词"+response);
-            try {
-                JSONObject data = new JSONObject(response);
-                JSONArray serArrary = data.getJSONArray("serviceContent");
-                String funParams = serArrary.getJSONObject(0).getString("funParams");
-                JSONObject fpJO = new JSONObject(funParams);
-                String timeString = fpJO.optString("time");
-                String[][] s = new String[3][3];
-                s[0][0] = fpJO.optJSONObject("audio").optString("key1");
-                s[0][1] = fpJO.optJSONObject("audio").optString("key2");
-                s[0][2] = fpJO.optJSONObject("audio").optString("key3");
-                s[1][0] = fpJO.optJSONObject("dev").optString("key1");
-                s[1][1] = fpJO.optJSONObject("dev").optString("key2");
-                s[1][2] = fpJO.optJSONObject("dev").optString("key3");
-                s[2][0] = fpJO.optJSONObject("aiui").optString("key1");
-                s[2][1] = fpJO.optJSONObject("aiui").optString("key2");
-                s[2][2] = fpJO.optJSONObject("aiui").optString("key3");
-                if((s[0][0]!=null || s[0][1]!=null || s[0][2]!=null)
-                        && (s[1][0]!=null || s[1][1]!=null || s[1][2]!=null)
-                        && (s[2][0]!=null || s[2][1]!=null || s[2][2]!=null)){
-                    setParserModeOrder(s);
-                    startTtsOutput("从平台获取模式命令词成功",false);
-                }else {
-                    startTtsOutput("从平台获取模式命令词失败，请使用默认命令词",false);
-                }
-                if (!TextUtils.isEmpty(timeString)){
-                    try {
-                        int time = Integer.valueOf(timeString);
-                        if (time > 0){
-                            mIat.setParameter(SpeechConstant.VAD_BOS, time+"000");
-                            Log.d("TAG", "onResponse: 获取到平台设置识别时间"+time+"秒");
-                        }else {
-                            ToastUtil.showLong(BaseApplication.getContext(),"从平台获取识别时间失败，默认设置为5秒");
-                        }
-                    }catch (Exception e){
-                        ToastUtil.showLong(BaseApplication.getContext(),"从平台获取识别时间失败，默认设置为5秒");
-                    }
-                }
-            } catch (JSONException e) {
-                Log.e("TAG", "onResponse: "+e.getMessage());
-                e.printStackTrace();
-                startTtsOutput("从平台获取模式命令词失败，请使用默认命令词",false);
-            }
-        }
-    };
-
-    public void setParserModeOrder(String[][] s){
-        parserModeOrder = s;
-        for (int i = 0; i < parserModeOrder.length; i++){
-            for (int j = 0; j < parserModeOrder[i].length; j++) {
-                Log.d(TAG, "setParserModeOrder: "+i+j+parserModeOrder[i][j]);
-            }
-        }
-    }
 
     private void parseOrder(String order) {
-        for (int i = 0; i < parserModeOrder.length; i++){
-            for (int j = 0; j < parserModeOrder[i].length; j++) {
-                if (order.equals(parserModeOrder[i][j])){
-                    if (i == 1){
-                        if (isLogin) {
-                            setParseMode(1);
-                        } else {
-                            startTtsOutput("正在登录",false);
-                            loginBeone();
-                        }
-                    }else {
-                        setParseMode(i);
-                    }
-                    return;
-                }
-            }
-        }
-//        if (order.equals("1234567")){
-//            startTtsOutput("主人，网络断开了，我休息了",false);
-//            return;
-//        }
-        if (order.equals("更新命令词")){
-            getOrderFromRemote();
+
+        if (order.equals("登录平台")){
+            loginBeone();
             return;
         }
         if (order.equals("关闭桌面宠物")){
@@ -573,29 +544,33 @@ public class BeoneAid implements CaeWakeupListener{
             creatPet();
             return;
         }
-        if(order.equals("中国中国")){
-            setParseMode(0);
-            return;
-        }else if (order.equals("中国")){
-            if (isLogin) {
-                setParseMode(1);
-            } else {
-                startTtsOutput("正在登录");
-                loginBeone();
-            }
-            return;
-        }else if (order.equals("美国")){
-            setParseMode(2);
-            return;
-        }
+//        if(order.equals("中国中国")){
+//            setParseMode(0);
+//            return;
+//        }else if (order.equals("中国")){
+//            if (isLogin) {
+//                setParseMode(1);
+//            } else {
+//                startTtsOutput("正在登录");
+//                loginBeone();
+//            }
+//            return;
+//        }else if (order.equals("美国")){
+//            setParseMode(2);
+//            return;
+//        }
 
         if (parseMode == 0) {
             sendOrder2App(order);
         }else if (parseMode == 1) {
-            try {
-                getAIUIResult(order);
-            } catch (JSONException e) {
-                e.printStackTrace();
+            if (isLogin) {
+                try {
+                    getAIUIResult(order);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }else {
+                startTtsOutput("登录未成功",false);
             }
         }else if (parseMode == 2){
             if (checkAIUIAgent()){
@@ -749,12 +724,10 @@ public class BeoneAid implements CaeWakeupListener{
                     startTtsOutput("登录失败");
                     isLogin = false;
                 } else {
+                    startTtsOutput("登录成功");
                     isLogin = true;
                     if (needPull){
-                        getOrderFromRemote();
                         checkUpdateFromRemote();
-                    }else {
-                        setParseMode(1);
                     }
                 }
             }

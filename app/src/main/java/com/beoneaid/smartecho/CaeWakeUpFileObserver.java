@@ -26,7 +26,7 @@ public class CaeWakeUpFileObserver extends FileObserver {
     int mChanel = -1;
     int mKeywordID = 0;
 
-    String[] keywords = {"ling2xi1ling2xi1","ding1dong1ding1dong1"};
+    String[] keywords = {"bao3bei4bao3bei4","xiao2bao3xiao2bao3","xiao3bei4xiao3bei4"};
 
     public CaeWakeUpFileObserver(CaeWakeupListener caeWakeupListener) {
         super(CAE_WAKEUP_FILE);
@@ -62,6 +62,8 @@ public class CaeWakeUpFileObserver extends FileObserver {
                             mKeywordID = 0;
                         } else if (keyword.equals(keywords[1])) {
                             mKeywordID = 1;
+                        } else if (keyword.equals(keywords[2])) {
+                            mKeywordID = 2;
                         }
                     } catch (JSONException e) {
                         e.printStackTrace();
