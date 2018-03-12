@@ -111,8 +111,9 @@ public class BeoneAid implements CaeWakeupListener{
     @Override
     public void onWakeUp(int angle, int channel, int keywordID) {
         LogUtil.d("SmartEcho - onWakeUp");
-        if (parseMode != 4){
-            parseMode = keywordID;
+        parseMode = keywordID;
+        if (lockMode4 && keywordID == 0){
+            parseMode = 4;
         }
         Log.d("TAG", "Echo  onWakeUp - angle:"+angle+"chane:"+channel);
         startTtsOutput(getEchoText(), true);
@@ -300,7 +301,7 @@ public class BeoneAid implements CaeWakeupListener{
 
         @Override
         public void onPcmData(byte[] data, int dataLen) {
-            Log.d("onPcmData", "onPcmData: !write"+dataLen);
+//            Log.d("onPcmData", "onPcmData: !write"+dataLen);
             PCM_IS_RUN = true;
 //			write2File(data);
             if (mStartRecognize && !mIsOnTts) {
@@ -434,13 +435,20 @@ public class BeoneAid implements CaeWakeupListener{
 //    private String[][] parserModeOrder = {{"中国中国"},{"中国"},{"美国"}};
 
     private int parseMode = 0;
+    private boolean lockMode4 = false;
     public void setParseMode(int newMode){
         if (newMode <= Config.MODE_NAME_ARRAY.length){
-            startTtsOutput("已为你切换到"+Config.MODE_NAME_ARRAY[newMode]);
             parseMode = newMode;
         }else {
             startTtsOutput("模式值超出范围");
             Log.d(TAG, "setParseMode: =="+newMode);
+        }
+        if (newMode == 4){
+            startTtsOutput("已为你切换到"+Config.MODE_NAME_ARRAY[newMode]);
+            lockMode4 = true;
+        }else {
+            startTtsOutput("已退出按键模拟模式");
+            lockMode4 = false;
         }
     }
 // TODO: 08/03/2018 改写成从平台获取唤醒词，需平台提供接口
@@ -544,21 +552,11 @@ public class BeoneAid implements CaeWakeupListener{
             creatPet();
             return;
         }
-//        if(order.equals("中国中国")){
-//            setParseMode(0);
-//            return;
-//        }else if (order.equals("中国")){
-//            if (isLogin) {
-//                setParseMode(1);
-//            } else {
-//                startTtsOutput("正在登录");
-//                loginBeone();
-//            }
-//            return;
-//        }else if (order.equals("美国")){
-//            setParseMode(2);
-//            return;
-//        }
+        //屏蔽识别出来的唤醒词
+        if (order.equals("宝贝宝贝")||order.equals("小宝小宝")||order.equals("小贝小贝")){
+            return;
+        }
+
 
         if (parseMode == 0) {
             sendOrder2App(order);
@@ -571,6 +569,7 @@ public class BeoneAid implements CaeWakeupListener{
                 }
             }else {
                 startTtsOutput("登录未成功",false);
+                loginBeone();
             }
         }else if (parseMode == 2){
             if (checkAIUIAgent()){
