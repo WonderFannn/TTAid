@@ -111,9 +111,12 @@ public class BeoneAid implements CaeWakeupListener{
     @Override
     public void onWakeUp(int angle, int channel, int keywordID) {
         LogUtil.d("SmartEcho - onWakeUp");
-        parseMode = keywordID;
-        if (lockMode4 && keywordID == 0){
-            parseMode = 4;
+        if (keywordID>=0){
+            parseMode = keywordID;
+            if (lockMode4 && keywordID == 0){
+                parseMode = 4;
+            }
+            voicer = voicers[parseMode];
         }
         Log.d("TAG", "Echo  onWakeUp - angle:"+angle+"chane:"+channel);
         startTtsOutput(getEchoText(), true);
@@ -129,7 +132,6 @@ public class BeoneAid implements CaeWakeupListener{
     }
 
     /**
-     * ==================================================================================
      *                               tts
      * ==================================================================================
      */
@@ -137,7 +139,7 @@ public class BeoneAid implements CaeWakeupListener{
     private SpeechSynthesizer mTts;
     // 默认发音人
     private String voicer = "vinn";
-
+    private String[] voicers = {"xiaoyan","xiaoyu","vinn","","xiaoyan"};
     // 缓冲进度
     private int mPercentForBuffering = 0;
     // 播放进度
@@ -557,7 +559,7 @@ public class BeoneAid implements CaeWakeupListener{
             return;
         }
 
-
+        voicer = voicers[parseMode];
         if (parseMode == 0) {
             sendOrder2App(order);
         }else if (parseMode == 1) {
@@ -579,7 +581,6 @@ public class BeoneAid implements CaeWakeupListener{
             sendSimulateKeyBroadcast(order);
         }
     }
-
 
 
     /**
@@ -615,6 +616,7 @@ public class BeoneAid implements CaeWakeupListener{
                 return;
             }
         }
+
         onRecognizeResultListener.onRecognizeResult(order);
     }
 

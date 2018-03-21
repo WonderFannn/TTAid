@@ -3,7 +3,7 @@
     package="com.beoneaid"
     android:installLocation="auto"
     android:versionCode="2"
-    android:versionName="2.0.0312">
+    android:versionName="2.0.0313">
 
     <application
         android:icon="@drawable/icon"
@@ -43,6 +43,8 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.wakeup_byuser" />
+                <action android:name="android.intent.action.show_batteryinfo" />
             </intent-filter>
         </receiver>
         <receiver android:name=".broad.NetworkStateReceiver">
