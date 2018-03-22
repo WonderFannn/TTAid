@@ -4,6 +4,8 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.AssetManager;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
@@ -43,6 +45,7 @@ import com.iflytek.cloud.SpeechRecognizer;
 import com.iflytek.cloud.SpeechSynthesizer;
 import com.iflytek.cloud.SynthesizerListener;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -86,6 +89,7 @@ public class BeoneAid implements CaeWakeupListener{
 //        initAudioManager();
         mCaeWakeUpFileObserver = new CaeWakeUpFileObserver(this);
         mSelfCheckThread.start();
+        mAm = (AudioManager)mContext.getSystemService(Context.AUDIO_SERVICE);
     }
 
     public void start() {
@@ -236,6 +240,9 @@ public class BeoneAid implements CaeWakeupListener{
             }, 500);
             if (PETSHOW){
                 petTalk("");
+            }
+            if (needPlayMp3){
+                playMP3Url();
             }
         }
 
@@ -863,7 +870,6 @@ public class BeoneAid implements CaeWakeupListener{
                         JSONObject data = bizParamJson.getJSONArray("data").getJSONObject(0);
                         JSONObject params = data.getJSONObject("params");
                         JSONObject content = data.getJSONArray("content").getJSONObject(0);
-
                         if (content.has("cnt_id")) {
                             String cnt_id = content.getString("cnt_id");
                             JSONObject cntJson = new JSONObject(new String(event.data.getByteArray(cnt_id), "utf-8"));
@@ -875,13 +881,36 @@ public class BeoneAid implements CaeWakeupListener{
                             if ("nlp".equals(sub)) {
                                 // 解析得到语义结果
                                 String resultStr = cntJson.optString("intent");
-                                JSONObject answer = new JSONObject(resultStr).optJSONObject("answer");
+                                if (resultStr.length()>3900){
+                                    Log.d(TAG, "AIUI返回: "+resultStr.substring(0,3900));
+                                    Log.d(TAG, "AIUI返回: "+resultStr.substring(3900,resultStr.length()));
+                                }else {
+                                    Log.d(TAG, "AIUI返回: "+resultStr);
+                                }
+                                JSONObject jsonObject = new JSONObject(resultStr);
+                                JSONObject answer = jsonObject.optJSONObject("answer");
+                                JSONArray result = jsonObject.optJSONObject("data").optJSONArray("result");
+                                Log.d(TAG, "AIUI返回1: "+result);
                                 if(answer != null) {
                                     String answerText = answer.optString("text");
                                     if (TextUtils.isEmpty(answerText)) {
                                         startTtsOutput("对不起，我不明白");
                                     } else {
-                                        startTtsOutput(answerText);
+                                        String mp3url = result.optJSONObject(0).optString("mp3Url");
+                                        String playUrl = result.optJSONObject(0).optString("playUrl");
+                                        Log.d(TAG, "AIUI返回mp3: "+mp3url);
+                                        if (!TextUtils.isEmpty(mp3url)){
+                                            needPlayMp3 = true;
+                                            playOnlineUrl = mp3url;
+                                            startTtsOutput(answerText,false);
+//                                            playMP3Url(mp3url);
+                                        }else if (!TextUtils.isEmpty(playUrl)) {
+                                            needPlayMp3 = true;
+                                            playOnlineUrl = playUrl;
+                                            startTtsOutput(answerText,false);
+                                        }else {
+                                            startTtsOutput(answerText);
+                                        }
                                     }
                                 }else {
                                     startTtsOutput("对不起，我不明白");
@@ -943,6 +972,34 @@ public class BeoneAid implements CaeWakeupListener{
         }
 
     };
+    private boolean needPlayMp3 = false;
+    private String playOnlineUrl;
+    private AudioManager mAm;
+    private void playMP3Url(){
+        needPlayMp3 = false;
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    mAm.requestAudioFocus(null, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+                    MediaPlayer player = new MediaPlayer();
+                    player.setDataSource(playOnlineUrl);
+                    player.prepare();
+                    player.start();
+                    player.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                        @Override
+                        public void onCompletion(MediaPlayer mp) {
+                            mAm.abandonAudioFocus(null);
+                        }
+                    });
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    Log.e(TAG, "playMP3Url: "+e.getMessage());
+                }
+            }
+        }).start();
+
+    }
 
     /**
      * ==================================================================================
