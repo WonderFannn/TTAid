@@ -3,7 +3,7 @@
     package="com.beoneaid"
     android:installLocation="auto"
     android:versionCode="2"
-    android:versionName="2.0.0313">
+    android:versionName="2.2.0323">
 
     <application
         android:icon="@drawable/icon"
