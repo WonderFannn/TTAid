@@ -3,6 +3,7 @@ package com.beoneaid.service;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
 import android.media.AudioManager;
@@ -32,6 +33,7 @@ public class BeoneAidService extends Service implements BeoneAid.OnRecognizeResu
     public static final String SMART_ECHO_ACTION_WAKEUP = "com.rockchip.echoOnWakeUp.ACTION.CAE.WAKEUP";
     public static final String SMART_ECHO_ACTION_NETWORK_DISCONNECTED = "com.rockchip.echoOnWakeUp.ACTION.NETWORK.DISCONNECTED";
     public static final String SMART_ECHO_ACTION_NETWORK_CONNECTED = "com.rockchip.echoOnWakeUp.ACTION.NETWORK.CONNECTED";
+    public static final String SMART_ECHO_ACTION_GET_BATTERY = "android.intent.action.show_batteryinfo";
 
 
     private AudioManager mAm;
@@ -85,7 +87,7 @@ public class BeoneAidService extends Service implements BeoneAid.OnRecognizeResu
                     isEchoRunning = true;
                 }
             } else if(SMART_ECHO_ACTION_WAKEUP.equals(action)) {
-                mBeoneAid.onWakeUp(0, 0, 0);
+                mBeoneAid.onWakeUp(0, 0, -1);
             } else if (SMART_ECHO_ACTION_NETWORK_DISCONNECTED.equals(action)){
                 if (isEchoRunning){
                     if (checkNet) {
@@ -121,6 +123,10 @@ public class BeoneAidService extends Service implements BeoneAid.OnRecognizeResu
             } else if (SMART_ECHO_ACTION_NETWORK_CONNECTED.equals(action)){
                 if (isEchoRunning) {
                     mBeoneAid.startTtsOutput("主人，网络连接了，我回来了", false);
+                }
+            } else if (SMART_ECHO_ACTION_GET_BATTERY.equals(action)){
+                if (isEchoRunning) {
+                    mBeoneAid.startTtsOutput("当前电量还有百分之"+ (int)(getBattery()*100), false);
                 }
             }
         }
@@ -185,4 +191,16 @@ public class BeoneAidService extends Service implements BeoneAid.OnRecognizeResu
         callback(result);
     }
 
+    /***
+     * 获取系统电量
+     */
+    private float getBattery(){
+        Intent intent = registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+        if(intent == null){
+            return 0f;
+        }
+        int level = intent.getIntExtra("level", 0);
+        int scale = intent.getIntExtra("scale", 100);
+        return ((float)level) / scale;
+    }
 }

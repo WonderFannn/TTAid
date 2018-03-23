@@ -14,6 +14,17 @@ import com.beoneaid.application.BaseApplication;
  */
 public class BroadcastManager {
 
+	/**
+	 * 按键模拟唤醒广播
+	 * */
+	public static final String WAKEUP_BYUSER = "android.intent.action.wakeup_byuser";
+
+	/**
+	 * 按键模拟唤醒广播
+	 * */
+	public static final String GET_BATTERY_INFO = "android.intent.action.show_batteryinfo";
+
+
 	public static final String ACTION_VOICE_EMULATE_KEY_OPEN = "action_voice_emulate_key_open";
 	/**
 	 * 关闭唤醒服务广播
