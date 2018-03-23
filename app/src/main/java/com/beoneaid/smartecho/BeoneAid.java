@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.text.TextUtils;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -889,26 +890,38 @@ public class BeoneAid implements CaeWakeupListener{
                                 }
                                 JSONObject jsonObject = new JSONObject(resultStr);
                                 JSONObject answer = jsonObject.optJSONObject("answer");
-                                JSONArray result = jsonObject.optJSONObject("data").optJSONArray("result");
-                                Log.d(TAG, "AIUI返回1: "+result);
+                                JSONObject datajson = jsonObject.optJSONObject("data");
+                                JSONArray result = null;
+                                if (datajson != null) {
+                                     result = datajson.optJSONArray("result");
+                                }
+                                Log.d(TAG, "AIUI返回1: "+answer);
                                 if(answer != null) {
                                     String answerText = answer.optString("text");
+                                    Log.d(TAG, "AIUI返回2："+answerText);
                                     if (TextUtils.isEmpty(answerText)) {
                                         startTtsOutput("对不起，我不明白");
                                     } else {
-                                        String mp3url = result.optJSONObject(0).optString("mp3Url");
-                                        String playUrl = result.optJSONObject(0).optString("playUrl");
-                                        Log.d(TAG, "AIUI返回mp3: "+mp3url);
+                                        String mp3url = "";
+                                        String playUrl = "";
+                                        if (result != null) {
+                                            mp3url = result.optJSONObject(0).optString("mp3Url");
+                                            playUrl = result.optJSONObject(0).optString("playUrl");
+                                            Log.d(TAG, "AIUI返回mp3: " + mp3url);
+                                        }
                                         if (!TextUtils.isEmpty(mp3url)){
+                                            Log.d(TAG, "AIUI返回3: "+answerText);
                                             needPlayMp3 = true;
                                             playOnlineUrl = mp3url;
                                             startTtsOutput(answerText,false);
 //                                            playMP3Url(mp3url);
                                         }else if (!TextUtils.isEmpty(playUrl)) {
+                                            Log.d(TAG, "AIUI返回3: "+answerText);
                                             needPlayMp3 = true;
                                             playOnlineUrl = playUrl;
                                             startTtsOutput(answerText,false);
                                         }else {
+                                            Log.d(TAG, "AIUI返回3: "+answerText);
                                             startTtsOutput(answerText);
                                         }
                                     }
@@ -976,22 +989,31 @@ public class BeoneAid implements CaeWakeupListener{
     private String playOnlineUrl;
     private AudioManager mAm;
 
-    // TODO: 2018/3/23 后期改写为独立线程类 
+    // TODO: 2018/3/23 后期改写为独立线程类
     private void playMP3Url(){
         needPlayMp3 = false;
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
-                    mAm.requestAudioFocus(null, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
                     MediaPlayer player = new MediaPlayer();
+                    player.reset();
                     player.setDataSource(playOnlineUrl);
-                    player.prepare();
-                    player.start();
-                    player.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                    player.setAudioStreamType(AudioManager.STREAM_MUSIC);
+                    player.prepareAsync();
+                    player.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                         @Override
-                        public void onCompletion(MediaPlayer mp) {
-                            mAm.abandonAudioFocus(null);
+                        public void onPrepared(MediaPlayer mp) {
+//                            mBufferProgress = 0;
+                            mp.start();
+                        }
+                    });
+
+                    player.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+                        @Override
+                        public boolean onError(MediaPlayer mp, int what, int extra) {
+                            Toast.makeText(BaseApplication.getContext(), "播放错误！", Toast.LENGTH_SHORT).show();
+                            return true;
                         }
                     });
                 } catch (Exception e) {
