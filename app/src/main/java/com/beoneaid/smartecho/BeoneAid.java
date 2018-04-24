@@ -90,7 +90,6 @@ public class BeoneAid implements CaeWakeupListener{
 //        initAudioManager();
         mCaeWakeUpFileObserver = new CaeWakeUpFileObserver(this);
         mSelfCheckThread.start();
-        mAm = (AudioManager)mContext.getSystemService(Context.AUDIO_SERVICE);
     }
 
     public void start() {
@@ -987,7 +986,6 @@ public class BeoneAid implements CaeWakeupListener{
     };
     private boolean needPlayMp3 = false;
     private String playOnlineUrl;
-    private AudioManager mAm;
 
     // TODO: 2018/3/23 后期改写为独立线程类
     private void playMP3Url(){
