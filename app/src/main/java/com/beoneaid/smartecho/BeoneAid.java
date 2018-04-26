@@ -682,13 +682,22 @@ public class BeoneAid implements CaeWakeupListener{
     private Response.ErrorListener getOFRErrorListener = new Response.ErrorListener() {
         @Override
         public void onErrorResponse(VolleyError error) {
-            startTtsOutput("平台返回超时");
+            startTtsOutput(getErrorText());
         }
     };
     private boolean isLogin = false;
     private String mSecretKey;
     private String mAccount;
     private String mMac;
+
+    private int mErrorIndex = 0;
+    private String getErrorText() {
+        mErrorIndex++;
+        if(mErrorIndex >= Config.ERROR_TEXT_ARRAY.length) {
+            mErrorIndex = 0;
+        }
+        return Config.ERROR_TEXT_ARRAY[mErrorIndex];
+    }
 
     private void initMac(){
         WifiManager wm = (WifiManager)mContext.getSystemService(mContext.WIFI_SERVICE);

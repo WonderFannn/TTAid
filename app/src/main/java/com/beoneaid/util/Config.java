@@ -7,6 +7,12 @@ public class Config {
             "我在",
             "在"
     };
+    public static final String[] ERROR_TEXT_ARRAY = {
+            "主人,刚才的指令没有平台反馈哦",
+            "主人,刚刚有点网络错误",
+            "主人,跟平台的通讯貌似有点问题"
+    };
+
     public static final String[] SMIULATEKEY_REPLY = {
             "好的",
             "好"
