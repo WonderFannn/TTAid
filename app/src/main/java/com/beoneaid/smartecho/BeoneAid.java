@@ -26,6 +26,7 @@ import com.beoneaid.util.Config;
 import com.beoneaid.util.DesktopPetManager;
 import com.beoneaid.util.GetMacUtil;
 import com.beoneaid.util.JsonParser;
+import com.beoneaid.util.LedController;
 import com.beoneaid.util.LogUtil;
 import com.beoneaid.util.ToastUtil;
 import com.beoneaid.util.versionupdate.CheckVersionTask;
@@ -122,6 +123,7 @@ public class BeoneAid implements CaeWakeupListener{
             }
             voicer = voicers[parseMode];
         }
+        setChannel(channel);
         Log.d("TAG", "Echo  onWakeUp - angle:"+angle+"chane:"+channel);
         startTtsOutput(getEchoText(), true);
     }
@@ -342,6 +344,7 @@ public class BeoneAid implements CaeWakeupListener{
             Log.d(TAG, "onResult: isLast"+isLast);
             String rltStr = printResult(result);
             if(isLast) {
+                setLedOff();
                 stopIat();
                 if (rltStr.contains("。")){
                     rltStr = rltStr.replaceAll("。","");
@@ -362,17 +365,16 @@ public class BeoneAid implements CaeWakeupListener{
         }
         @Override
         public void onBeginOfSpeech() {
-
         }
         @Override
         public void onEndOfSpeech() {
-//            resetCurrentValume();
             stopIat();
         }
 
     };
     private void startIat() {
         mStartRecognize = true;
+        setLedOn();
         // start listening user
         if (mIat != null && !mIat.isListening()) {
             mIat.startListening(mIatListener);
@@ -1220,6 +1222,24 @@ public class BeoneAid implements CaeWakeupListener{
 //        mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, currentValume, 0);
 //        Log.d(TAG, "resetCurrentValume: "+currentValume);
 //    }
+
+     /**
+     * ==================================================================================
+     *                               LED控制
+     * ==================================================================================
+     */
+
+     private int mChannel = 0;
+     public void setChannel(int channel){
+         mChannel = channel;
+     }
+     private void setLedOn(){
+         Log.d("LedController", "channel = "+ mChannel);
+         LedController.setLedOn(mChannel);
+     }
+     private void setLedOff(){
+         LedController.setLedOff();
+     }
 
      /**
      * ==================================================================================
