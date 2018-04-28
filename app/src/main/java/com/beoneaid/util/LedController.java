@@ -43,6 +43,4 @@ public class LedController {
             setLedState(i,0);
         }
     }
-
-
 }

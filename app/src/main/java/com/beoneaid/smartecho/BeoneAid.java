@@ -344,7 +344,7 @@ public class BeoneAid implements CaeWakeupListener{
             Log.d(TAG, "onResult: isLast"+isLast);
             String rltStr = printResult(result);
             if(isLast) {
-                setLedOff();
+//                setLedOff();
                 stopIat();
                 if (rltStr.contains("。")){
                     rltStr = rltStr.replaceAll("。","");
@@ -385,6 +385,7 @@ public class BeoneAid implements CaeWakeupListener{
         mStartRecognize = false;
         if(mIat != null && mIat.isListening()) {
             mIat.stopListening();
+            setLedOff();
         }
     }
 
