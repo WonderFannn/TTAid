@@ -101,6 +101,7 @@ public class BeoneAid implements CaeWakeupListener{
             mCaeWakeUpFileObserver.startWatching();
         }
         checkUpdateFromRemote();
+        getConfigurationFromRemote();
     }
 
     public void stop() {
@@ -463,92 +464,74 @@ public class BeoneAid implements CaeWakeupListener{
             lockMode4 = false;
         }
     }
-// TODO: 08/03/2018 改写成从平台获取唤醒词，需平台提供接口
-//    public void getOrderFromRemote(){
-//        needPull = false;
-//        if (isLogin){
-//            SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
-//            Date curDate = new Date(System.currentTimeMillis());
-//            String time = formatter.format(curDate);
-//            JSONObject serviceContent = new JSONObject();
-//            try {
-//                serviceContent.put("secretKey", mSecretKey);
-//                serviceContent.put("account", mAccount);
-//                serviceContent.put("mac", mMac);
-//                serviceContent.put("updateTime", "20160101090000");
-//            } catch (JSONException e) {
-//                e.printStackTrace();
-//            }
-//            JSONObject data = new JSONObject();
-//            try {
-//                data.put("activityCode", "T902");
-//                data.put("bipCode", "B004");
-//                data.put("origDomain", "VA000");
-//                data.put("homeDomain", "0000");
-//                data.put("serviceContent", serviceContent);
-//            } catch (JSONException e) {
-//                e.printStackTrace();
-//            }
-//
-//            String url = mContext.getString(R.string.beone_aiui_url) + data.toString();
-//            Log.d(TAG, "getOrderFromRemote: url == " +url);
-//            StringRequest stringRequest = new StringRequest(url, RsPullListener, RsErrorListener);
-//            mQueue.add(stringRequest);
-//        }else {
-//            needPull = true;
-//            loginBeone();
-//        }
-//
-//    }
+    public void getConfigurationFromRemote(){
+        needPull = false;
+        if (isLogin){
+            SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
+            Date curDate = new Date(System.currentTimeMillis());
+            String time = formatter.format(curDate);
+            JSONObject serviceContent = new JSONObject();
+            try {
+                serviceContent.put("secretKey", mSecretKey);
+                serviceContent.put("account", mAccount);
+                serviceContent.put("mac", mMac);
+                serviceContent.put("updateTime", "20160101090000");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            JSONObject data = new JSONObject();
+            try {
+                data.put("activityCode", "T902");
+                data.put("bipCode", "B004");
+                data.put("origDomain", "VA000");
+                data.put("homeDomain", "0000");
+                data.put("serviceContent", serviceContent);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
 
-//    private Response.Listener<String> RsPullListener = new Response.Listener<String>() {
-//        @Override
-//        public void onResponse(String response) {
-//            Log.d(TAG, "onResponse: 获取命令词"+response);
-//            try {
-//                JSONObject data = new JSONObject(response);
-//                JSONArray serArrary = data.getJSONArray("serviceContent");
-//                String funParams = serArrary.getJSONObject(0).getString("funParams");
-//                JSONObject fpJO = new JSONObject(funParams);
-//                String timeString = fpJO.optString("time");
-//                String[][] s = new String[3][3];
-//                s[0][0] = fpJO.optJSONObject("audio").optString("key1");
-//                s[0][1] = fpJO.optJSONObject("audio").optString("key2");
-//                s[0][2] = fpJO.optJSONObject("audio").optString("key3");
-//                s[1][0] = fpJO.optJSONObject("dev").optString("key1");
-//                s[1][1] = fpJO.optJSONObject("dev").optString("key2");
-//                s[1][2] = fpJO.optJSONObject("dev").optString("key3");
-//                s[2][0] = fpJO.optJSONObject("aiui").optString("key1");
-//                s[2][1] = fpJO.optJSONObject("aiui").optString("key2");
-//                s[2][2] = fpJO.optJSONObject("aiui").optString("key3");
-//                if((s[0][0]!=null || s[0][1]!=null || s[0][2]!=null)
-//                        && (s[1][0]!=null || s[1][1]!=null || s[1][2]!=null)
-//                        && (s[2][0]!=null || s[2][1]!=null || s[2][2]!=null)){
-////                    setParserModeOrder(s);
-//                    startTtsOutput("从平台获取模式命令词成功",false);
-//                }else {
-//                    startTtsOutput("从平台获取模式命令词失败，请使用默认命令词",false);
-//                }
-//                if (!TextUtils.isEmpty(timeString)){
-//                    try {
-//                        int time = Integer.valueOf(timeString);
-//                        if (time > 0){
-//                            mIat.setParameter(SpeechConstant.VAD_BOS, time+"000");
-//                            Log.d("TAG", "onResponse: 获取到平台设置识别时间"+time+"秒");
-//                        }else {
-//                            ToastUtil.showLong(BaseApplication.getContext(),"从平台获取识别时间失败，默认设置为5秒");
-//                        }
-//                    }catch (Exception e){
-//                        ToastUtil.showLong(BaseApplication.getContext(),"从平台获取识别时间失败，默认设置为5秒");
-//                    }
-//                }
-//            } catch (JSONException e) {
-//                Log.e("TAG", "onResponse: "+e.getMessage());
-//                e.printStackTrace();
-//                startTtsOutput("从平台获取模式命令词失败，请使用默认命令词",false);
-//            }
-//        }
-//    };
+            String url = mContext.getString(R.string.beone_aiui_url) + data.toString();
+            Log.d(TAG, "getOrderFromRemote: url == " +url);
+            StringRequest stringRequest = new StringRequest(url, RsPullListener, RsErrorListener);
+            mQueue.add(stringRequest);
+        }else {
+            needPull = true;
+            loginBeone();
+        }
+
+    }
+
+    private Response.Listener<String> RsPullListener = new Response.Listener<String>() {
+        @Override
+        public void onResponse(String response) {
+            Log.d(TAG, "onResponse: 获取平台配置"+response);
+            try {
+                JSONObject data = new JSONObject(response);
+                JSONArray serArrary = data.getJSONArray("serviceContent");
+                String funParams = serArrary.getJSONObject(0).getString("funParams");
+                JSONObject fpJO = new JSONObject(funParams);
+                String timeString = fpJO.optString("time");
+
+                if (!TextUtils.isEmpty(timeString)){
+                    try {
+                        int time = Integer.valueOf(timeString);
+                        if (time > 0){
+                            mIat.setParameter(SpeechConstant.VAD_BOS, time+"000");
+                            Log.d("TAG", "onResponse: 获取到平台设置识别时间"+time+"秒");
+                        }else {
+                            ToastUtil.showLong(BaseApplication.getContext(),"从平台获取识别时间失败，默认设置为5秒");
+                        }
+                    }catch (Exception e){
+                        ToastUtil.showLong(BaseApplication.getContext(),"从平台获取识别时间失败，默认设置为5秒");
+                    }
+                }
+            } catch (JSONException e) {
+                Log.e("TAG", "onResponse: "+e.getMessage());
+                e.printStackTrace();
+                startTtsOutput("从平台获取配置失败，将使用APP默认配置",false);
+            }
+        }
+    };
 
 
     private void parseOrder(String order) {
@@ -748,6 +731,7 @@ public class BeoneAid implements CaeWakeupListener{
                     isLogin = true;
                     if (needPull){
                         checkUpdateFromRemote();
+                        getConfigurationFromRemote();
                     }
                 }
             }
