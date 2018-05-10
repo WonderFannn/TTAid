@@ -43,4 +43,21 @@ public class LedController {
             setLedState(i,0);
         }
     }
+
+    public static void setLedFlash(){
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    for (int i = 0;i < 12;i++){
+                        setLedOn(i%6);
+                        Thread.sleep(100);
+                    }
+                    setLedOff();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+    }
 }

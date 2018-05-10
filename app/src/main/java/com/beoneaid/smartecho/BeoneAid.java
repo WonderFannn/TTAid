@@ -100,8 +100,7 @@ public class BeoneAid implements CaeWakeupListener{
         if (mCaeWakeUpFileObserver != null) {
             mCaeWakeUpFileObserver.startWatching();
         }
-        checkUpdateFromRemote();
-        getConfigurationFromRemote();
+        loginBeone();
     }
 
     public void stop() {
@@ -126,7 +125,12 @@ public class BeoneAid implements CaeWakeupListener{
         }
         setChannel(channel);
         Log.d("TAG", "Echo  onWakeUp - angle:"+angle+"chane:"+channel);
-        startTtsOutput(getEchoText(), true);
+
+        if(wakeupMode.equals(allModes[0])){
+            startIat();
+        }else {
+            startTtsOutput(getEchoText(), true);
+        }
     }
 
     private int mEchoIndex = 0;
@@ -353,6 +357,9 @@ public class BeoneAid implements CaeWakeupListener{
                 if(!TextUtils.isEmpty(rltStr)) {
                     parseOrder(rltStr);
                     ToastUtil.showShort(mContext, rltStr);
+                    if (recongnizeMode.equals(allModes[1]) || recongnizeMode.equals(allModes[2])){
+                        startTtsOutput("命令发送成功",false);
+                    }
                 }
             }
         }
@@ -375,7 +382,9 @@ public class BeoneAid implements CaeWakeupListener{
     };
     private void startIat() {
         mStartRecognize = true;
-        setLedOn();
+        if (wakeupMode.equals(allModes[0])||wakeupMode.equals(allModes[2])) {
+            setLedOn();
+        }
         // start listening user
         if (mIat != null && !mIat.isListening()) {
             mIat.startListening(mIatListener);
@@ -386,7 +395,10 @@ public class BeoneAid implements CaeWakeupListener{
         mStartRecognize = false;
         if(mIat != null && mIat.isListening()) {
             mIat.stopListening();
-            setLedOff();
+            if (wakeupMode.equals(allModes[0])||wakeupMode.equals(allModes[2])) {
+                setLedOff();
+            }
+
         }
     }
 
@@ -444,7 +456,7 @@ public class BeoneAid implements CaeWakeupListener{
      * ==================================================================================
      */
 
-    private boolean needPull = false;
+
 //    private String[][] parserModeOrder = {{"中国中国"},{"中国"},{"美国"}};
 
     private int parseMode = 0;
@@ -464,74 +476,7 @@ public class BeoneAid implements CaeWakeupListener{
             lockMode4 = false;
         }
     }
-    public void getConfigurationFromRemote(){
-        needPull = false;
-        if (isLogin){
-            SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
-            Date curDate = new Date(System.currentTimeMillis());
-            String time = formatter.format(curDate);
-            JSONObject serviceContent = new JSONObject();
-            try {
-                serviceContent.put("secretKey", mSecretKey);
-                serviceContent.put("account", mAccount);
-                serviceContent.put("mac", mMac);
-                serviceContent.put("updateTime", "20160101090000");
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            JSONObject data = new JSONObject();
-            try {
-                data.put("activityCode", "T902");
-                data.put("bipCode", "B004");
-                data.put("origDomain", "VA000");
-                data.put("homeDomain", "0000");
-                data.put("serviceContent", serviceContent);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
 
-            String url = mContext.getString(R.string.beone_aiui_url) + data.toString();
-            Log.d(TAG, "getOrderFromRemote: url == " +url);
-            StringRequest stringRequest = new StringRequest(url, RsPullListener, RsErrorListener);
-            mQueue.add(stringRequest);
-        }else {
-            needPull = true;
-            loginBeone();
-        }
-
-    }
-
-    private Response.Listener<String> RsPullListener = new Response.Listener<String>() {
-        @Override
-        public void onResponse(String response) {
-            Log.d(TAG, "onResponse: 获取平台配置"+response);
-            try {
-                JSONObject data = new JSONObject(response);
-                JSONArray serArrary = data.getJSONArray("serviceContent");
-                String funParams = serArrary.getJSONObject(0).getString("funParams");
-                JSONObject fpJO = new JSONObject(funParams);
-                String timeString = fpJO.optString("time");
-
-                if (!TextUtils.isEmpty(timeString)){
-                    try {
-                        int time = Integer.valueOf(timeString);
-                        if (time > 0){
-                            mIat.setParameter(SpeechConstant.VAD_BOS, time+"000");
-                            Log.d("TAG", "onResponse: 获取到平台设置识别时间"+time+"秒");
-                        }else {
-                            ToastUtil.showLong(BaseApplication.getContext(),"从平台获取识别时间失败，默认设置为5秒");
-                        }
-                    }catch (Exception e){
-                        ToastUtil.showLong(BaseApplication.getContext(),"从平台获取识别时间失败，默认设置为5秒");
-                    }
-                }
-            } catch (JSONException e) {
-                Log.e("TAG", "onResponse: "+e.getMessage());
-                e.printStackTrace();
-                startTtsOutput("从平台获取配置失败，将使用APP默认配置",false);
-            }
-        }
-    };
 
 
     private void parseOrder(String order) {
@@ -707,7 +652,12 @@ public class BeoneAid implements CaeWakeupListener{
                     final String serviceContentString = data.getString("serviceContent");
                     final JSONObject serviceContentJson = new JSONObject(serviceContentString);
                     if (serviceContentJson != null) {
-                        startTtsOutput(serviceContentJson.optString("answer"));
+                        if (completeMode.equals(allModes[1])||completeMode.equals(allModes[2])) {
+                            startTtsOutput(serviceContentJson.optString("answer"));
+                        }
+                        if(completeMode.equals(allModes[0])||completeMode.equals(allModes[2])){
+                            setLedFlash();
+                        }
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -729,8 +679,10 @@ public class BeoneAid implements CaeWakeupListener{
                 } else {
                     startTtsOutput("登录成功");
                     isLogin = true;
-                    if (needPull){
+                    if (needGetCheckUpdate){
                         checkUpdateFromRemote();
+                    }
+                    if (needGetConfig){
                         getConfigurationFromRemote();
                     }
                 }
@@ -1109,12 +1061,95 @@ public class BeoneAid implements CaeWakeupListener{
 
     /**
      * ==================================================================================
-     *                               更新
+     *                        从平台更新和获取配置
      * ==================================================================================
      */
 
+    private boolean needGetConfig = true;
+    public void getConfigurationFromRemote(){
+        needGetConfig = false;
+        if (isLogin){
+            SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
+            Date curDate = new Date(System.currentTimeMillis());
+            String time = formatter.format(curDate);
+            JSONObject serviceContent = new JSONObject();
+            try {
+                serviceContent.put("secretKey", mSecretKey);
+                serviceContent.put("account", mAccount);
+                serviceContent.put("mac", mMac);
+                serviceContent.put("updateTime", "20160101090000");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            JSONObject data = new JSONObject();
+            try {
+                data.put("activityCode", "T902");
+                data.put("bipCode", "B004");
+                data.put("origDomain", "VA000");
+                data.put("homeDomain", "0000");
+                data.put("serviceContent", serviceContent);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            String url = mContext.getString(R.string.beone_aiui_url) + data.toString();
+            Log.d(TAG, "getOrderFromRemote: url == " +url);
+            StringRequest stringRequest = new StringRequest(url, RsPullListener, RsErrorListener);
+            mQueue.add(stringRequest);
+        }else {
+            needGetConfig = true;
+            loginBeone();
+        }
+
+    }
+
+    private Response.Listener<String> RsPullListener = new Response.Listener<String>() {
+        @Override
+        public void onResponse(String response) {
+            Log.d(TAG, "onResponse: 获取平台配置"+response);
+            try {
+                JSONObject data = new JSONObject(response);
+                JSONArray serArrary = data.getJSONArray("serviceContent");
+                String funParams = serArrary.getJSONObject(0).getString("funParams");
+                JSONObject fpJO = new JSONObject(funParams);
+                String timeString = fpJO.optString("time");
+
+                if (!TextUtils.isEmpty(timeString)){
+                    try {
+                        int time = Integer.valueOf(timeString);
+                        if (time > 0){
+                            mIat.setParameter(SpeechConstant.VAD_BOS, time+"000");
+                            Log.d("TAG", "onResponse: 获取到平台设置识别时间"+time+"秒");
+                        }else {
+                            ToastUtil.showLong(BaseApplication.getContext(),"从平台获取识别时间失败，默认设置为5秒");
+                        }
+                    }catch (Exception e){
+                        ToastUtil.showLong(BaseApplication.getContext(),"从平台获取识别时间失败，默认设置为5秒");
+                    }
+                }
+            } catch (JSONException e) {
+                Log.e("TAG", "onResponse: "+e.getMessage());
+                e.printStackTrace();
+                startTtsOutput("从平台获取配置失败，将使用APP默认配置",false);
+            }
+        }
+    };
+
+    private String[] allModes = {"tsligtht","tsvoice","tslightvoice"};
+    private String wakeupMode = allModes[0];
+    private String recongnizeMode = allModes[0];
+    private String completeMode = allModes[0];
+
+    public void setAllModes(String wMode,String rMode,String cMode){
+        wakeupMode = wMode;
+        recongnizeMode = rMode;
+        completeMode = cMode;
+    }
+
+    //更新
+    private boolean needGetCheckUpdate = true;
     public void checkUpdateFromRemote(){
-        needPull = false;
+        needGetCheckUpdate = false;
         if (isLogin){
             SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
             Date curDate = new Date(System.currentTimeMillis());
@@ -1175,7 +1210,7 @@ public class BeoneAid implements CaeWakeupListener{
                 }
             }).start();
         }else {
-            needPull = true;
+            needGetCheckUpdate = true;
             loginBeone();
         }
 
@@ -1224,6 +1259,9 @@ public class BeoneAid implements CaeWakeupListener{
      }
      private void setLedOff(){
          LedController.setLedOff();
+     }
+     private void setLedFlash(){
+         LedController.setLedFlash();
      }
 
      /**
