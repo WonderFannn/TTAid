@@ -357,7 +357,7 @@ public class BeoneAid implements CaeWakeupListener{
                 if(!TextUtils.isEmpty(rltStr)) {
                     parseOrder(rltStr);
                     ToastUtil.showShort(mContext, rltStr);
-                    if (recongnizeMode.equals(allModes[1]) || recongnizeMode.equals(allModes[2])){
+                    if (recognizeMode.equals(allModes[1]) || recognizeMode.equals(allModes[2])){
                         startTtsOutput("命令发送成功",false);
                     }
                 }
@@ -1113,7 +1113,7 @@ public class BeoneAid implements CaeWakeupListener{
                 String funParams = serArrary.getJSONObject(0).getString("funParams");
                 JSONObject fpJO = new JSONObject(funParams);
                 String timeString = fpJO.optString("time");
-
+                setAllModes(fpJO.optString("hxtsSetup"),fpJO.optString("qqtsSetup"),fpJO.optString("jgtsSetup"));
                 if (!TextUtils.isEmpty(timeString)){
                     try {
                         int time = Integer.valueOf(timeString);
@@ -1135,15 +1135,43 @@ public class BeoneAid implements CaeWakeupListener{
         }
     };
 
-    private String[] allModes = {"tsligtht","tsvoice","tslightvoice"};
+    private String[] allModes = {"tslight","tsvoice","tslightvoice"};
     private String wakeupMode = allModes[0];
-    private String recongnizeMode = allModes[0];
-    private String completeMode = allModes[0];
+    private String recognizeMode = allModes[0];
+    private String completeMode = allModes[1];
 
     public void setAllModes(String wMode,String rMode,String cMode){
-        wakeupMode = wMode;
-        recongnizeMode = rMode;
-        completeMode = cMode;
+        if (wMode.contains("light") && wMode.contains("voice")){
+            wakeupMode = allModes[2];
+        }else if (wMode.contains("light")){
+            wakeupMode = allModes[0];
+        }else if (wMode.contains("voice")){
+            wakeupMode = allModes[1];
+        }else {
+            wakeupMode = allModes[0];
+        }
+
+        if (rMode.contains("light") && rMode.contains("voice")){
+            recognizeMode = allModes[2];
+        }else if (rMode.contains("light")){
+            recognizeMode = allModes[0];
+        }else if (rMode.contains("voice")){
+            recognizeMode = allModes[1];
+        }else {
+            recognizeMode = allModes[0];
+        }
+
+        if (cMode.contains("light") && cMode.contains("voice")){
+            completeMode = allModes[2];
+        }else if (cMode.contains("light")){
+            completeMode = allModes[0];
+        }else if (cMode.contains("voice")){
+            completeMode = allModes[1];
+        }else {
+            completeMode = allModes[1];
+        }
+
+        Log.d(TAG, "setAllModes: "+wakeupMode+"-"+recognizeMode+"-"+completeMode);
     }
 
     //更新
