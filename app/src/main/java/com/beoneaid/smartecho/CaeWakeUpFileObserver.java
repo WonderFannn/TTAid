@@ -26,7 +26,7 @@ public class CaeWakeUpFileObserver extends FileObserver {
     int mChanel = -1;
     int mKeywordID = 0;
 
-    String[] keywords = {"bao3bei4bao3bei4","xiao2bao3xiao2bao3","xiao3bei4xiao3bei4"};
+    String[] keywords = {"xiao3bei4xiao3bei4","xiao2bao3xiao2bao3","bao3bei4bao3bei4"};
 
     public CaeWakeUpFileObserver(CaeWakeupListener caeWakeupListener) {
         super(CAE_WAKEUP_FILE);

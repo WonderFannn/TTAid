@@ -40,6 +40,8 @@ public class BeoneAidService extends Service implements BeoneAid.OnRecognizeResu
     private boolean checkNet = true;
     private BeoneAid mBeoneAid;
     private boolean isEchoRunning = false;
+
+    
     @Override
     public void onCreate() {
         super.onCreate();
@@ -87,7 +89,7 @@ public class BeoneAidService extends Service implements BeoneAid.OnRecognizeResu
                     isEchoRunning = true;
                 }
             } else if(SMART_ECHO_ACTION_WAKEUP.equals(action)) {
-                mBeoneAid.onWakeUp(0, 0, -1);
+                mBeoneAid.onWakeUp(0, 0, 0);
             } else if (SMART_ECHO_ACTION_NETWORK_DISCONNECTED.equals(action)){
                 if (isEchoRunning){
                     if (checkNet) {
@@ -142,6 +144,9 @@ public class BeoneAidService extends Service implements BeoneAid.OnRecognizeResu
         intent.setAction(BeoneAidService.SMART_ECHO_ACTION_START);
         startService(intent);
     }
+
+
+
 
     void callback(String result) {
         final int N = mCallbacks.beginBroadcast();

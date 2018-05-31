@@ -13,6 +13,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
@@ -95,6 +96,9 @@ public class BeoneAid implements CaeWakeupListener{
 
     public void start() {
         LogUtil.d("SmartEcho - start");
+        BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_DOWN,null);
+        BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_DOWN,null);
+
         mRecorder = new PcmRecorder();
         mRecorder.startRecording(mPcmListener);
         if (mCaeWakeUpFileObserver != null) {
@@ -532,9 +536,11 @@ public class BeoneAid implements CaeWakeupListener{
             od = od.substring(2);
             if (od.startsWith("听音乐")||od.startsWith("听歌")){
                 openActivity("com.jinxin.cloudmusic");
+                onRecognizeResultListener.onRecognizeResult("close_movie_mode");
                 return;
             }else if (od.startsWith("看电影")){
-                openActivity("com.jinxin.beonemoviesearcher","com.beonemoviesearcher.activity.MainActivity");
+//                openActivity("com.jinxin.beonemoviesearcher","com.beonemoviesearcher.activity.MainActivity");
+                onRecognizeResultListener.onRecognizeResult("open_movie_mode");
                 return;
             }
         }
@@ -542,15 +548,19 @@ public class BeoneAid implements CaeWakeupListener{
             od = od.substring(2);
             if (od.startsWith("音乐")||od.startsWith("云音乐")){
                 openActivity("com.jinxin.cloudmusic");
+                onRecognizeResultListener.onRecognizeResult("close_movie_mode");
                 return;
             }else if (od.startsWith("影视搜索")||od.startsWith("电影搜索")){
-                openActivity("com.jinxin.beonemoviesearcher","com.beonemoviesearcher.activity.MainActivity");
+                onRecognizeResultListener.onRecognizeResult("open_movie_mode");
+//                openActivity("com.jinxin.beonemoviesearcher","com.beonemoviesearcher.activity.MainActivity");
                 return;
             }else if (od.startsWith("帮助")){
                 openActivity("com.jinxin.voicehelp");
+                onRecognizeResultListener.onRecognizeResult("close_movie_mode");
                 return;
             }else if (od.startsWith("呼叫中心")){
                 openActivity("com.jinxin.jxpensioncall");
+                onRecognizeResultListener.onRecognizeResult("close_movie_mode");
                 return;
             }
         }
@@ -725,6 +735,7 @@ public class BeoneAid implements CaeWakeupListener{
     }
 
     private void getAIUIResult(String order) throws JSONException {
+        Log.d("平台通讯", "getAIUIResult: "+order);
         SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
         Date curDate = new Date(System.currentTimeMillis());
         String time = formatter.format(curDate);
@@ -753,6 +764,13 @@ public class BeoneAid implements CaeWakeupListener{
 
         String url = mContext.getString(R.string.beone_aiui_url) + data.toString();
         StringRequest stringRequest = new StringRequest(url, RsBeoneListener, getOFRErrorListener);
+        stringRequest.setRetryPolicy(
+                new DefaultRetryPolicy(
+                        50*1000,//默认超时时间，应设置一个稍微大点儿的
+                        DefaultRetryPolicy.DEFAULT_MAX_RETRIES,//默认最大尝试次数
+                        DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
+                )
+        );
         mQueue.add(stringRequest);
     }
 

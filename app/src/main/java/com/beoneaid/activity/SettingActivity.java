@@ -58,6 +58,7 @@ public class SettingActivity extends Activity implements View.OnClickListener {
     String shModeOrder = "";
     String aiuiModeOrder = "";
 
+
     @Override
     public void onCreate( Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
