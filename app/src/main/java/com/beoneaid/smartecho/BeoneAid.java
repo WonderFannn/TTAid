@@ -96,8 +96,6 @@ public class BeoneAid implements CaeWakeupListener{
 
     public void start() {
         LogUtil.d("SmartEcho - start");
-        BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_DOWN,null);
-        BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_DOWN,null);
 
         mRecorder = new PcmRecorder();
         mRecorder.startRecording(mPcmListener);
@@ -137,13 +135,23 @@ public class BeoneAid implements CaeWakeupListener{
         }
     }
 
+    private String[] echoText = Config.ECHO_TEXT_ARRAY;
+    private void setEchoText(String[] texts){
+        for (String s:texts){
+            Log.d(TAG, "唤醒回复词: "+s);
+            if (TextUtils.isEmpty(s)){
+                return;
+            }
+        }
+        echoText = texts;
+    }
     private int mEchoIndex = 0;
     private String getEchoText() {
         mEchoIndex++;
-        if(mEchoIndex >= Config.ECHO_TEXT_ARRAY.length) {
+        if(mEchoIndex >= echoText.length) {
             mEchoIndex = 0;
         }
-        return Config.ECHO_TEXT_ARRAY[mEchoIndex];
+        return echoText[mEchoIndex];
     }
 
     /**
@@ -540,6 +548,7 @@ public class BeoneAid implements CaeWakeupListener{
                 return;
             }else if (od.startsWith("看电影")){
 //                openActivity("com.jinxin.beonemoviesearcher","com.beonemoviesearcher.activity.MainActivity");
+                openActivity("com.qiyi.video.jinxinzhihui");
                 onRecognizeResultListener.onRecognizeResult("open_movie_mode");
                 return;
             }
@@ -766,7 +775,7 @@ public class BeoneAid implements CaeWakeupListener{
         StringRequest stringRequest = new StringRequest(url, RsBeoneListener, getOFRErrorListener);
         stringRequest.setRetryPolicy(
                 new DefaultRetryPolicy(
-                        50*1000,//默认超时时间，应设置一个稍微大点儿的
+                        20*1000,//默认超时时间，应设置一个稍微大点儿的
                         DefaultRetryPolicy.DEFAULT_MAX_RETRIES,//默认最大尝试次数
                         DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
                 )
@@ -1130,8 +1139,17 @@ public class BeoneAid implements CaeWakeupListener{
                 JSONArray serArrary = data.getJSONArray("serviceContent");
                 String funParams = serArrary.getJSONObject(0).getString("funParams");
                 JSONObject fpJO = new JSONObject(funParams);
-                String timeString = fpJO.optString("time");
                 setAllModes(fpJO.optString("hxtsSetup"),fpJO.optString("qqtsSetup"),fpJO.optString("jgtsSetup"));
+                JSONObject hxhfc = fpJO.optJSONObject("hxhfc");
+                if (hxhfc!=null){
+                    String[] texts = new String[3];
+                    texts[0] = hxhfc.optString("hxhfc1");
+                    texts[1] = hxhfc.optString("hxhfc2");
+                    texts[2] = hxhfc.optString("hxhfc3");
+
+                    setEchoText(texts);
+                }
+                String timeString = fpJO.optString("time");
                 if (!TextUtils.isEmpty(timeString)){
                     try {
                         int time = Integer.valueOf(timeString);
@@ -1288,6 +1306,20 @@ public class BeoneAid implements CaeWakeupListener{
 //        mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, currentValume, 0);
 //        Log.d(TAG, "resetCurrentValume: "+currentValume);
 //    }
+
+     /**
+     * ==================================================================================
+     *                               关机语音提示
+     * ==================================================================================
+     */
+
+     private String[] powerPressReminder = {"即将关机","取消关机"};
+     public void sayPowerLongPress(){
+         startTtsOutput(powerPressReminder[1],false);
+     }
+     public void sayPowerUp(){
+         startTtsOutput(powerPressReminder[2],false);
+     }
 
      /**
      * ==================================================================================

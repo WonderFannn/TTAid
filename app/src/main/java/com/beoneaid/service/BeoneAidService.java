@@ -29,12 +29,15 @@ import java.io.IOException;
 
 public class BeoneAidService extends Service implements BeoneAid.OnRecognizeResultListener {
 
+    private static final String TAG = "BeoneAidService";
+
     public static final String SMART_ECHO_ACTION_START = "com.rockchip.echoOnWakeUp.ACTION.START";
     public static final String SMART_ECHO_ACTION_WAKEUP = "com.rockchip.echoOnWakeUp.ACTION.CAE.WAKEUP";
     public static final String SMART_ECHO_ACTION_NETWORK_DISCONNECTED = "com.rockchip.echoOnWakeUp.ACTION.NETWORK.DISCONNECTED";
     public static final String SMART_ECHO_ACTION_NETWORK_CONNECTED = "com.rockchip.echoOnWakeUp.ACTION.NETWORK.CONNECTED";
     public static final String SMART_ECHO_ACTION_GET_BATTERY = "android.intent.action.show_batteryinfo";
-
+    public static final String SMART_ECHO_ACTION_POWER_KEY_LONG_PRESS = "com.android.interceptPowerKeyLongPress";
+    public static final String SMART_ECHO_ACTION_POWER_KEY_UP = "com.android.interceptPowerKeyUp";
 
     private AudioManager mAm;
     private boolean checkNet = true;
@@ -80,6 +83,7 @@ public class BeoneAidService extends Service implements BeoneAid.OnRecognizeResu
         String action = null;
         if (intent != null){
             action = intent.getAction();
+            Log.d(TAG, "onStartCommand: "+action);
         }
         if (action != null) {
             LogUtil.d("BeoneAidService - onStartCommand - " + action);
@@ -129,6 +133,14 @@ public class BeoneAidService extends Service implements BeoneAid.OnRecognizeResu
             } else if (SMART_ECHO_ACTION_GET_BATTERY.equals(action)){
                 if (isEchoRunning) {
                     mBeoneAid.startTtsOutput("当前电量还有百分之"+ (int)(getBattery()*100), false);
+                }
+            } else if (SMART_ECHO_ACTION_POWER_KEY_LONG_PRESS.equals(action)){
+                if (isEchoRunning){
+                    mBeoneAid.sayPowerLongPress();
+                }
+            } else if (SMART_ECHO_ACTION_POWER_KEY_UP.equals(action)){
+                if (isEchoRunning){
+                    mBeoneAid.sayPowerUp();
                 }
             }
         }
