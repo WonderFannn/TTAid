@@ -25,6 +25,18 @@ public class BroadcastManager {
 	public static final String GET_BATTERY_INFO = "android.intent.action.show_batteryinfo";
 
 
+	/**
+	 * shell命令广播
+	 */
+	public static final String ACTION_SEND_SHELL_COMMAND = "android.intent.action.runshellcommand";
+
+	/**
+	 * 关机语音提示广播
+	 * */
+	public static final String POWER_KEY_LONG_PRESS = "com.android.interceptPowerKeyLongPress";
+	public static final String POWER_KEY_UP = "com.android.interceptPowerKeyUp";
+
+
 	public static final String ACTION_VOICE_EMULATE_KEY_OPEN = "action_voice_emulate_key_open";
 	/**
 	 * 关闭唤醒服务广播
@@ -49,6 +61,20 @@ public class BroadcastManager {
 	public static final String ACTION_SIMULATE_KEY_DPAD_DOWN = "action_simulate_key_dpad_down";
 	public static final String ACTION_SIMULATE_KEY_DPAD_LEFT = "action_simulate_key_dpad_left";
 	public static final String ACTION_SIMULATE_KEY_DPAD_RIGHT = "action_simulate_key_dpad_right";
+
+
+	public static void sendBroadcastWithString(String action, String command) {
+		if (action == null)
+			return;
+		// 指定广播目标Action
+		Intent _itent = new Intent(action);
+		// 可通过Intent携带消息
+		if (command != null) {
+			_itent.putExtra("command",command);
+		}
+		// 发送广播消息
+		BaseApplication.getContext().sendBroadcast(_itent);
+	}
 
 	/**
 	 * 发送广播消息

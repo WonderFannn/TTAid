@@ -36,6 +36,18 @@ public class BeoneAidReceiver extends BroadcastReceiver {
 //            i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             i.setAction(BeoneAidService.SMART_ECHO_ACTION_GET_BATTERY);
             context.startService(i);
+        }else if (BroadcastManager.POWER_KEY_LONG_PRESS.equals(intent.getAction())){
+            Log.d("BeoneAid", "==================== BeoneAidService power key long press ======================");
+            Intent i = new Intent(context, BeoneAidService.class);
+//            i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            i.setAction(BeoneAidService.SMART_ECHO_ACTION_POWER_KEY_LONG_PRESS);
+            context.startService(i);
+        }else if (BroadcastManager.POWER_KEY_UP.equals(intent.getAction())){
+            Log.d("BeoneAid", "==================== BeoneAidService power key up ======================");
+            Intent i = new Intent(context, BeoneAidService.class);
+//            i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            i.setAction(BeoneAidService.SMART_ECHO_ACTION_POWER_KEY_UP);
+            context.startService(i);
         }
     }
 }

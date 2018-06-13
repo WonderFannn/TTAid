@@ -43,6 +43,7 @@ public class BeoneAidService extends Service implements BeoneAid.OnRecognizeResu
     private boolean checkNet = true;
     private BeoneAid mBeoneAid;
     private boolean isEchoRunning = false;
+    private boolean needSayPowerUp = false;
 
     
     @Override
@@ -138,10 +139,12 @@ public class BeoneAidService extends Service implements BeoneAid.OnRecognizeResu
                 if (isEchoRunning){
                     mBeoneAid.sayPowerLongPress();
                 }
+                needSayPowerUp = true;
             } else if (SMART_ECHO_ACTION_POWER_KEY_UP.equals(action)){
-                if (isEchoRunning){
+                if (isEchoRunning && needSayPowerUp){
                     mBeoneAid.sayPowerUp();
                 }
+                needSayPowerUp = false;
             }
         }
         return START_STICKY;

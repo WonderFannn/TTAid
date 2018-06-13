@@ -89,6 +89,7 @@ public class BeoneAid implements CaeWakeupListener{
         initReqQue();
         initMac();
         creatPet();
+        initMediaPlayer();
 //        initAudioManager();
         mCaeWakeUpFileObserver = new CaeWakeUpFileObserver(this);
         mSelfCheckThread.start();
@@ -132,6 +133,9 @@ public class BeoneAid implements CaeWakeupListener{
             startIat();
         }else {
             startTtsOutput(getEchoText(), true);
+        }
+        if (mMediaPlayer!=null && mMediaPlayer.isPlaying()){
+            mMediaPlayer.pause();
         }
     }
 
@@ -279,7 +283,7 @@ public class BeoneAid implements CaeWakeupListener{
             // 设置在线合成发音人
             mTts.setParameter(SpeechConstant.VOICE_NAME, voicer);
             //设置合成语速
-            mTts.setParameter(SpeechConstant.SPEED, "50");
+            mTts.setParameter(SpeechConstant.SPEED, "75");
             //设置合成音调
             mTts.setParameter(SpeechConstant.PITCH, "50");
             //设置合成音量
@@ -489,9 +493,43 @@ public class BeoneAid implements CaeWakeupListener{
         }
     }
 
+    Boolean needSendPowerOff = false;
+    Boolean needSendPowerRestart = false;
 
 
     private void parseOrder(String order) {
+
+        if (order.equals("强制关机")){
+            BroadcastManager.sendBroadcastWithString(BroadcastManager.ACTION_SEND_SHELL_COMMAND,"reboot -p");
+            return;
+        }
+        if (order.equals("强制重启")){
+            BroadcastManager.sendBroadcastWithString(BroadcastManager.ACTION_SEND_SHELL_COMMAND,"reboot");
+            return;
+        }
+        if (order.equals("确定")){
+            if (needSendPowerOff){
+                BroadcastManager.sendBroadcastWithString(BroadcastManager.ACTION_SEND_SHELL_COMMAND,"reboot -p");
+                return;
+            }
+            if (needSendPowerRestart){
+                BroadcastManager.sendBroadcastWithString(BroadcastManager.ACTION_SEND_SHELL_COMMAND,"reboot");
+                return;
+            }
+        }
+        needSendPowerOff = false;
+        needSendPowerRestart = false;
+        if (order.equals("关机")){
+            startTtsOutput("主人，您确定要关机吗，关机请回复确定");
+            needSendPowerOff = true;
+            return;
+        }
+        if (order.equals("重启")){
+            startTtsOutput("主人，您确定要重启吗，重启请回复确定");
+            needSendPowerRestart = true;
+            return;
+        }
+
 
         if (order.equals("登录平台")){
             loginBeone();
@@ -524,6 +562,22 @@ public class BeoneAid implements CaeWakeupListener{
                 loginBeone();
             }
         }else if (parseMode == 2){
+            if (order.equals("暂停")){
+                if (mMediaPlayer!=null && mMediaPlayer.isPlaying()){
+                    mMediaPlayer.pause();
+                    return;
+                }
+            }else if (order.equals("播放")){
+                if (mMediaPlayer!=null && haveMusic){
+                    mMediaPlayer.start();
+                    return;
+                }
+            }else if (order.equals("停止")){
+                if(mMediaPlayer!=null && haveMusic){
+                    mMediaPlayer.stop();
+                    return;
+                }
+            }
             if (checkAIUIAgent()){
                 startTextNlp(order);
             }
@@ -878,9 +932,11 @@ public class BeoneAid implements CaeWakeupListener{
                                     } else {
                                         String mp3url = "";
                                         String playUrl = "";
+                                        String newsUrl = "";
                                         if (result != null) {
                                             mp3url = result.optJSONObject(0).optString("mp3Url");
                                             playUrl = result.optJSONObject(0).optString("playUrl");
+                                            newsUrl = result.optJSONObject(0).optString("url");
                                             Log.d(TAG, "AIUI返回mp3: " + mp3url);
                                         }
                                         if (!TextUtils.isEmpty(mp3url)){
@@ -893,6 +949,11 @@ public class BeoneAid implements CaeWakeupListener{
                                             Log.d(TAG, "AIUI返回3: "+answerText);
                                             needPlayMp3 = true;
                                             playOnlineUrl = playUrl;
+                                            startTtsOutput(answerText,false);
+                                        }else if (!TextUtils.isEmpty(newsUrl)) {
+                                            Log.d(TAG, "AIUI返回3: "+answerText);
+                                            needPlayMp3 = true;
+                                            playOnlineUrl = newsUrl;
                                             startTtsOutput(answerText,false);
                                         }else {
                                             Log.d(TAG, "AIUI返回3: "+answerText);
@@ -961,7 +1022,11 @@ public class BeoneAid implements CaeWakeupListener{
     };
     private boolean needPlayMp3 = false;
     private String playOnlineUrl;
-
+    private MediaPlayer mMediaPlayer;
+    private boolean haveMusic = false;
+    private void initMediaPlayer(){
+        mMediaPlayer = new MediaPlayer();
+    }
     // TODO: 2018/3/23 后期改写为独立线程类
     private void playMP3Url(){
         needPlayMp3 = false;
@@ -969,24 +1034,31 @@ public class BeoneAid implements CaeWakeupListener{
             @Override
             public void run() {
                 try {
-                    MediaPlayer player = new MediaPlayer();
-                    player.reset();
-                    player.setDataSource(playOnlineUrl);
-                    player.setAudioStreamType(AudioManager.STREAM_MUSIC);
-                    player.prepareAsync();
-                    player.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                    mMediaPlayer.reset();
+                    mMediaPlayer.setDataSource(playOnlineUrl);
+                    mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+                    mMediaPlayer.prepareAsync();
+                    mMediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                         @Override
                         public void onPrepared(MediaPlayer mp) {
 //                            mBufferProgress = 0;
                             mp.start();
+                            haveMusic = true;
                         }
                     });
 
-                    player.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+                    mMediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
                         @Override
                         public boolean onError(MediaPlayer mp, int what, int extra) {
                             Toast.makeText(BaseApplication.getContext(), "播放错误！", Toast.LENGTH_SHORT).show();
+                            Log.d(TAG+"MediaPlayer", "onError: "+what+" extra:"+extra);
                             return true;
+                        }
+                    });
+                    mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                        @Override
+                        public void onCompletion(MediaPlayer mp) {
+                            haveMusic = false;
                         }
                     });
                 } catch (Exception e) {
@@ -1313,12 +1385,12 @@ public class BeoneAid implements CaeWakeupListener{
      * ==================================================================================
      */
 
-     private String[] powerPressReminder = {"即将关机","取消关机"};
+     private String[] powerPressReminder = {"有本事你就别放手","取消关机"};
      public void sayPowerLongPress(){
-         startTtsOutput(powerPressReminder[1],false);
+         startTtsOutput(powerPressReminder[0],false);
      }
      public void sayPowerUp(){
-         startTtsOutput(powerPressReminder[2],false);
+         startTtsOutput(powerPressReminder[1],false);
      }
 
      /**
