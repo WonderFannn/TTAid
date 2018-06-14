@@ -38,6 +38,8 @@ public class BeoneAidService extends Service implements BeoneAid.OnRecognizeResu
     public static final String SMART_ECHO_ACTION_GET_BATTERY = "android.intent.action.show_batteryinfo";
     public static final String SMART_ECHO_ACTION_POWER_KEY_LONG_PRESS = "com.android.interceptPowerKeyLongPress";
     public static final String SMART_ECHO_ACTION_POWER_KEY_UP = "com.android.interceptPowerKeyUp";
+    public static final String SMART_ECHO_UPDATE_SUCCESS = "com.android.update_success";
+    public static final String SMART_ECHO_INSTALL_APK = "com.android.install_apk";
 
     private AudioManager mAm;
     private boolean checkNet = true;
@@ -52,6 +54,7 @@ public class BeoneAidService extends Service implements BeoneAid.OnRecognizeResu
         mAm = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
         mBeoneAid = new BeoneAid(getApplicationContext());
         mBeoneAid.start();
+        isEchoRunning = true;
         mBeoneAid.setOnRecognizeResultListener(this);
     }
 
@@ -89,12 +92,21 @@ public class BeoneAidService extends Service implements BeoneAid.OnRecognizeResu
         if (action != null) {
             LogUtil.d("BeoneAidService - onStartCommand - " + action);
             if (SMART_ECHO_ACTION_START.equals(action)) {
-                if (!isEchoRunning) {
+                if (isEchoRunning) {
                     mBeoneAid.startTtsOutput("哔湾助手在后台", false);
-                    isEchoRunning = true;
                 }
             } else if(SMART_ECHO_ACTION_WAKEUP.equals(action)) {
                 mBeoneAid.onWakeUp(0, 0, 0);
+            } else if(SMART_ECHO_UPDATE_SUCCESS.equals(action)) {
+                if (isEchoRunning) {
+                    mBeoneAid.startTtsOutput("更新成功", false);
+                }
+            } else if(SMART_ECHO_INSTALL_APK.equals(action)) {
+                if (isEchoRunning) {
+                    mBeoneAid.needInstallApk = true;
+                    mBeoneAid.filePath = intent.getStringExtra("filePath");
+                    mBeoneAid.startTtsOutput("主人，要更新到最新版本吗，如需更新请回复确定");
+                }
             } else if (SMART_ECHO_ACTION_NETWORK_DISCONNECTED.equals(action)){
                 if (isEchoRunning){
                     if (checkNet) {

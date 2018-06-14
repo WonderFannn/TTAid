@@ -17,6 +17,7 @@ import android.view.WindowManager;
 import android.widget.Toast;
 
 import com.beoneaid.activity.SettingActivity;
+import com.beoneaid.broad.BroadcastManager;
 
 import org.json.JSONObject;
 
@@ -61,7 +62,8 @@ public class CheckVersionTask {
             super.handleMessage(msg);
             switch (msg.what) {
                 case UPDATA_CLIENT:
-                    showUpdataDialog(context);
+//                    showUpdataDialog(context);
+                    downLoadApk(context);
                     break;
                 case GET_UNDATAINFO_ERROR:
                     Toast.makeText(context, "获取服务器更新信息失败", Toast.LENGTH_SHORT).show();
@@ -257,11 +259,11 @@ public class CheckVersionTask {
      * 根据地址下载apk,并将其保存到本地的sd卡
      */
     protected void downLoadApk(final Context context) {
-        pd = new ProgressDialog(context);
-        pd.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-        pd.setMessage("正在下载更新");
-        pd.getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT);
-        pd.show();
+//        pd = new ProgressDialog(context);
+//        pd.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+//        pd.setMessage("正在下载更新");
+//        pd.getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT);
+//        pd.show();
         new Thread() {
             @Override
             public void run() {
@@ -288,14 +290,15 @@ public class CheckVersionTask {
                         while ((len = input.read(buffer)) != -1) {
                             sum += len;
                             output.write(buffer, 0, len);
-                            handler.obtainMessage(DOWNLOAD_PROGRESS, sum).sendToTarget();
+//                            handler.obtainMessage(DOWNLOAD_PROGRESS, sum).sendToTarget();
                             Log.e("---len", sum + "");
                         }
                         output.flush();
 
                     sleep(3000);
-                    installApk(file, context);
-                    pd.dismiss(); //结束掉进度条对话框
+//                    installApk(file, context);
+                    BroadcastManager.sendBroadcastWithFilePath(BroadcastManager.INSTALL_APK,file.getPath());
+//                    pd.dismiss(); //结束掉进度条对话框
                 } catch (Exception e) {
                     handler.obtainMessage(DOWN_ERROR).sendToTarget();
                     e.printStackTrace();

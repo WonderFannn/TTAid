@@ -24,6 +24,19 @@ public class BeoneAidReceiver extends BroadcastReceiver {
 //            i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             i.setAction(BeoneAidService.SMART_ECHO_ACTION_START);
             context.startService(i);
+        }else if (BroadcastManager.UPDATE_SUCCESS.equals(intent.getAction())){
+            Log.d("BeoneAid", "==================== BeoneAidService UPDATE_SUCCESS ======================");
+            Intent i = new Intent(context, BeoneAidService.class);
+//            i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            i.setAction(BeoneAidService.SMART_ECHO_UPDATE_SUCCESS);
+            context.startService(i);
+        }else if (BroadcastManager.INSTALL_APK.equals(intent.getAction())){
+            Log.d("BeoneAid", "==================== BeoneAidService INSTALL_APK ======================");
+            Intent i = new Intent(context, BeoneAidService.class);
+//            i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            i.setAction(BeoneAidService.SMART_ECHO_INSTALL_APK);
+            i.putExtra("filePath",intent.getStringExtra("filePath"));
+            context.startService(i);
         }else if (BroadcastManager.WAKEUP_BYUSER.equals(intent.getAction())){
             Log.d("BeoneAid", "==================== BeoneAidService WakeUp ======================");
             Intent i = new Intent(context, BeoneAidService.class);

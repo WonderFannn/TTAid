@@ -24,7 +24,14 @@ public class BroadcastManager {
 	 * */
 	public static final String GET_BATTERY_INFO = "android.intent.action.show_batteryinfo";
 
-
+	/**
+	 * 更新广播
+	 * */
+	public static final String UPDATE_SUCCESS = "com.android.update_success";
+	/**
+	 * 安装apk
+	 * */
+	public static final String INSTALL_APK = "com.android.install_apk";
 	/**
 	 * shell命令广播
 	 */
@@ -63,7 +70,7 @@ public class BroadcastManager {
 	public static final String ACTION_SIMULATE_KEY_DPAD_RIGHT = "action_simulate_key_dpad_right";
 
 
-	public static void sendBroadcastWithString(String action, String command) {
+	public static void sendBroadcastWithCommand(String action, String command) {
 		if (action == null)
 			return;
 		// 指定广播目标Action
@@ -75,10 +82,40 @@ public class BroadcastManager {
 		// 发送广播消息
 		BaseApplication.getContext().sendBroadcast(_itent);
 	}
+	public static void sendBroadcastWithCommand2(String action, String command,String argv1,String argv2) {
+		if (action == null)
+			return;
+		// 指定广播目标Action
+		Intent _itent = new Intent(action);
+		// 可通过Intent携带消息
+		if (command != null) {
+			_itent.putExtra("command",command);
+		}
+		if (argv1 != null){
+			_itent.putExtra("argv1",argv1);
+		}
+		if (argv2 != null){
+			_itent.putExtra("argv2",argv2);
+		}
+		// 发送广播消息
+		BaseApplication.getContext().sendBroadcast(_itent);
+	}
+	public static void sendBroadcastWithFilePath(String action, String filePath) {
+		if (action == null)
+			return;
+		// 指定广播目标Action
+		Intent _itent = new Intent(action);
+		// 可通过Intent携带消息
+		if (filePath != null) {
+			_itent.putExtra("filePath",filePath);
+		}
+		// 发送广播消息
+		BaseApplication.getContext().sendBroadcast(_itent);
+	}
 
 	/**
 	 * 发送广播消息
-	 * 
+	 *
 	 * @param action
 	 *            广播消息名称
 	 * @param bundle
@@ -132,4 +169,5 @@ public class BroadcastManager {
 		if(broadcastReceiver == null)return;
 		BaseApplication.getContext().unregisterReceiver(broadcastReceiver);
 	}
+
 }

@@ -488,7 +488,7 @@ public class BeoneAid implements CaeWakeupListener{
             startTtsOutput("已为你切换到"+Config.MODE_NAME_ARRAY[newMode]);
             lockMode4 = true;
         }else {
-            startTtsOutput("已退出按键模拟模式");
+            startTtsOutput("本宝宝已做好了准备");
             lockMode4 = false;
         }
     }
@@ -498,25 +498,49 @@ public class BeoneAid implements CaeWakeupListener{
 
 
     private void parseOrder(String order) {
+        if (order.equals("更新软件")){
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        Thread.sleep(3000);
+                        BroadcastManager.sendBroadcast(BroadcastManager.UPDATE_SUCCESS,null);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }).start();
+            BroadcastManager.sendBroadcastWithCommand(BroadcastManager.ACTION_SEND_SHELL_COMMAND,"pm install -r /mnt/sdcard/ttaid.apk");
+
+            return;
+        }
 
         if (order.equals("强制关机")){
-            BroadcastManager.sendBroadcastWithString(BroadcastManager.ACTION_SEND_SHELL_COMMAND,"reboot -p");
+            BroadcastManager.sendBroadcastWithCommand(BroadcastManager.ACTION_SEND_SHELL_COMMAND,"reboot -p");
             return;
         }
         if (order.equals("强制重启")){
-            BroadcastManager.sendBroadcastWithString(BroadcastManager.ACTION_SEND_SHELL_COMMAND,"reboot");
+            BroadcastManager.sendBroadcastWithCommand(BroadcastManager.ACTION_SEND_SHELL_COMMAND,"reboot");
             return;
         }
         if (order.equals("确定")){
             if (needSendPowerOff){
-                BroadcastManager.sendBroadcastWithString(BroadcastManager.ACTION_SEND_SHELL_COMMAND,"reboot -p");
+                BroadcastManager.sendBroadcastWithCommand(BroadcastManager.ACTION_SEND_SHELL_COMMAND,"reboot -p");
                 return;
             }
             if (needSendPowerRestart){
-                BroadcastManager.sendBroadcastWithString(BroadcastManager.ACTION_SEND_SHELL_COMMAND,"reboot");
+                BroadcastManager.sendBroadcastWithCommand(BroadcastManager.ACTION_SEND_SHELL_COMMAND,"reboot");
+                return;
+            }
+            if (needInstallApk){
+
+                //am broadcast -a com.android.update_success
+                //am startservice -n com.jinxin.beoneaid/com.beoneaid.service.BeoneAidService
+                BroadcastManager.sendBroadcastWithCommand2(BroadcastManager.ACTION_SEND_SHELL_COMMAND,"pm install -r "+ filePath,null,"am broadcast -a com.android.update_success");
                 return;
             }
         }
+        needInstallApk = false;
         needSendPowerOff = false;
         needSendPowerRestart = false;
         if (order.equals("关机")){
@@ -747,10 +771,10 @@ public class BeoneAid implements CaeWakeupListener{
                     Log.e(TAG, "onResponse: BeoneListener:"+e.getMessage() );
                 }
                 if (TextUtils.isEmpty(mSecretKey) || TextUtils.isEmpty(mAccount)) {
-                    startTtsOutput("登录失败");
+                    startTtsOutput("登录失败",false);
                     isLogin = false;
                 } else {
-                    startTtsOutput("登录成功");
+//                    startTtsOutput("登录成功");
                     isLogin = true;
                     if (needGetCheckUpdate){
                         checkUpdateFromRemote();
@@ -1283,6 +1307,8 @@ public class BeoneAid implements CaeWakeupListener{
     }
 
     //更新
+    public boolean needInstallApk = false;
+    public String filePath = "";
     private boolean needGetCheckUpdate = true;
     public void checkUpdateFromRemote(){
         needGetCheckUpdate = false;
