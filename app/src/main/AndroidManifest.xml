@@ -3,7 +3,7 @@
     package="com.beoneaid"
     android:installLocation="auto"
     android:versionCode="2"
-    android:versionName="2.6.0615">
+    android:versionName="2.6.0617">
 
     <application
         android:icon="@drawable/icon"
@@ -50,6 +50,7 @@
                 <action android:name="com.android.update_success"/>
                 <action android:name="com.android.install_apk"/>
                 <action android:name="android.intent.action.speak_text" />
+                <action android:name="android.intent.action.ota_sw_update" />
             </intent-filter>
         </receiver>
         <receiver android:name=".broad.NetworkStateReceiver">

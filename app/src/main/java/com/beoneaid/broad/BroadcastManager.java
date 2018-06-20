@@ -25,13 +25,17 @@ public class BroadcastManager {
 	public static final String GET_BATTERY_INFO = "android.intent.action.show_batteryinfo";
 
 	/**
-	 * 更新广播
+	 * 固件升级广播
 	 * */
-	public static final String UPDATE_SUCCESS = "com.android.update_success";
+	public static final String OTA_SW_UPDATE = "android.intent.action.ota_sw_update";
+	public static final String OTA_UPDATE_CONFIRM = "android.intent.action.rk.updateservice";
+
+	public static final String SPEAK_TEXT = "android.intent.action.speak_text";
 	/**
-	 * 安装apk
+	 * 安装apk及更新成功广播
 	 * */
 	public static final String INSTALL_APK = "com.android.install_apk";
+	public static final String UPDATE_SUCCESS = "com.android.update_success";
 	/**
 	 * shell命令广播
 	 */
@@ -45,10 +49,10 @@ public class BroadcastManager {
 
 
 	public static final String ACTION_VOICE_EMULATE_KEY_OPEN = "action_voice_emulate_key_open";
+	public static final String ACTION_VOICE_EMULATE_KEY_CLOSE = "action_voice_emulate_key_close";
 	/**
 	 * 关闭唤醒服务广播
 	 */
-	public static final String ACTION_VOICE_EMULATE_KEY_CLOSE = "action_voice_emulate_key_close";
 	public static final String ACTION_VOICE_WAKE= "action_voice_wake";
 	/**
 	 * 关闭唤醒服务广播

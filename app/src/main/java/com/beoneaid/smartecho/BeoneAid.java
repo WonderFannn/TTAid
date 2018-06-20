@@ -496,24 +496,25 @@ public class BeoneAid implements CaeWakeupListener{
     Boolean needSendPowerOff = false;
     Boolean needSendPowerRestart = false;
 
+    public boolean needUpdateOTA = false;
 
     private void parseOrder(String order) {
-        if (order.equals("更新软件")){
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        Thread.sleep(3000);
-                        BroadcastManager.sendBroadcast(BroadcastManager.UPDATE_SUCCESS,null);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }).start();
-            BroadcastManager.sendBroadcastWithCommand(BroadcastManager.ACTION_SEND_SHELL_COMMAND,"pm install -r /mnt/sdcard/ttaid.apk");
-
-            return;
-        }
+//        if (order.equals("更新软件")){
+//            new Thread(new Runnable() {
+//                @Override
+//                public void run() {
+//                    try {
+//                        Thread.sleep(3000);
+//                        BroadcastManager.sendBroadcast(BroadcastManager.UPDATE_SUCCESS,null);
+//                    } catch (InterruptedException e) {
+//                        e.printStackTrace();
+//                    }
+//                }
+//            }).start();
+//            BroadcastManager.sendBroadcastWithCommand(BroadcastManager.ACTION_SEND_SHELL_COMMAND,"pm install -r /mnt/sdcard/ttaid.apk");
+//
+//            return;
+//        }
 
         if (order.equals("强制关机")){
             BroadcastManager.sendBroadcastWithCommand(BroadcastManager.ACTION_SEND_SHELL_COMMAND,"reboot -p");
@@ -533,16 +534,20 @@ public class BeoneAid implements CaeWakeupListener{
                 return;
             }
             if (needInstallApk){
-
                 //am broadcast -a com.android.update_success
                 //am startservice -n com.jinxin.beoneaid/com.beoneaid.service.BeoneAidService
                 BroadcastManager.sendBroadcastWithCommand2(BroadcastManager.ACTION_SEND_SHELL_COMMAND,"pm install -r "+ filePath,null,"am broadcast -a com.android.update_success");
+                return;
+            }
+            if (needUpdateOTA){
+                BroadcastManager.sendBroadcast(BroadcastManager.OTA_UPDATE_CONFIRM,null);
                 return;
             }
         }
         needInstallApk = false;
         needSendPowerOff = false;
         needSendPowerRestart = false;
+        needUpdateOTA = false;
         if (order.equals("关机")){
             startTtsOutput("主人，您确定要关机吗，关机请回复确定");
             needSendPowerOff = true;

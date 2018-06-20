@@ -17,6 +17,7 @@ import android.util.Log;
 import com.beoneaid.api.IBeoneAidService;
 import com.beoneaid.api.IBeoneAidServiceCallback;
 import com.beoneaid.application.BaseApplication;
+import com.beoneaid.broad.BroadcastManager;
 import com.beoneaid.smartecho.BeoneAid;
 import com.beoneaid.util.LogUtil;
 import com.beoneaid.util.ToastUtil;
@@ -157,6 +158,21 @@ public class BeoneAidService extends Service implements BeoneAid.OnRecognizeResu
                     mBeoneAid.sayPowerUp();
                 }
                 needSayPowerUp = false;
+            } else if (BroadcastManager.OTA_SW_UPDATE.equals(action)){
+                //固件更新
+                String type = intent.getStringExtra("type");
+                if (type.equals("local")){
+                    type = "本地";
+                }
+                if (isEchoRunning){
+                    mBeoneAid.needUpdateOTA = true;
+                    mBeoneAid.startTtsOutput("检测到系统有"+type+"更新，如需升级请回复确定");
+                }
+            }else if (BroadcastManager.SPEAK_TEXT.equals(action)){
+                if (isEchoRunning){
+                    mBeoneAid.needUpdateOTA = true;
+                    mBeoneAid.startTtsOutput(intent.getStringExtra("speakText"),false);
+                }
             }
         }
         return START_STICKY;
