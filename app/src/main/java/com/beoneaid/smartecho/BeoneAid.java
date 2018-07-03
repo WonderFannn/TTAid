@@ -3,6 +3,8 @@ package com.beoneaid.smartecho;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.content.res.AssetManager;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -60,6 +62,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 /**
  * Created by wangfan on 2017/10/12.
@@ -499,22 +502,6 @@ public class BeoneAid implements CaeWakeupListener{
     public boolean needUpdateOTA = false;
 
     private void parseOrder(String order) {
-//        if (order.equals("更新软件")){
-//            new Thread(new Runnable() {
-//                @Override
-//                public void run() {
-//                    try {
-//                        Thread.sleep(3000);
-//                        BroadcastManager.sendBroadcast(BroadcastManager.UPDATE_SUCCESS,null);
-//                    } catch (InterruptedException e) {
-//                        e.printStackTrace();
-//                    }
-//                }
-//            }).start();
-//            BroadcastManager.sendBroadcastWithCommand(BroadcastManager.ACTION_SEND_SHELL_COMMAND,"pm install -r /mnt/sdcard/ttaid.apk");
-//
-//            return;
-//        }
 
         if (order.equals("强制关机")){
             BroadcastManager.sendBroadcastWithCommand(BroadcastManager.ACTION_SEND_SHELL_COMMAND,"reboot -p");
@@ -578,7 +565,7 @@ public class BeoneAid implements CaeWakeupListener{
 
         voicer = voicers[parseMode];
         if (parseMode == 0) {
-            sendOrder2App(order);
+            sendOrder2xfyd(order);
         }else if (parseMode == 1) {
             if (isLogin) {
                 try {
@@ -621,6 +608,44 @@ public class BeoneAid implements CaeWakeupListener{
      *                               API mode == 0
      * ==================================================================================
      */
+    public static Intent createExplicitFromImplicitIntent(Context context, Intent implicitIntent) {
+        // Retrieve all services that can match the given intent
+        PackageManager pm = context.getPackageManager();
+        List<ResolveInfo> resolveInfo = pm.queryIntentServices(implicitIntent, 0);
+
+        // Make sure only one match was found
+        if (resolveInfo == null || resolveInfo.size() != 1) {
+            return null;
+        }
+
+        // Get component info and create ComponentName
+        ResolveInfo serviceInfo = resolveInfo.get(0);
+        String packageName = serviceInfo.serviceInfo.packageName;
+        String className = serviceInfo.serviceInfo.name;
+        ComponentName component = new ComponentName(packageName, className);
+
+        // Create a new intent. Use the old one for extras and such reuse
+        Intent explicitIntent = new Intent(implicitIntent);
+
+        // Set the component to be explicit
+        explicitIntent.setComponent(component);
+
+        return explicitIntent;
+    }
+    private void sendOrder2xfyd(String order){
+//        com.iflytek.xiri2.START --es text "今天的天气" --es startmode "text"
+        Intent intent = new Intent("com.iflytek.xiri2.START");
+//        intent.putExtra("startmode","text");
+//        intent.putExtra("text",order);
+//        intent.setPackage("com.lzpd.scheduler");
+        final Intent eintent = new Intent(createExplicitFromImplicitIntent(mContext,intent));
+        eintent.putExtra("startmode","text");
+        eintent.putExtra("text",order);
+        mContext.startService(eintent);
+
+    }
+
+
     private void sendOrder2App(String order){
         String od = order;
         if (od.startsWith("我要")||od.startsWith("我想")){

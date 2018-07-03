@@ -53,7 +53,6 @@ public class CaeWakeUpFileObserver extends FileObserver {
                 }
                 if (temp_str.length >= 5) {
                     String jsonString = cae_wakeup_file_str.substring(cae_wakeup_file_str.indexOf("{"),cae_wakeup_file_str.indexOf("}")+1);
-                    // TODO: 06/03/2018 获取keyword
                     try {
                         JSONObject data = new JSONObject(jsonString);
                         String keyword = data.optString("keyword").replace(" ", "");
@@ -114,7 +113,7 @@ public class CaeWakeUpFileObserver extends FileObserver {
     @Override
     public void onEvent(int i, String s) {
         if (i == FileObserver.MODIFY) {
-//            LogUtil.d("====== " + CAE_WAKEUP_FILE + " has been modify, read it go!");
+            LogUtil.d("====== " + CAE_WAKEUP_FILE + " has been modify, read it go!");
             boolean isWakeup = getCAEWakeState();
             if(isWakeup) {
                 mCaeWakeupListener.onWakeUp(mAngle, mChanel, mKeywordID);
