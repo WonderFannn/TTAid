@@ -16,7 +16,7 @@ import android.util.Log;
 import android.view.WindowManager;
 import android.widget.Toast;
 
-import com.beoneaid.activity.SettingActivity;
+import com.beoneaid.activity.ShowActivity;
 import com.beoneaid.broad.BroadcastManager;
 
 import org.json.JSONObject;
@@ -319,7 +319,7 @@ public class CheckVersionTask {
 
     //进入程序的主界面
     private void LoginMain() {
-        Intent intent = new Intent(context, SettingActivity.class);
+        Intent intent = new Intent(context, ShowActivity.class);
         context.startActivity(intent);
     }
 

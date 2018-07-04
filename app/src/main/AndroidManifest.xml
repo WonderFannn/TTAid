@@ -3,7 +3,7 @@
     package="com.beoneaid"
     android:installLocation="auto"
     android:versionCode="2"
-    android:versionName="2.6.0617">
+    android:versionName="2.8.0704">
 
     <application
         android:icon="@drawable/icon"
@@ -12,7 +12,7 @@
         android:label="Beone助手" >
 
         <activity
-            android:name=".activity.SettingActivity"
+            android:name=".activity.ShowActivity"
             android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|orientation|screenLayout|fontScale"
             android:screenOrientation="portrait" >
             <intent-filter>
