@@ -49,6 +49,7 @@ import com.iflytek.cloud.SpeechError;
 import com.iflytek.cloud.SpeechRecognizer;
 import com.iflytek.cloud.SpeechSynthesizer;
 import com.iflytek.cloud.SynthesizerListener;
+import com.orhanobut.logger.Logger;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -597,8 +598,6 @@ public class BeoneAid implements CaeWakeupListener{
             if (checkAIUIAgent()){
                 startTextNlp(order);
             }
-        }else if (parseMode == 4){
-            sendSimulateKeyBroadcast(order);
         }
     }
 
@@ -612,24 +611,19 @@ public class BeoneAid implements CaeWakeupListener{
         // Retrieve all services that can match the given intent
         PackageManager pm = context.getPackageManager();
         List<ResolveInfo> resolveInfo = pm.queryIntentServices(implicitIntent, 0);
-
         // Make sure only one match was found
         if (resolveInfo == null || resolveInfo.size() != 1) {
             return null;
         }
-
         // Get component info and create ComponentName
         ResolveInfo serviceInfo = resolveInfo.get(0);
         String packageName = serviceInfo.serviceInfo.packageName;
         String className = serviceInfo.serviceInfo.name;
         ComponentName component = new ComponentName(packageName, className);
-
         // Create a new intent. Use the old one for extras and such reuse
         Intent explicitIntent = new Intent(implicitIntent);
-
         // Set the component to be explicit
         explicitIntent.setComponent(component);
-
         return explicitIntent;
     }
     private void sendOrder2xfyd(String order){
@@ -964,12 +958,7 @@ public class BeoneAid implements CaeWakeupListener{
                             if ("nlp".equals(sub)) {
                                 // 解析得到语义结果
                                 String resultStr = cntJson.optString("intent");
-                                if (resultStr.length()>3900){
-                                    Log.d(TAG, "AIUI返回: "+resultStr.substring(0,3900));
-                                    Log.d(TAG, "AIUI返回: "+resultStr.substring(3900,resultStr.length()));
-                                }else {
-                                    Log.d(TAG, "AIUI返回: "+resultStr);
-                                }
+                                Logger.d(resultStr);
                                 JSONObject jsonObject = new JSONObject(resultStr);
                                 JSONObject answer = jsonObject.optJSONObject("answer");
                                 JSONObject datajson = jsonObject.optJSONObject("data");
@@ -987,27 +976,39 @@ public class BeoneAid implements CaeWakeupListener{
                                         String mp3url = "";
                                         String playUrl = "";
                                         String newsUrl = "";
-                                        if (result != null) {
+                                        String title = "";
+                                        if (result != null && result.length()>0) {
                                             mp3url = result.optJSONObject(0).optString("mp3Url");
                                             playUrl = result.optJSONObject(0).optString("playUrl");
                                             newsUrl = result.optJSONObject(0).optString("url");
+                                            title = result.optJSONObject(0).optString("title");
+
                                             Log.d(TAG, "AIUI返回mp3: " + mp3url);
                                         }
                                         if (!TextUtils.isEmpty(mp3url)){
                                             Log.d(TAG, "AIUI返回3: "+answerText);
                                             needPlayMp3 = true;
                                             playOnlineUrl = mp3url;
+                                            if (!TextUtils.isEmpty(title)){
+                                                answerText = title;
+                                            }
                                             startTtsOutput(answerText,false);
 //                                            playMP3Url(mp3url);
                                         }else if (!TextUtils.isEmpty(playUrl)) {
                                             Log.d(TAG, "AIUI返回3: "+answerText);
                                             needPlayMp3 = true;
                                             playOnlineUrl = playUrl;
+                                            if (!TextUtils.isEmpty(title)){
+                                                answerText = title;
+                                            }
                                             startTtsOutput(answerText,false);
                                         }else if (!TextUtils.isEmpty(newsUrl)) {
                                             Log.d(TAG, "AIUI返回3: "+answerText);
                                             needPlayMp3 = true;
                                             playOnlineUrl = newsUrl;
+                                            if (!TextUtils.isEmpty(title)){
+                                                answerText = title;
+                                            }
                                             startTtsOutput(answerText,false);
                                         }else {
                                             Log.d(TAG, "AIUI返回3: "+answerText);
