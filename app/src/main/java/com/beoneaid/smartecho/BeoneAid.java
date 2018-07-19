@@ -64,6 +64,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created by wangfan on 2017/10/12.
@@ -94,7 +96,7 @@ public class BeoneAid implements CaeWakeupListener{
         initMac();
         creatPet();
         initMediaPlayer();
-//        initAudioManager();
+        initAudioManager();
         mCaeWakeUpFileObserver = new CaeWakeUpFileObserver(this);
         mSelfCheckThread.start();
     }
@@ -408,7 +410,7 @@ public class BeoneAid implements CaeWakeupListener{
         // start listening user
         if (mIat != null && !mIat.isListening()) {
             mIat.startListening(mIatListener);
-//            getSystemCurrentValume();
+            getSystemCurrentValume();
         }
     }
     private void stopIat() {
@@ -418,7 +420,7 @@ public class BeoneAid implements CaeWakeupListener{
             if (wakeupMode.equals(allModes[0])||wakeupMode.equals(allModes[2])) {
                 setLedOff();
             }
-
+            resetCurrentValume();
         }
     }
 
@@ -437,7 +439,7 @@ public class BeoneAid implements CaeWakeupListener{
         // 设置语音前端点:静音超时时间，即用户多长时间不说话则当做超时处理
         mIat.setParameter(SpeechConstant.VAD_BOS, "5000");
         // 设置语音后端点:后端点静音检测时间，即用户停止说话多长时间内即认为不再输入， 自动停止录音
-        mIat.setParameter(SpeechConstant.VAD_EOS, "1000");
+        mIat.setParameter(SpeechConstant.VAD_EOS, "1500");
         // 设置标点符号,设置为"0"返回结果无标点,设置为"1"返回结果有标点
         mIat.setParameter(SpeechConstant.ASR_PTT, "0");
         // 设置音频保存路径，保存音频格式支持pcm、wav，设置路径为sd卡请注意WRITE_EXTERNAL_STORAGE权限
@@ -890,6 +892,14 @@ public class BeoneAid implements CaeWakeupListener{
      *                               AIUI mode == 2
      * ==================================================================================
      */
+
+    public String StringFilter(String str){
+        String regEx="\\[[a-z]\\d\\]";
+        Pattern p   =   Pattern.compile(regEx);
+        Matcher m   =   p.matcher(str);
+        return  m.replaceAll("").trim();
+    }
+
     private AIUIAgent mAIUIAgent = null;
     private int mAIUIState = AIUIConstant.STATE_IDLE;
 
@@ -969,6 +979,7 @@ public class BeoneAid implements CaeWakeupListener{
                                 Log.d(TAG, "AIUI返回1: "+answer);
                                 if(answer != null) {
                                     String answerText = answer.optString("text");
+                                    answerText = StringFilter(answerText);
                                     Log.d(TAG, "AIUI返回2："+answerText);
                                     if (TextUtils.isEmpty(answerText)) {
                                         startTtsOutput("对不起，我不明白");
@@ -1414,27 +1425,27 @@ public class BeoneAid implements CaeWakeupListener{
      * ==================================================================================
      */
 
-//    private AudioManager mAudioManager;
-//    private int mMusicValumeMin;
-//    private int currentValume;
-//    private void initAudioManager(){
-//        mAudioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
-//        mMusicValumeMin = mAudioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)/10+1;
-//        currentValume = mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
-//    }
-//
-//    private void getSystemCurrentValume() {
-//        int getVolume = mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
-//        if ( getVolume > mMusicValumeMin){
-//            currentValume = getVolume;
-//        }
-//        mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, mMusicValumeMin, 0);
-//        Log.d(TAG, "getSystemCurrentValume: currentValume"+currentValume);
-//    }
-//    private void resetCurrentValume(){
-//        mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, currentValume, 0);
-//        Log.d(TAG, "resetCurrentValume: "+currentValume);
-//    }
+    private AudioManager mAudioManager;
+    private int currentValume = 0;
+    private void initAudioManager(){
+        mAudioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
+        currentValume = mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+    }
+
+    private void getSystemCurrentValume() {
+        int getVolume = mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+        if ( getVolume != 0){
+            currentValume = getVolume;
+            mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 0, 0);
+        }
+        Log.d(TAG, "getSystemCurrentValume: currentValume"+currentValume);
+    }
+
+
+    private void resetCurrentValume(){
+        mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, currentValume, 0);
+        Log.d(TAG, "resetCurrentValume: "+currentValume);
+    }
 
      /**
      * ==================================================================================
