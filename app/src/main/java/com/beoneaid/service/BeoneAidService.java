@@ -97,7 +97,7 @@ public class BeoneAidService extends Service implements BeoneAid.OnRecognizeResu
                     mBeoneAid.startTtsOutput("哔湾助手在后台", false);
                 }
             } else if(SMART_ECHO_ACTION_WAKEUP.equals(action)) {
-                int mode = intent.getIntExtra("mode",0);
+                int mode = intent.getIntExtra("mode",1);
                 mBeoneAid.onWakeUp(0, 0, mode);
             } else if(SMART_ECHO_UPDATE_SUCCESS.equals(action)) {
                 if (isEchoRunning) {

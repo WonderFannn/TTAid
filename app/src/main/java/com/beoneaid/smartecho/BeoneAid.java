@@ -25,6 +25,7 @@ import com.beoneaid.R;
 import com.beoneaid.application.BaseApplication;
 import com.beoneaid.broad.BroadcastManager;
 import com.beoneaid.smartecho.audio.PcmRecorder;
+import com.beoneaid.util.BeoneSmartHomeSpeechProcessor;
 import com.beoneaid.util.Config;
 import com.beoneaid.util.DesktopPetManager;
 import com.beoneaid.util.GetMacUtil;
@@ -57,8 +58,6 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -379,9 +378,7 @@ public class BeoneAid implements CaeWakeupListener{
                 if(!TextUtils.isEmpty(rltStr)) {
                     parseOrder(rltStr);
                     ToastUtil.showShort(mContext, rltStr);
-                    if (recognizeMode.equals(allModes[1]) || recognizeMode.equals(allModes[2])){
-                        startTtsOutput("命令发送成功",false);
-                    }
+
                 }
             }
         }
@@ -404,9 +401,7 @@ public class BeoneAid implements CaeWakeupListener{
     };
     private void startIat() {
         mStartRecognize = true;
-        if (wakeupMode.equals(allModes[0])||wakeupMode.equals(allModes[2])) {
-            setLedOn();
-        }
+        setLedOn();
         // start listening user
         if (mIat != null && !mIat.isListening()) {
             mIat.startListening(mIatListener);
@@ -417,9 +412,8 @@ public class BeoneAid implements CaeWakeupListener{
         mStartRecognize = false;
         if(mIat != null && mIat.isListening()) {
             mIat.stopListening();
-            if (wakeupMode.equals(allModes[0])||wakeupMode.equals(allModes[2])) {
-                setLedOff();
-            }
+            setLedOff();
+
             resetCurrentValume();
         }
     }
@@ -449,6 +443,7 @@ public class BeoneAid implements CaeWakeupListener{
         mIat.setParameter(SpeechConstant.ASR_AUDIO_PATH, mContext.getExternalFilesDir(null)+"/msc/wftest/iat.wav");
         mIat.setParameter(SpeechConstant.NOTIFY_RECORD_DATA, "0");
         mIat.setParameter("domain", "fariat");
+        mIat.setParameter("nunum","1");
     }
     // 用HashMap存储听写结果
     private HashMap<String, String> mIatResults = new LinkedHashMap<String, String>();
@@ -570,12 +565,21 @@ public class BeoneAid implements CaeWakeupListener{
         if (parseMode == 0) {
             sendOrder2xfyd(order);
         }else if (parseMode == 1) {
-            if (isLogin) {
+            if (isLogin && mBeoneSmartHomeSpeechProcessor != null) {
+                JSONObject result = mBeoneSmartHomeSpeechProcessor.HandleText(order);
+                String answer = result.optString("answer");
+                startTtsOutput(answer);
+                int pId = result.optInt("patternId");
                 try {
-                    getAIUIResult(order);
+                    getAIUIResult(pId);
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
+//                try {
+//                    getAIUIResult(order);
+//                } catch (JSONException e) {
+//                    e.printStackTrace();
+//                }
             }else {
                 startTtsOutput("登录未成功",false);
                 loginBeone();
@@ -772,15 +776,10 @@ public class BeoneAid implements CaeWakeupListener{
             if (isLogin) {
                 try {
                     JSONObject data = new JSONObject(response);
-                    final String serviceContentString = data.getString("serviceContent");
-                    final JSONObject serviceContentJson = new JSONObject(serviceContentString);
-                    if (serviceContentJson != null) {
-                        if (completeMode.equals(allModes[1])||completeMode.equals(allModes[2])) {
-                            startTtsOutput(serviceContentJson.optString("answer"));
-                        }
-                        if(completeMode.equals(allModes[0])||completeMode.equals(allModes[2])){
-                            setLedFlash();
-                        }
+                    JSONObject responseJson = data.optJSONObject("response");
+                    String rspCode = responseJson.optString("rspCode");
+                    if (!rspCode.equals("0000")) {
+                        startTtsOutput("模式执行失败");
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -807,6 +806,9 @@ public class BeoneAid implements CaeWakeupListener{
                     }
                     if (needGetConfig){
                         getConfigurationFromRemote();
+                    }
+                    if (needGetModeList){
+                        getModeListFromRemote();
                     }
                 }
             }
@@ -847,27 +849,27 @@ public class BeoneAid implements CaeWakeupListener{
 
     }
 
-    private void getAIUIResult(String order) throws JSONException {
-        Log.d("平台通讯", "getAIUIResult: "+order);
+    private void getAIUIResult(int patternId) throws JSONException {
+        Log.d("平台通讯", "getAIUIResult: "+patternId);
         SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
         Date curDate = new Date(System.currentTimeMillis());
         String time = formatter.format(curDate);
         String opr = null;
-        try {
-            opr = URLEncoder.encode(order, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            opr = URLEncoder.encode(patternId, "UTF-8");
+//        } catch (UnsupportedEncodingException e) {
+//            e.printStackTrace();
+//        }
         JSONObject serviceContent = new JSONObject();
         serviceContent.put("secretKey", mSecretKey);
         serviceContent.put("account", mAccount);
         serviceContent.put("mac", mMac);
-        serviceContent.put("voiceText", opr);
-        serviceContent.put("patternOperation", false);
+        serviceContent.put("patternId", patternId);
+//        serviceContent.put("patternOperation", false);
         JSONObject data = new JSONObject();
         data.put("actionCode", "0");
-        data.put("activityCode", "T901");
-        data.put("bipCode", "B040");
+        data.put("activityCode", "T902");
+        data.put("bipCode", "B002");
         data.put("bipVer", "1.0");
         data.put("origDomain", "VA000");
         data.put("processTime", time);
@@ -1093,7 +1095,6 @@ public class BeoneAid implements CaeWakeupListener{
     private void initMediaPlayer(){
         mMediaPlayer = new MediaPlayer();
     }
-    // TODO: 2018/3/23 后期改写为独立线程类
     private void playMP3Url(){
         needPlayMp3 = false;
         new Thread(new Runnable() {
@@ -1138,53 +1139,6 @@ public class BeoneAid implements CaeWakeupListener{
 
     /**
      * ==================================================================================
-     *                               按键模式 mode == 4
-     * ==================================================================================
-     */
-    private int mSRIndex = 0;
-    private String getSRText() {
-        mSRIndex++;
-        if(mSRIndex >= Config.SMIULATEKEY_REPLY.length) {
-            mSRIndex = 0;
-        }
-        return Config.SMIULATEKEY_REPLY[mSRIndex];
-    }
-    private void sendSimulateKeyBroadcast(String text) {
-        if(!TextUtils.isEmpty(text)){
-            ToastUtil.showShort(BaseApplication.getContext(),text);
-            if (text.contains("返回")){
-                BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_BACK,null);
-                return;
-            }else if (text.contains("确定")){
-                BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_CENTER,null);
-                return;
-            }else if (text.contains("上")){
-                BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_UP,null);
-                startTtsOutput(getSRText());
-                return;
-            }else if (text.contains("下")){
-                BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_DOWN,null);
-                startTtsOutput(getSRText());
-                return;
-            }else if (text.contains("左")){
-                BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_LEFT,null);
-                startTtsOutput(getSRText());
-                return;
-            }else if (text.contains("右")){
-                BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_DPAD_RIGHT,null);
-                startTtsOutput(getSRText());
-                return;
-            }else if (text.contains("显示桌面")||text.contains("显示主页")||text.contains("退出")){
-                BroadcastManager.sendBroadcast(BroadcastManager.ACTION_SIMULATE_KEY_HOME,null);
-                setParseMode(0);
-                return;
-            }else{
-                startTtsOutput("我不明白");
-            }
-        }
-    }
-    /**
-     * ==================================================================================
      *                               桌面宠物管理
      * ==================================================================================
      */
@@ -1225,6 +1179,69 @@ public class BeoneAid implements CaeWakeupListener{
     }
 
     /**
+     * ==================================================================================
+     *                        从平台获取模式列表
+     * ==================================================================================
+     */
+
+    private BeoneSmartHomeSpeechProcessor mBeoneSmartHomeSpeechProcessor;
+
+    private boolean needGetModeList = true;
+    public void getModeListFromRemote(){
+        needGetModeList = false;
+        if (isLogin){
+            SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
+            Date curDate = new Date(System.currentTimeMillis());
+            String time = formatter.format(curDate);
+            JSONObject serviceContent = new JSONObject();
+            try {
+                serviceContent.put("secretKey", mSecretKey);
+                serviceContent.put("account", mAccount);
+                serviceContent.put("mac", mMac);
+                serviceContent.put("updateTime", "20160101090000");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            JSONObject data = new JSONObject();
+            try {
+                data.put("activityCode", "T203");
+                data.put("bipCode", "B002");
+                data.put("origDomain", "VA000");
+                data.put("homeDomain", "0000");
+                data.put("serviceContent", serviceContent);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            String url = mContext.getString(R.string.beone_aiui_url) + data.toString();
+            Log.d(TAG, "getOrderFromRemote: url == " +url);
+            StringRequest stringRequest = new StringRequest(url, RsGetModeListListener, RsErrorListener);
+            mQueue.add(stringRequest);
+        }else {
+            needGetConfig = true;
+            loginBeone();
+        }
+
+    }
+
+    private Response.Listener<String> RsGetModeListListener = new Response.Listener<String>() {
+        @Override
+        public void onResponse(String response) {
+//            Log.d(TAG, "onResponse: 获取模式列表"+response);
+            Logger.d(response);
+            try {
+                JSONObject data = new JSONObject(response);
+                JSONArray serArrary = data.getJSONArray("serviceContent");
+                mBeoneSmartHomeSpeechProcessor = new BeoneSmartHomeSpeechProcessor(serArrary);
+            } catch (JSONException e) {
+                Log.e("TAG", "onResponse: "+e.getMessage());
+                e.printStackTrace();
+                startTtsOutput("从平台模式列表失败，将使用APP默认配置",false);
+            }
+        }
+    };
+
+     /**
      * ==================================================================================
      *                        从平台更新和获取配置
      * ==================================================================================
@@ -1277,7 +1294,7 @@ public class BeoneAid implements CaeWakeupListener{
                 JSONArray serArrary = data.getJSONArray("serviceContent");
                 String funParams = serArrary.getJSONObject(0).getString("funParams");
                 JSONObject fpJO = new JSONObject(funParams);
-                setAllModes(fpJO.optString("hxtsSetup"),fpJO.optString("qqtsSetup"),fpJO.optString("jgtsSetup"));
+//                setAllModes(fpJO.optString("hxtsSetup"),fpJO.optString("qqtsSetup"),fpJO.optString("jgtsSetup"));
                 JSONObject hxhfc = fpJO.optJSONObject("hxhfc");
                 if (hxhfc!=null){
                     String[] texts = new String[3];
@@ -1311,42 +1328,6 @@ public class BeoneAid implements CaeWakeupListener{
 
     private String[] allModes = {"tslight","tsvoice","tslightvoice"};
     private String wakeupMode = allModes[0];
-    private String recognizeMode = allModes[0];
-    private String completeMode = allModes[1];
-
-    public void setAllModes(String wMode,String rMode,String cMode){
-        if (wMode.contains("light") && wMode.contains("voice")){
-            wakeupMode = allModes[2];
-        }else if (wMode.contains("light")){
-            wakeupMode = allModes[0];
-        }else if (wMode.contains("voice")){
-            wakeupMode = allModes[1];
-        }else {
-            wakeupMode = allModes[0];
-        }
-
-        if (rMode.contains("light") && rMode.contains("voice")){
-            recognizeMode = allModes[2];
-        }else if (rMode.contains("light")){
-            recognizeMode = allModes[0];
-        }else if (rMode.contains("voice")){
-            recognizeMode = allModes[1];
-        }else {
-            recognizeMode = allModes[0];
-        }
-
-        if (cMode.contains("light") && cMode.contains("voice")){
-            completeMode = allModes[2];
-        }else if (cMode.contains("light")){
-            completeMode = allModes[0];
-        }else if (cMode.contains("voice")){
-            completeMode = allModes[1];
-        }else {
-            completeMode = allModes[1];
-        }
-
-        Log.d(TAG, "setAllModes: "+wakeupMode+"-"+recognizeMode+"-"+completeMode);
-    }
 
     //更新
     public boolean needInstallApk = false;

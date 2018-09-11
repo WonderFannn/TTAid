@@ -35,6 +35,7 @@ public class BeoneAidReceiver extends BroadcastReceiver {
         }else if (BroadcastManager.WAKEUP_BYUSER.equals(intent.getAction())){
             Intent i = new Intent(context, BeoneAidService.class);
             i.setAction(BeoneAidService.SMART_ECHO_ACTION_WAKEUP);
+            i.putExtra("mode",intent.getIntExtra("mode",1));
             context.startService(i);
         }else if (BroadcastManager.GET_BATTERY_INFO.equals(intent.getAction())){
             Intent i = new Intent(context, BeoneAidService.class);
