@@ -3,12 +3,13 @@
     package="com.beoneaid"
     android:installLocation="auto"
     android:versionCode="2"
-    android:versionName="2.8.0730">
+    android:versionName="2.10.0912">
 
     <application
         android:icon="@drawable/icon"
         android:testOnly="false"
         android:name=".application.BaseApplication"
+        android:persistent="true"
         android:label="Beone助手" >
 
         <activity

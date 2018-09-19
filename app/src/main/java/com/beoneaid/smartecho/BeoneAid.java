@@ -779,7 +779,7 @@ public class BeoneAid implements CaeWakeupListener{
                     JSONObject responseJson = data.optJSONObject("response");
                     String rspCode = responseJson.optString("rspCode");
                     if (!rspCode.equals("0000")) {
-                        startTtsOutput("模式执行失败");
+                        startTtsOutput("模式执行失败",false);
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();
