@@ -98,7 +98,8 @@ public class BeoneAidService extends Service implements BeoneAid.OnRecognizeResu
                 }
             } else if(SMART_ECHO_ACTION_WAKEUP.equals(action)) {
                 int mode = intent.getIntExtra("mode",1);
-                mBeoneAid.onWakeUp(0, 0, mode);
+                mBeoneAid.onWakeUp(0,0,mode,true);
+//                mBeoneAid.positiveWakeup(mode);
             } else if(SMART_ECHO_UPDATE_SUCCESS.equals(action)) {
                 if (isEchoRunning) {
                     mBeoneAid.startTtsOutput("更新成功", false);

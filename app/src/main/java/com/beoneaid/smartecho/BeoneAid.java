@@ -122,7 +122,7 @@ public class BeoneAid implements CaeWakeupListener{
     }
 
     @Override
-    public void onWakeUp(int angle, int channel, int keywordID) {
+    public void onWakeUp(int angle, int channel, int keywordID, boolean broadcastWakeup) {
         LogUtil.d("SmartEcho - onWakeUp");
         if (keywordID>=0){
             parseMode = keywordID;
@@ -134,10 +134,11 @@ public class BeoneAid implements CaeWakeupListener{
         setChannel(channel);
         Log.d("TAG", "Echo  onWakeUp - angle:"+angle+"chane:"+channel);
 
-        if(wakeupMode.equals(allModes[0])){
+        if(wakeupMode.equals(allModes[0]) || broadcastWakeup){
             startIat();
         }else {
             startTtsOutput(getEchoText(), true);
+            startIat();
         }
         if (mMediaPlayer!=null && mMediaPlayer.isPlaying()){
             mMediaPlayer.pause();
@@ -401,7 +402,9 @@ public class BeoneAid implements CaeWakeupListener{
     };
     private void startIat() {
         mStartRecognize = true;
-        setLedOn();
+        if (wakeupMode.contains("light")){
+            setLedOn();
+        }
         // start listening user
         if (mIat != null && !mIat.isListening()) {
             mIat.startListening(mIatListener);
@@ -412,8 +415,9 @@ public class BeoneAid implements CaeWakeupListener{
         mStartRecognize = false;
         if(mIat != null && mIat.isListening()) {
             mIat.stopListening();
-            setLedOff();
-
+            if (wakeupMode.contains("light")){
+                setLedOff();
+            }
             resetCurrentValume();
         }
     }
@@ -499,23 +503,92 @@ public class BeoneAid implements CaeWakeupListener{
 
     public boolean needUpdateOTA = false;
 
+    private String orderCache = "";
+    private int orderCacheNum = 0;
     private void parseOrder(String order) {
+        if (order.length() >= 3 && orderCache.length() >= 3){
+            if (order.substring(order.length()-3,order.length()).equals(orderCache.substring(orderCache.length()-3,orderCache.length()))){
+                orderCacheNum ++;
+            }else {
+                orderCacheNum = 0;
+            }
+            if (orderCacheNum == 4){
+                startTtsOutput("语音缓存错误，即将重启",false);
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            Thread.sleep(4000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        BroadcastManager.sendBroadcastWithCommand(BroadcastManager.ACTION_SEND_SHELL_COMMAND,"reboot");
+                    }
+                }).start();
+                return;
+            }
+        }
+        orderCache = order;
 
         if (order.equals("强制关机")){
-            BroadcastManager.sendBroadcastWithCommand(BroadcastManager.ACTION_SEND_SHELL_COMMAND,"reboot -p");
+            startTtsOutput("即将关机",false);
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        Thread.sleep(4000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    BroadcastManager.sendBroadcastWithCommand(BroadcastManager.ACTION_SEND_SHELL_COMMAND,"reboot -p");
+                }
+            }).start();
             return;
         }
         if (order.equals("强制重启")){
-            BroadcastManager.sendBroadcastWithCommand(BroadcastManager.ACTION_SEND_SHELL_COMMAND,"reboot");
+            startTtsOutput("好的，马上重启",false);
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        Thread.sleep(4000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    BroadcastManager.sendBroadcastWithCommand(BroadcastManager.ACTION_SEND_SHELL_COMMAND,"reboot");
+                }
+            }).start();
             return;
         }
         if (order.equals("确定")){
             if (needSendPowerOff){
-                BroadcastManager.sendBroadcastWithCommand(BroadcastManager.ACTION_SEND_SHELL_COMMAND,"reboot -p");
+                startTtsOutput("即将关机",false);
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            Thread.sleep(3000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        BroadcastManager.sendBroadcastWithCommand(BroadcastManager.ACTION_SEND_SHELL_COMMAND,"reboot -p");
+                    }
+                }).start();
                 return;
             }
             if (needSendPowerRestart){
-                BroadcastManager.sendBroadcastWithCommand(BroadcastManager.ACTION_SEND_SHELL_COMMAND,"reboot");
+                startTtsOutput("好的，马上重启",false);
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            Thread.sleep(3000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        BroadcastManager.sendBroadcastWithCommand(BroadcastManager.ACTION_SEND_SHELL_COMMAND,"reboot");
+                    }
+                }).start();
                 return;
             }
             if (needInstallApk){
@@ -633,16 +706,21 @@ public class BeoneAid implements CaeWakeupListener{
         return explicitIntent;
     }
     private void sendOrder2xfyd(String order){
+
+        try {
 //        com.iflytek.xiri2.START --es text "今天的天气" --es startmode "text"
-        Intent intent = new Intent("com.iflytek.xiri2.START");
+            Intent intent = new Intent("com.iflytek.xiri2.START");
 //        intent.putExtra("startmode","text");
 //        intent.putExtra("text",order);
 //        intent.setPackage("com.lzpd.scheduler");
-        final Intent eintent = new Intent(createExplicitFromImplicitIntent(mContext,intent));
-        eintent.putExtra("startmode","text");
-        eintent.putExtra("text",order);
-        mContext.startService(eintent);
+            final Intent eintent = new Intent(createExplicitFromImplicitIntent(mContext, intent));
+            eintent.putExtra("startmode", "text");
+            eintent.putExtra("text", order);
+            mContext.startService(eintent);
 
+        }catch (Exception e){
+            startTtsOutput("讯飞语点相关应用未安装",false);
+        }
     }
 
 
@@ -1294,7 +1372,7 @@ public class BeoneAid implements CaeWakeupListener{
                 JSONArray serArrary = data.getJSONArray("serviceContent");
                 String funParams = serArrary.getJSONObject(0).getString("funParams");
                 JSONObject fpJO = new JSONObject(funParams);
-//                setAllModes(fpJO.optString("hxtsSetup"),fpJO.optString("qqtsSetup"),fpJO.optString("jgtsSetup"));
+                setAllModes(fpJO.optString("hxtsSetup"),fpJO.optString("qqtsSetup"),fpJO.optString("jgtsSetup"));
                 JSONObject hxhfc = fpJO.optJSONObject("hxhfc");
                 if (hxhfc!=null){
                     String[] texts = new String[3];
@@ -1328,6 +1406,42 @@ public class BeoneAid implements CaeWakeupListener{
 
     private String[] allModes = {"tslight","tsvoice","tslightvoice"};
     private String wakeupMode = allModes[0];
+    private String recognizeMode = allModes[0];
+    private String completeMode = allModes[1];
+
+    public void setAllModes(String wMode,String rMode,String cMode){
+        if (wMode.contains("light") && wMode.contains("voice")){
+            wakeupMode = allModes[2];
+        }else if (wMode.contains("light")){
+            wakeupMode = allModes[0];
+        }else if (wMode.contains("voice")){
+            wakeupMode = allModes[1];
+        }else {
+            wakeupMode = allModes[0];
+        }
+
+        if (rMode.contains("light") && rMode.contains("voice")){
+            recognizeMode = allModes[2];
+        }else if (rMode.contains("light")){
+            recognizeMode = allModes[0];
+        }else if (rMode.contains("voice")){
+            recognizeMode = allModes[1];
+        }else {
+            recognizeMode = allModes[0];
+        }
+
+        if (cMode.contains("light") && cMode.contains("voice")){
+            completeMode = allModes[2];
+        }else if (cMode.contains("light")){
+            completeMode = allModes[0];
+        }else if (cMode.contains("voice")){
+            completeMode = allModes[1];
+        }else {
+            completeMode = allModes[1];
+        }
+
+        Log.d(TAG, "setAllModes: "+wakeupMode+"-"+recognizeMode+"-"+completeMode);
+    }
 
     //更新
     public boolean needInstallApk = false;

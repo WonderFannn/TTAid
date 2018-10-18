@@ -109,4 +109,28 @@ public class Computeclass {
     public static String similarityResult(double resule){
         return  NumberFormat.getPercentInstance(new Locale( "en ", "US ")).format(resule);
     }
+
+    /**查询是否包含*/
+    public static boolean containResult(String speakText,String modeName){
+        int sLength = speakText.length();
+        int mLength = modeName.length();
+        if (sLength >= mLength && speakText.contains(modeName)){
+            return true;
+        }
+        if (mLength > sLength && modeName.contains(speakText)){
+            return true;
+        }
+        if (sLength >= mLength/2 && mLength == 3 && speakText.contains(modeName.substring(mLength/2))){
+            return true;
+        }
+        if (sLength >= mLength/2 && mLength > 3 &&
+                (speakText.contains(modeName.substring(mLength/2)) || speakText.contains(modeName.substring(0,mLength/2)))){
+            return true;
+        }
+        if (sLength >= 3 && mLength >= 3 && modeName.contains(speakText.substring(sLength-3))){
+            return true;
+        }
+
+        return  false;
+    }
 }

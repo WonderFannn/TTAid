@@ -2,8 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.beoneaid"
     android:installLocation="auto"
-    android:versionCode="2"
-    android:versionName="2.10.0912">
+    android:versionCode="3"
+    android:versionName="2.10.1018">
 
     <application
         android:icon="@drawable/icon"

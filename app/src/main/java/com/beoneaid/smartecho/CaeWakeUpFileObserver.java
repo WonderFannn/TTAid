@@ -116,7 +116,7 @@ public class CaeWakeUpFileObserver extends FileObserver {
             LogUtil.d("====== " + CAE_WAKEUP_FILE + " has been modify, read it go!");
             boolean isWakeup = getCAEWakeState();
             if(isWakeup) {
-                mCaeWakeupListener.onWakeUp(mAngle, mChanel, mKeywordID);
+                mCaeWakeupListener.onWakeUp(mAngle, mChanel, mKeywordID,false);
                 setCaeWakeupState(false);
             }
         }

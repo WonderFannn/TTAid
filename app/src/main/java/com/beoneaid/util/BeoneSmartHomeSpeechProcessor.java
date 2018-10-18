@@ -44,14 +44,16 @@ public class BeoneSmartHomeSpeechProcessor {
             }
             return null;
         }
-        if (text.startsWith("第") && mFiltrateModeList.length() > 0){
+        if (text.contains("第") && text.indexOf("第") < text.length() && mFiltrateModeList.length() > 0){
 
-            String num = text.replace("第","").replace("个","");
+            String num = text.substring(text.indexOf("第")+1,text.length());
             int number = 0;
-            if (isNumeric(num)){
-                number = Integer.parseInt(num);
-            }else {
-                switch (num){
+            if (num.length() >= 2 && isNumeric(num.substring(0,2))){
+                number = Integer.parseInt(num.substring(0,2));
+            }else if (num.length() >= 1 && isNumeric(num.substring(0,1))) {
+                number = Integer.parseInt(num.substring(0,1));
+            }else if (num.length() >= 1){
+                switch (num.substring(0,1)){
                     case "一":number = 1;break;
                     case "二":number = 2;break;
                     case "三":number = 3;break;
@@ -62,9 +64,10 @@ public class BeoneSmartHomeSpeechProcessor {
                     case "八":number = 8;break;
                     case "九":number = 9;break;
                     case "十":number = 10;break;
-                    case "十一":number = 11;break;
                     default:number = 0;break;
                 }
+            }else {
+                number = 0;
             }
             Log.d(TAG, "HandleText: number = "+number);
             if (number <= 0 || number > mFiltrateModeList.length()){
@@ -96,7 +99,8 @@ public class BeoneSmartHomeSpeechProcessor {
             JSONObject jsonObject;
             try {
                 jsonObject = mModeList.optJSONObject(i);
-                int score = Computeclass.SimilarDegree(text,jsonObject.optString("paternName"));
+                String paternName = jsonObject.optString("paternName");
+                int score = Computeclass.SimilarDegree(text,paternName);
                 if (score == 100){
                     JSONObject resultJson = new JSONObject();
                     resultJson.put("mode","1");
@@ -104,7 +108,7 @@ public class BeoneSmartHomeSpeechProcessor {
                     resultJson.put("patternId",jsonObject.optInt("patternId"));
                     return resultJson;
                 }
-                if (score >= 66){
+                if (score >= 66 || Computeclass.containResult(text,paternName) ){
                     mFiltrateModeList.put(jsonObject);
                 }
             } catch (JSONException e) {
@@ -113,19 +117,33 @@ public class BeoneSmartHomeSpeechProcessor {
 
         }
         if (mFiltrateModeList.length()>0){
-            answer = "主人,你想执行";
-            for (int i = 0; i < mFiltrateModeList.length(); i++) {
-                answer =answer + mFiltrateModeList.optJSONObject(i).optString("paternName") +",";
+            if (mFiltrateModeList.length() == 1){
+                answer = "好的，为您执行模式-" + mFiltrateModeList.optJSONObject(0).optString("paternName");
+                patternId = mFiltrateModeList.optJSONObject(0).optInt("patternId");
+                JSONObject resultJson = new JSONObject();
+                try {
+                    resultJson.put("mode", "1");
+                    resultJson.put("answer", answer);
+                    resultJson.put("patternId",patternId);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                mFiltrateModeList = new JSONArray();
+                return resultJson;
+            }else {
+                answer = "主人,你想执行哪个模式？";
+                for (int i = 0; i < mFiltrateModeList.length(); i++) {
+                    answer = answer+"\n"+ (i+1)+ "," + mFiltrateModeList.optJSONObject(i).optString("paternName");
+                }
+                JSONObject resultJson = new JSONObject();
+                try {
+                    resultJson.put("mode", "2");
+                    resultJson.put("answer", answer);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                return resultJson;
             }
-            answer = answer+"这些模式吗？请告诉我您要执行第几个。";
-            JSONObject resultJson = new JSONObject();
-            try {
-                resultJson.put("mode","2");
-                resultJson.put("answer",answer);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            return resultJson;
         }else {
             answer = "主人，我不明白";
             JSONObject resultJson = new JSONObject();
