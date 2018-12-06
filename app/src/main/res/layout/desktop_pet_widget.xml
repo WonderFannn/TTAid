@@ -7,21 +7,23 @@
     android:gravity="center"
     android:orientation="horizontal">
 
-    <ImageView
-        android:id="@+id/iv_pet"
-        android:layout_width="70dp"
-        android:layout_height="70dp"
-        android:src="@drawable/pet_icon" />
-
     <TextView
         android:id="@+id/tv_talk"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:gravity="center"
+        android:gravity="center_vertical"
         android:layout_marginLeft="5dp"
-        android:background="@drawable/message_box_left"
+        android:background="@drawable/message_box_right"
         android:text="123213"
-        android:visibility="gone"
+        android:visibility="invisible"
         android:textColor="#0972CE"/>
+
+    <ImageView
+        android:id="@+id/iv_pet"
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        android:visibility="invisible"
+        android:src="@drawable/xiaobao_icon" />
+
 
 </LinearLayout>

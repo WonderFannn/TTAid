@@ -138,7 +138,6 @@ public class BeoneAid implements CaeWakeupListener{
             startIat();
         }else {
             startTtsOutput(getEchoText(), true);
-            startIat();
         }
         if (mMediaPlayer!=null && mMediaPlayer.isPlaying()){
             mMediaPlayer.pause();
@@ -401,6 +400,10 @@ public class BeoneAid implements CaeWakeupListener{
 
     };
     private void startIat() {
+        if (mTts.isSpeaking()){
+            mTts.stopSpeaking();
+            mIsOnTts = false;
+        }
         mStartRecognize = true;
         if (wakeupMode.contains("light")){
             setLedOn();

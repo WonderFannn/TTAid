@@ -6,6 +6,7 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.beoneaid.R;
@@ -58,13 +59,13 @@ public class DesktopPetManager {
                 desktopPetViewParams.format = PixelFormat.RGBA_8888;
                 desktopPetViewParams.flags = WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
                         | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
-                desktopPetViewParams.gravity = Gravity.LEFT | Gravity.TOP;
+                desktopPetViewParams.gravity = Gravity.RIGHT | Gravity.TOP;
                 desktopPetViewParams.width = DesktopPetView.viewWidth;
                 desktopPetViewParams.height = DesktopPetView.viewHeight;
                 
-                desktopPetViewParams.x = 0;
+                desktopPetViewParams.x = 100;
                 
-                desktopPetViewParams.y = 0;
+                desktopPetViewParams.y = 50;
             }
             desktopPetView.setParams(desktopPetViewParams);
             windowManager.addView(desktopPetView, desktopPetViewParams);
@@ -97,10 +98,13 @@ public class DesktopPetManager {
         if (desktopPetView != null) {
             Log.d(TAG, "updatePetTalk: ");
             TextView percentView = (TextView) desktopPetView.findViewById(R.id.tv_talk);
+            ImageView petIcon = (ImageView) desktopPetView.findViewById(R.id.iv_pet);
             percentView.setText(str);
             percentView.setVisibility(View.VISIBLE);
+            petIcon.setVisibility(View.VISIBLE);
             if (str.equals("")){
-                percentView.setVisibility(View.GONE);
+                percentView.setVisibility(View.INVISIBLE);
+                petIcon.setVisibility(View.INVISIBLE);
             }
 //            desktopPetView.setTalkText(str);
         }
