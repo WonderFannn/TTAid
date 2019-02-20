@@ -509,6 +509,11 @@ public class BeoneAid implements CaeWakeupListener{
     private String orderCache = "";
     private int orderCacheNum = 0;
     private void parseOrder(String order) {
+        try {
+            uploadText("玲珑宝:"+order);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
         if (order.length() >= 3 && orderCache.length() >= 3){
             if (order.substring(order.length()-3,order.length()).equals(orderCache.substring(orderCache.length()-3,orderCache.length()))){
                 orderCacheNum ++;
@@ -969,6 +974,67 @@ public class BeoneAid implements CaeWakeupListener{
         );
         mQueue.add(stringRequest);
     }
+
+    private void uploadText(String text) throws JSONException {
+        if (!isLogin){
+            Log.e(TAG, "未登录,无法上传" );
+            return;
+        }
+        Log.d("上传识别内容", "text: "+text);
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
+        Date curDate = new Date(System.currentTimeMillis());
+        String time = formatter.format(curDate);
+        String opr = null;
+//        try {
+//            opr = URLEncoder.encode(patternId, "UTF-8");
+//        } catch (UnsupportedEncodingException e) {
+//            e.printStackTrace();
+//        }
+        JSONObject serviceContent = new JSONObject();
+        serviceContent.put("secretKey", mSecretKey);
+        serviceContent.put("account", mAccount);
+        serviceContent.put("mac", mMac);
+        serviceContent.put("voiceText", text);
+//        serviceContent.put("patternOperation", false);
+        JSONObject data = new JSONObject();
+        data.put("actionCode", "0");
+        data.put("activityCode", "T902");
+        data.put("bipCode", "B040");
+        data.put("bipVer", "1.0");
+        data.put("origDomain", "VA000");
+        data.put("processTime", time);
+        data.put("homeDomain", "P000");
+        data.put("testFlag", "1");
+        data.put("serviceContent", serviceContent);
+
+        String url = mContext.getString(R.string.beone_aiui_url) + data.toString();
+        StringRequest stringRequest = new StringRequest(url, RsUploadTextListener, getOFRErrorListener);
+        stringRequest.setRetryPolicy(
+                new DefaultRetryPolicy(
+                        20*1000,//默认超时时间，应设置一个稍微大点儿的
+                        DefaultRetryPolicy.DEFAULT_MAX_RETRIES,//默认最大尝试次数
+                        DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
+                )
+        );
+        mQueue.add(stringRequest);
+    }
+
+    private Response.Listener<String> RsUploadTextListener = new Response.Listener<String>() {
+        @Override
+        public void onResponse(String response) {
+            Log.d(TAG, "onResponse: RsUploadTextListener"+response);
+            try {
+                JSONObject data = new JSONObject(response);
+                JSONObject responseJson = data.optJSONObject("response");
+                String rspCode = responseJson.optString("rspCode");
+                if (!rspCode.equals("0000")) {
+                    Log.e(TAG, "onResponse: 上传失败" );
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+    };
 
     /**
      * ==================================================================================

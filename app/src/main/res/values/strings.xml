@@ -8,7 +8,8 @@
     <string name="all_movie_url">http://open.tvapk.com/fastsou/allvideo</string>
     <string name="url_sign">f9763aa117e00136fd11876b5aa724fc</string>
     <string name="beone_aiui_url_test">http://192.168.60.148:8080/smarthomeOld/mobile/service?$data=</string>
-    <string name="beone_aiui_url">http://www.beonehome.com:6100/smarthome/mobile/service?$data=</string>
+    <string name="beone_aiui_urlmain">http://www.beonehome.com:6100/smarthome/mobile/service?$data=</string>
+    <string name="beone_aiui_url">http://112.33.20.213:6100/smarthome/mobile/service?$data=</string>
     <!-- 设置相关 -->
     <string name="setting_prf">settingprf</string>
     <string formatted="false" name="tts_toast_format">buffer %d%%，playing %d%%</string>
