@@ -936,7 +936,7 @@ public class BeoneAid implements CaeWakeupListener{
     }
 
     private void getAIUIResult(int patternId) throws JSONException {
-        Log.d("平台通讯", "getAIUIResult: "+patternId);
+        Log.d("根据模式id控制模式", "getAIUIResult: "+patternId);
         SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
         Date curDate = new Date(System.currentTimeMillis());
         String time = formatter.format(curDate);
